@@ -9,6 +9,8 @@ An online platform to view data from all of your GIHS online platforms in one pl
 * [For developers](#for-developers)
 
 ## Releases
+**The target audience is [Glenunga International High School](https://en.wikipedia.org/wiki/Glenunga_International_High_School).**
+
 Installers for stable and beta releases of TaskCollect *will* be available in the [releases](https://github.com/taskcollect/taskcollect/releases) tab.
 
 *At the current moment, TaskCollect is a work in progress. Do not expect any functionality yet.*
