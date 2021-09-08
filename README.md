@@ -27,7 +27,7 @@ Installers for stable and beta releases of TaskCollect *will* be available in th
 Run `srv.py` with Python 3. The web server will start up on [http://localhost:1111](http://localhost:1111).
 
 ## Help and documentation
-All help and documentation is *supposed to be* available in the 'Help' tab in TaskCollect, or, in `help.html` and the `docs` folder. *In reality there's basically nothing except for the license and an incomplete list of active bugs.*
+All help and documentation is *supposed to be* available in the 'Help' tab in TaskCollect, or, in `web/help.html` and the `web/doc/` folder. *In reality there's basically nothing except for the license and an incomplete list of active bugs.*
 
 ## For developers
 *This section will be populated at a later date.*
