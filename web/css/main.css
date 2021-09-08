@@ -1,0 +1,620 @@
+:root
+{
+    --accent-color: #0BAB05;
+    --accent-shade: #008B00;
+    --accent-darker: #006B00;
+    --main-font: "Calibri";
+    --condensed-font: "Roboto Condensed";
+    --fg-btn-color: #F0F0F0;
+    --icon-btn-daymap: url(../img/daymap-white.svg);
+    --icon-btn-webmail: url(../img/webmail-white.svg);
+    --icon-btn-classroom: url(../img/classroom-white.svg);
+    --icon-btn-drive: url(../img/drive-white.svg);
+    --icon-btn-stile: url(../img/stile-white.svg);
+    --icon-btn-edpuzzle: url(../img/edpuzzle-white.svg);
+    --icon-btn-taskcollect: url(../img/taskcollect-white.svg);
+    --icon-btn-external-link: url(../img/external-link-white.png);
+}
+
+@media (prefers-color-scheme: light)
+{
+    :root
+    {
+        --mono-shade: #FAFAFA;
+        --mono-light: #F0F0F0;
+        --mono-lighter: #E0E0E0;
+        --input-bg-color: #FFFFFF;
+        --input-border-color: #AAAAAA;
+        --fg-color: #000000;
+        --fg-disabled-color: #BBBBBB;
+        --bg-color: #FFFFFF;
+        --bg-red: #E06666;
+        --icon-daymap: url(../img/daymap-black.svg);
+        --icon-webmail: url(../img/webmail-black.svg);
+        --icon-classroom: url(../img/classroom-black.svg);
+        --icon-drive: url(../img/drive-black.svg);
+        --icon-stile: url(../img/stile-black.svg);
+        --icon-edpuzzle: url(../img/edpuzzle-black.svg);
+        --icon-taskcollect: url(../img/taskcollect-black.svg);
+        --icon-external-link: url(../img/external-link-black.png);
+    }
+}
+
+@media (prefers-color-scheme: dark)
+{
+    :root
+    {
+        --accent-light: #0A3E73;
+        --mono-shade: #2A2A2A;
+        --mono-light: #303030;
+        --mono-lighter: #404040;
+        --input-bg-color: #505050;
+        --input-border-color: #AAAAAA;
+        --fg-color: #F0F0F0;
+        --fg-disabled-color: #555555;
+        --bg-color: #202020;
+        --bg-red: #990000;
+        --icon-daymap: url(../img/daymap-white.svg);
+        --icon-webmail: url(../img/webmail-white.svg);
+        --icon-classroom: url(../img/classroom-white.svg);
+        --icon-drive: url(../img/drive-white.svg);
+        --icon-stile: url(../img/stile-white.svg);
+        --icon-edpuzzle: url(../img/edpuzzle-white.svg);
+        --icon-taskcollect: url(../img/taskcollect-white.svg);
+        --icon-external-link: url(../img/external-link-white.png);
+    }
+}
+
+::selection
+{
+    color: var(--fg-btn-color);
+    background: var(--accent-color);
+}
+
+html, body
+{
+    background: var(--mono-shade);
+    color: var(--fg-color);
+    display: table;
+    font-family: var(--main-font);
+    height: 100%;
+    margin: 0;
+    width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6, p
+{
+    margin: 0;
+}
+
+a
+{
+    color: var(--accent-color);
+}
+
+button
+{
+    border: none;
+}
+
+button:hover
+{
+    cursor: pointer;
+}
+
+button:focus
+{
+    outline: 0 !important;
+}
+
+.no-focus-border:focus
+{
+    outline: 0 !important;
+}
+
+input
+{
+    background: var(--input-bg-color);
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    color: var(--fg-color);
+    padding: 5px 10px 5px 10px;
+}
+
+input:focus
+{
+    border: 1px solid var(--accent-color);
+    outline: 0 !important;
+}
+
+iframe
+{
+    border: none;
+}
+
+.big-iframe
+{
+    display: table-cell;
+    height: 100%;
+    width: 100%;
+}
+
+#titlebar
+{
+    background: var(--bg-color);
+    display: table-row;
+    height: 68px;
+}
+
+#titlebar img
+{
+    padding: 8px 20px 0 20px;
+}
+
+#menubar
+{
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--fg-disabled-color);
+    color: var(--fg-color);
+    font-family: var(--main-font);
+    margin: 0 0 5px 0;
+    padding: 0 0 6px 10px;
+    position: relative;
+    text-align: left;
+}
+
+#menubar li
+{
+    display: inline;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#menubar li a
+{
+    color: var(--bg-colour);
+    text-decoration: none;
+}
+
+#menubar li a button
+{
+    background: var(--bg-color);
+    border: none;
+    border-radius: 5px;
+    color: var(--fg-color);
+    font-family: var(--main-font);
+    font-size: 90%;
+    padding: 6px 10px 6px 10px;
+    margin: 0%;
+}
+
+#menubar li a button:hover
+{
+    background: var(--mono-light);
+}
+
+.about-logo
+{
+    display: block;
+    margin: 9% auto 30px auto;
+}
+
+.about-title
+{
+    text-align: center;
+}
+
+.about-version
+{
+    margin: 10px 0 0 0;
+    text-align: center;
+}
+
+.about-description
+{
+    text-align: center;
+}
+
+.indented
+{
+    margin: 0 0 0 20px;
+}
+
+.doc-div
+{
+    display: table-cell;
+    height: 100%;
+    padding: 38px;
+}
+
+.doc-margin-div
+{
+    max-width: 50em;
+}
+
+.inline
+{
+    display: table;
+    height: 100%;
+    width: 100%;
+}
+
+.left-sidebar
+{
+    background: var(--bg-color);
+    border-right: 1px solid var(--fg-disabled-color);
+    display: table-cell;
+    height: 100%;
+    width: 15%;
+}
+
+.left-sidebar button
+{
+    background: var(--bg-color);
+    border: none;
+    color: var(--fg-color);
+    margin: 0;
+    overflow: none;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.docs-sidebar *
+{
+    text-align: left;
+}
+
+.docs-sidebar p
+{
+    color: var(--accent-color);
+    overflow: hidden;
+    padding: 20px 15px 5px 20px;
+    text-overflow: ellipsis;
+}
+
+.docs-sidebar button
+{
+    overflow: hidden;
+    padding: 5px 15px 5px 20px;
+    text-overflow: ellipsis;
+}
+
+.left-sidebar button:hover
+{
+    background: var(--mono-light);
+}
+
+.docs-sidebar button.highlighted
+{
+    background: var(--mono-lighter);
+}
+
+.article-container
+{
+    background: var(--mono-light);
+    margin: auto;
+    margin-top: 5%;
+    margin-bottom: 5%;
+    max-width: 55em;
+    padding: 40px;
+}
+
+.red-article-container
+{
+    background: var(--bg-red);
+    color: var(--fg-btn-color);
+    margin: auto;
+    margin-top: 5%;
+    margin-bottom: 5%;
+    max-width: 55em;
+    padding: 40px;
+}
+
+.index-flex
+{
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: row wrap;
+}
+
+@media screen and (min-width: 1000px)
+{
+    .flex-container
+    {
+        flex-basis: 33.3333%;
+    }
+}
+
+@media screen and (min-width: 600px) and (max-width: 1000px)
+{
+    .flex-container
+    {
+        flex-basis: 50%;
+    }
+
+    .last-flex-container
+    {
+        flex-basis: 100%;
+    }
+}
+
+@media screen and (max-width: 600px)
+{
+    .flex-container
+    {
+        flex-basis: 100%;
+    }
+}
+
+.taskcollect-container
+{
+    background: var(--bg-color);
+    border: 1px solid var(--fg-disabled-color);
+    height: 750px;
+    margin: 5px 7px 5px 7px;
+    padding: 20px;
+    vertical-align: top;
+}
+
+.tccontain-titlediv h3
+{
+    display: inline;
+    font-weight: normal;
+}
+
+.tccontain-titlediv a button
+{
+    background: var(--accent-color);
+    color: var(--fg-btn-color);
+    border: none;
+    border-radius: 5px;
+    float: right;
+    margin-left: 1%;
+    margin-bottom: 2%;
+    padding: 5px 10px 5px 10px;
+    text-align: right;
+}
+
+.tccontain-titlediv a button p:after
+{
+    content: var(--icon-btn-external-link);
+}
+
+.tccontain-titlediv a button:hover
+{
+    background: var(--accent-shade);
+}
+
+.tccontain-titlediv a button:active
+{
+    background: var(--accent-darker);
+}
+
+.tccontain-titlediv button
+{
+    background: var(--accent-color);
+    color: var(--fg-btn-color);
+    border: none;
+    border-radius: 5px;
+    float: right;
+    margin-left: 1%;
+    padding: 5px 10px 5px 10px;
+}
+
+.tccontain-titlediv button:hover
+{
+    background: var(--accent-shade);
+}
+
+.tccontain-titlediv button:active
+{
+    background: var(--accent-darker);
+}
+
+.rounded-container
+{
+    border-radius: 20px;
+}
+
+.msgbox
+{
+    border-radius: 10px;
+    display: inline-block;
+    height: 50px;
+    overflow: none;
+    padding: 17px;
+    width: 100%;
+}
+
+.msgbox a
+{
+    width: 80%;
+}
+
+.msgbox:before
+{
+    margin-right: 10px;
+    vertical-align: top;
+}
+
+.daymap-msgbox:before
+{
+    content: var(--icon-daymap);
+}
+
+.webmail-msgbox:before
+{
+    content: var(--icon-webmail);
+}
+
+.classroom-msgbox:before
+{
+    content: var(--icon-classroom);
+}
+
+.edpuzzle-msgbox:before
+{
+    content: var(--icon-edpuzzle);
+}
+
+.stile-msgbox:before
+{
+    content: var(--icon-stile);
+}
+
+.taskcollect-msgbox:before
+{
+    content: var(--icon-taskcollect);
+}
+
+.msgbox div
+{
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 80%;
+}
+
+.msgbox div b
+{
+    white-space: nowrap;
+}
+
+.msgbox div p
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 80%;
+}
+
+table
+{
+    margin: 12px 0;
+    table-layout: fixed;
+    width: 100%;
+}
+
+td
+{
+    background: var(--mono-light);
+    border: 4px solid var(--bg-color);
+    border-radius: 15px;
+}
+
+td.err-bg
+{
+    background: var(--bg-red);
+    color: var(--fg-btn-color);
+    border: 4px solid var(--bg-color);
+    border-radius: 15px;
+}
+
+.vle-label
+{
+    font-size: 90%;
+    padding: 10px 0;
+    text-align: center;
+    width: 100%;
+}
+
+.vle-label p
+{
+    display: inline-block;
+    margin-left: 5px;
+    vertical-align: 5px;
+}
+
+.btn-lower-right
+{
+    background: var(--accent-color);
+    border: 0;
+    border-radius: 5px;
+    color: var(--fg-btn-color);
+    float: right;
+    padding: 10px 20px 10px 20px;
+}
+
+.btn-lower-right:hover
+{
+    background: var(--accent-shade);
+    border: 0;
+}
+
+.btn-lower-right:active
+{
+    background: var(--accent-darker);
+    border: 0;
+}
+
+.fg-red
+{
+    color: #FF0000;
+}
+
+.fg-orange
+{
+    color: #FF6220;
+}
+
+.fg-yellow
+{
+    color: #DCA200;
+}
+
+.fg-yellow
+{
+    color: #DCA200;
+}
+
+.fg-disabled
+{
+    color: #777777;
+}
+
+a.boring-link
+{
+    color: var(--fg-color);
+    text-decoration: none;
+}
+
+.banner-strip
+{
+    background: var(--mono-lighter);
+    font-size: 90%;
+    margin-top: 15px;
+    padding: 7px 15px;
+}
+
+.tiny-header
+{
+    font-weight: normal;
+    margin-top: 10px;
+}
+
+.timetable-lesson
+{
+    border-left: 3px solid var(--accent-color);
+    padding: 10px 0 10px 25px;
+    margin: 5px 0;
+}
+
+.timetable-lesson h5
+{
+    font-weight: normal;
+    margin: 0;
+}
+
+.timetable-lesson h4
+{
+    font-size: 90%;
+    font-weight: normal;
+    margin: 0;
+}
+
+.err-bg
+{
+    background: var(--bg-red);
+    color: var(--fg-btn-color);
+}
