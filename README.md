@@ -28,7 +28,7 @@ Installers for stable and beta releases of TaskCollect *will* be available in th
 ## Usage
 Run `srv.py` with Python 3. The web server will start up on [http://localhost:1111](http://localhost:1111).
 
-Before you run the server, make sure you create the the `/usr` directory, and add a file titled `creds.csv` to it.
+Before you run the server, make sure you create the the `usr/` directory, and add a file titled `creds.csv` to it.
 
 In `creds.csv`, you should put in a CSV database of credentials in this format:
 
