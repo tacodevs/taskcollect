@@ -142,7 +142,7 @@ class Handler(BaseHTTPRequestHandler):
                         self.send_header("Content-type", "text/html")
                         self.end_headers()
 
-                        with open("./srv/login.html") as f:
+                        with open("./web/login.html") as f:
 
                             file = ""
 
@@ -163,7 +163,7 @@ class Handler(BaseHTTPRequestHandler):
             # These are resources which cannot be hindered by session token checking,
             # so are also placed above the token-checking section.
 
-            elif os.path.isfile(f"./srv{http_res}") and http_res not in special_reslist:
+            elif os.path.isfile(f"./web{http_res}") and http_res not in special_reslist:
                 if http_res[-5:] == ".html":
                     self.httperr(404)
                 elif http_res[-4:] == ".csv":
@@ -217,11 +217,11 @@ class Handler(BaseHTTPRequestHandler):
                         if creds_correct:
 
                             # If the requested HTML resource exists, provide it to the user.
-                            if os.path.isfile(f"./srv{http_res}.html") and http_res not in special_reslist:
+                            if os.path.isfile(f"./web{http_res}.html") and http_res not in special_reslist:
                                 self.httpsrv(f"/{http_res}.html", "text/html")
 
                             # If the requested CSV resource exists, provide it to the user.
-                            elif os.path.isfile(f"./srv{http_res}.csv"):
+                            elif os.path.isfile(f"./web{http_res}.csv"):
                                 self.httpsrv(f"/{http_res}.csv", "text/csv")
 
                             # If the requested resource is "/", provide and personalise it.
@@ -304,7 +304,7 @@ class Handler(BaseHTTPRequestHandler):
                                 html_tasks = wrapper.render_tasks(tasks)
 
                                 # Return the HTML document to the user, replacing placeholders with personalised HTML components.
-                                with open("./srv/index.html") as f:
+                                with open("./web/index.html") as f:
 
                                     file = ""
 
@@ -343,7 +343,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-type", mimetype)
         self.end_headers()
 
-        with open(f"./srv{srvfpath}", "rb") as f:
+        with open(f"./web{srvfpath}", "rb") as f:
             self.wfile.write(f.read())
 
     # A function to send an HTTP response of with a specified status code,
