@@ -1,6 +1,9 @@
 # Required for session token lifetime generation
 import datetime
 
+# Required to decode the user input from HTML query
+import urllib.parse
+
 # Required to set up a simple HTTP server
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -81,7 +84,8 @@ class Handler(BaseHTTPRequestHandler):
 
                         with open("./usr/creds.csv", "r") as credsfile:
 
-                            query["username"] = query["username"].replace("%5C", "\\")
+                            query["username"] = urllib.parse.unquote(query["username"])
+                            query["password"] = urllib.parse.unquote(query["password"])
 
                             usr_correct = False
                             pwd_correct = False
