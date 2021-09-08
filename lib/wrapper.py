@@ -32,3 +32,8 @@ def render_msgs(msgs):
 def render_tasks(tasks):
     html_tasks = '<br><p class="fg-red">Oopsy...</p>'
     return html_tasks
+
+# Function to convert user task/assignment data into a CSV.
+def tocsv_tasks(tasks):
+    csv = ''
+    return csv

@@ -55,7 +55,17 @@ class Handler(BaseHTTPRequestHandler):
             if http_query != False:
                 query = dict(kvpair.split("=") for kvpair in http_query.split("&"))
 
-            special_reslist = ["/", "/index", "/login", "/login-err"]
+            special_reslist = [
+                "/",
+                "/index",
+                "/login",
+                "/login-err",
+                "daymap-tasks.csv",
+                "classroom-tasks.csv",
+                "edpuzzle-tasks.csv",
+                "stile-tasks.csv",
+                "tasks.csv"
+            ]
 
             # Login handling. Has to be before session token checking.
             if http_res == "/login":
@@ -166,8 +176,6 @@ class Handler(BaseHTTPRequestHandler):
             elif os.path.isfile(f"./web{http_res}") and http_res not in special_reslist:
                 if http_res[-5:] == ".html":
                     self.httperr(404)
-                elif http_res[-4:] == ".csv":
-                    self.httperr(404)
                 elif http_res[-4:] == ".css":
                     self.httpsrv(f"/{http_res}", "text/css")
                 elif http_res[-4:] == ".png":
@@ -220,9 +228,95 @@ class Handler(BaseHTTPRequestHandler):
                             if os.path.isfile(f"./web{http_res}.html") and http_res not in special_reslist:
                                 self.httpsrv(f"/{http_res}.html", "text/html")
 
-                            # If the requested CSV resource exists, provide it to the user.
-                            elif os.path.isfile(f"./web{http_res}.csv"):
-                                self.httpsrv(f"/{http_res}.csv", "text/csv")
+                            # If the requested resource is the DayMap tasks CSV, generate a personalised version and send it.
+                            elif http_res == "daymap-tasks.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                tasks = daymap.get_tasks(username, password)
+                                tasks = wrapper.tasksort(tasks)
+                                csv = wrapper.tocsv_tasks(tasks)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the Google Classroom tasks CSV, generate a personalised version and send it.
+                            elif http_res == "classroom-tasks.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                tasks = classroom.get_tasks(username, password)
+                                tasks = wrapper.tasksort(tasks)
+                                csv = wrapper.tocsv_tasks(tasks)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the Edpuzzle tasks CSV, generate a personalised version and send it.
+                            elif http_res == "edpuzzle-tasks.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                tasks = edpuzzle.get_tasks(username, password)
+                                tasks = wrapper.tasksort(tasks)
+                                csv = wrapper.tocsv_tasks(tasks)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the Stile tasks CSV, generate a personalised version and send it.
+                            elif http_res == "stile-tasks.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                tasks = stile.get_tasks(username, password)
+                                tasks = wrapper.tasksort(tasks)
+                                csv = wrapper.tocsv_tasks(tasks)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the tasks CSV, generate a personalised version and send it.
+                            elif http_res == "tasks.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                tasks = {}
+
+                                tasks.update(
+                                    daymap.get_tasks(
+                                        username, password
+                                    )
+                                )
+
+                                tasks.update(
+                                    classroom.get_tasks(
+                                        username, password
+                                    )
+                                )
+
+                                tasks.update(
+                                    edpuzzle.get_tasks(
+                                        username, password
+                                    )
+                                )
+
+                                tasks.update(
+                                    stile.get_tasks(
+                                        username, password
+                                    )
+                                )
+
+                                tasks = wrapper.tasksort(tasks)
+                                csv = wrapper.tocsv_tasks(tasks)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is "/", provide and personalise it.
                             elif http_res == "/":
