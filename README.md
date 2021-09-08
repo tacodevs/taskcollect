@@ -28,6 +28,14 @@ Installers for stable and beta releases of TaskCollect *will* be available in th
 ## Usage
 Run `srv.py` with Python 3. The web server will start up on [http://localhost:1111](http://localhost:1111).
 
+Before you run the server, make sure you create the the `/usr` directory, and add a file titled `creds.csv` to it.
+
+In `creds.csv`, you should put in a CSV database of credentials in this format:
+
+```
+Name SURNAME,user@example.com,CURRIC\XXXXXX,password,blank
+```
+
 ## Help and documentation
 All help and documentation is *supposed to be* available in the 'Help' tab in TaskCollect, or, in `web/help.html` and the `web/doc/` folder. *In reality there's basically nothing except for the license and an incomplete list of active bugs.*
 
