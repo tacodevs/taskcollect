@@ -39,5 +39,8 @@ Name SURNAME,user@example.com,CURRIC\XXXXXX,password,blank
 ## Help and documentation
 All help and documentation is *supposed to be* available in the 'Help' tab in TaskCollect, or, in `web/help.html` and the `web/doc/` folder. *In reality there's basically nothing except for the license and an incomplete list of active bugs.*
 
+## To-do
+	* Add a logout button
+
 ## For developers
 *This section will be populated at a later date.*
