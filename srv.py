@@ -1,9 +1,6 @@
 # Required for session token lifetime generation
 import datetime
 
-# Required to decode the user input from HTML query
-import urllib.parse
-
 # Required to set up a simple HTTP server
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -36,6 +33,9 @@ import sys
 
 # Required to output detailed Python error messages
 import traceback
+
+# Required to decode the user input from HTML query
+import urllib.parse
 
 # The server request handler.
 class Handler(BaseHTTPRequestHandler):
