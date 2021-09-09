@@ -232,6 +232,67 @@ class Handler(BaseHTTPRequestHandler):
                             if os.path.isfile(f"./web{http_res}.html") and http_res not in special_reslist:
                                 self.httpsrv(f"/{http_res}.html", "text/html")
 
+                            # If the requested resource is the timetable CSV, generate a personalised version and send it.
+                            elif http_res == "timetable.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                timetable = daymap.get_timetable(username, password)
+                                csv = wrapper.tocsv_timetable(timetable)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the DayMap messages CSV, generate a personalised version and send it.
+                            elif http_res == "daymap-msgs.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                msgs = daymap.get_msgs(username, password)
+                                csv = wrapper.tocsv_msgs(msgs)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the EWS emails CSV, generate a personalised version and send it.
+                            elif http_res == "ews-msgs.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                msgs = ews.get_emails(username, password)
+                                csv = wrapper.tocsv_msgs(msgs)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
+                            # If the requested resource is the messages CSV, generate a personalised version and send it.
+                            elif http_res == "msgs.csv":
+
+                                self.send_response(200)
+                                self.send_header("Content-type", "text/csv")
+                                self.end_headers()
+
+                                msgs = {}
+                                
+                                msgs.update(
+                                    daymap.get_msgs(
+                                        username, password
+                                    )
+                                )
+
+                                msgs.update(
+                                    ews.get_emails(
+                                        username, password
+                                    )
+                                )
+
+                                csv = wrapper.tocsv_msgs(msgs)
+
+                                self.wfile.write(bytes(csv, "utf-8"))
+
                             # If the requested resource is the DayMap tasks CSV, generate a personalised version and send it.
                             elif http_res == "daymap-tasks.csv":
 
