@@ -1,7 +1,3 @@
-# Function to calculate a Python datetime object for a X days from today.
-def date_from_now(days):
-    return days
-
 # Function to sort an unsorted TaskCollect dictionary of tasks.
 def tasksort(tasks):
     sorted_tasks = {}
