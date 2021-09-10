@@ -392,9 +392,13 @@ class Handler(BaseHTTPRequestHandler):
 
                                 # Gets the user's timetable for the next two days, from DayMap.
 
-                                timetable = daymap.get_timetable(
-                                    wrapper.date_from_now(0),
-                                    username, password
+                                timetable = {}
+                                
+                                timetable.update(
+                                    daymap.get_timetable(
+                                        wrapper.date_from_now(0),
+                                        username, password
+                                    )
                                 )
 
                                 timetable.update(
