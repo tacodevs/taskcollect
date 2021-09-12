@@ -15,9 +15,21 @@ def shorten(tasks, amt):
         return tasks
 
 # Function to convert user timetable data into an HTML component, ready for rendering.
-def render_timetable(timetable):
-    html_timetable = '<br><p class="fg-red">Oopsy...</p>'
-    return html_timetable
+def render_timetable(timetable, timetable2, lesson_list, lesson_list2, week, day):
+    html_day = f"<div class=\"banner-strip\">{day}</div>"
+    html_week = f"<h5 class=\"tiny-header\">{week}</h5>"
+    count = 0
+    html_timetable = ""
+    html_timetable2 = ""
+    for item in lesson_list:
+        html_timetable = html_timetable + f"<div class = \"timetable-lesson\"><h5>{timetable[item][1]}</h5><h4>{item}</h4></div>"
+    
+    for item in lesson_list2:
+        html_timetable2 = html_timetable2 + f"<div class = \"timetable-lesson\"><h5>{timetable2[item][1]}</h5><h4>{item}</h4></div>"
+    
+    html_tomorrow = f"<div class=\"banner-strip\">{timetable2[lesson_list2[-1]][0]}</div>"
+
+    return html_day, html_week, html_timetable, html_tomorrow, html_timetable2
 
 # Function to convert user message/email data into an HTML component, ready for rendering.
 def render_msgs(msgs):
