@@ -1,5 +1,9 @@
 # Required for session token lifetime generation
 import datetime
+from re import U
+
+# Required to decode the user input from HTML query
+import urllib.parse
 
 # Required to set up a simple HTTP server
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -33,9 +37,6 @@ import sys
 
 # Required to output detailed Python error messages
 import traceback
-
-# Required to decode the user input from HTML query
-import urllib.parse
 
 # The server request handler.
 class Handler(BaseHTTPRequestHandler):
@@ -239,7 +240,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/csv")
                                 self.end_headers()
 
-                                timetable = daymap.get_timetable(username, password)
+                                daymap.get_lessons(username, password)
                                 csv = wrapper.tocsv_timetable(timetable)
 
                                 self.wfile.write(bytes(csv, "utf-8"))
@@ -392,21 +393,7 @@ class Handler(BaseHTTPRequestHandler):
 
                                 # Gets the user's timetable for the next two days, from DayMap.
 
-                                timetable = {}
-                                
-                                timetable.update(
-                                    daymap.get_timetable(
-                                        wrapper.date_from_now(0),
-                                        username, password
-                                    )
-                                )
-
-                                timetable.update(
-                                    daymap.get_timetable(
-                                        wrapper.date_from_now(1),
-                                        username, password
-                                    )
-                                )
+                                html_week, html_today, timetable, lessons, timetable2, lessons2 = daymap.get_lessons(username, password)
 
                                 # Collects the user's messages and emails into one dictionary, then cuts
                                 # off excess messages that won't fit into the HTML document.
@@ -460,9 +447,13 @@ class Handler(BaseHTTPRequestHandler):
 
                                 tasks = wrapper.tasksort(tasks)
                                 tasks = wrapper.shorten(tasks, 5)
-
+                                
+                                #get JSON data from daymap
+                                daymap.get_daymapID(username, password)
+                                #this is commented out because not needed yet
+                        
                                 # Convert user data to HTML components for rendering.
-                                html_timetable = wrapper.render_timetable(timetable)
+                                html_today, html_week, html_timetable, html_tomorrow, html_timetable2 = wrapper.render_timetable(timetable, timetable2, lessons, lessons2,  html_week, html_today)
                                 html_msgs = wrapper.render_msgs(msgs)
                                 html_tasks = wrapper.render_tasks(tasks)
 
@@ -473,9 +464,13 @@ class Handler(BaseHTTPRequestHandler):
 
                                     for l in f:
                                         l1 = l.replace('<taskcollect plchold="timetable" />', html_timetable)
-                                        l2 = l1.replace('<taskcollect plchold="messages" />', html_msgs)
-                                        l3 = l2.replace('<taskcollect plchold="tasks" />', html_tasks)
-                                        file += l3
+                                        l2 = l1.replace('<taskcollect plchold="timetable2" />', html_timetable2)
+                                        l3 = l2.replace('<taskcollect plchold="tomorrow" />', html_tomorrow)
+                                        l4 = l3.replace('<taskcollect plchold="week" />', html_week)
+                                        l5 = l4.replace('<taskcollect plchold="today" />', html_today)
+                                        l6 = l5.replace('<taskcollect plchold="messages" />', html_msgs)
+                                        l7 = l6.replace('<taskcollect plchold="tasks" />', html_tasks)
+                                        file += l7
 
                                     self.wfile.write(bytes(file, "utf-8"))
 
