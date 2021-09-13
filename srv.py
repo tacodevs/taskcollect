@@ -449,7 +449,7 @@ class Handler(BaseHTTPRequestHandler):
                                 tasks = wrapper.shorten(tasks, 5)
                                 
                                 #get JSON data from daymap
-                                daymap.get_daymapID(username, password)
+                                #daymap.get_daymapID(username, password)
                                 #this is commented out because not needed yet
                         
                                 # Convert user data to HTML components for rendering.
