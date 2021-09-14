@@ -579,6 +579,21 @@ a.boring-link
     text-decoration: none;
 }
 
+.msg-box
+{
+    color: var(--fg-color);
+    margin-left: -5px;
+    margin-top: -5px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    display: inline-block;
+    overflow-wrap:break-word;
+    text-decoration: none;
+    height: auto;
+    width: auto;
+}
+
+
 .banner-strip
 {
     background: var(--mono-lighter);
@@ -596,6 +611,7 @@ a.boring-link
 .timetable-lesson
 {
     border-left: 3px solid var(--accent-color);
+    color: #FFFFFF;
     padding: 10px 0 10px 25px;
     margin: 5px 0;
 }

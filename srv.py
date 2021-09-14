@@ -400,11 +400,7 @@ class Handler(BaseHTTPRequestHandler):
 
                                 msgs = {}
 
-                                msgs.update(
-                                    daymap.get_msgs(
-                                        username, password
-                                    )
-                                )
+                                daymap_msgs = daymap.get_msgs(username, password)
 
                                 msgs.update(
                                     ews.get_emails(
@@ -421,11 +417,7 @@ class Handler(BaseHTTPRequestHandler):
 
                                 tasks = {}
 
-                                tasks.update(
-                                    daymap.get_tasks(
-                                        username, password
-                                    )
-                                )
+                                daymap_tasks = daymap.get_tasks(username, password)
 
                                 tasks.update(
                                     classroom.get_tasks(
@@ -454,8 +446,8 @@ class Handler(BaseHTTPRequestHandler):
                         
                                 # Convert user data to HTML components for rendering.
                                 html_today, html_week, html_timetable, html_tomorrow, html_timetable2 = wrapper.render_timetable(timetable, timetable2, lessons, lessons2,  html_week, html_today)
-                                html_msgs = wrapper.render_msgs(msgs)
-                                html_tasks = wrapper.render_tasks(tasks)
+                                html_msgs = wrapper.render_msgs(daymap_msgs)
+                                html_tasks = wrapper.render_tasks(daymap_tasks)
 
                                 # Return the HTML document to the user, replacing placeholders with personalised HTML components.
                                 with open("./web/index.html") as f:
