@@ -579,6 +579,21 @@ a.boring-link
     text-decoration: none;
 }
 
+.msg-box
+{
+    color: var(--fg-color);
+    margin-left: -5px;
+    margin-top: -5px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    display: inline-block;
+    overflow-wrap:break-word;
+    text-decoration: none;
+    height: auto;
+    width: auto;
+}
+
+
 .banner-strip
 {
     background: var(--mono-lighter);
