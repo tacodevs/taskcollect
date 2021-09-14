@@ -111,7 +111,7 @@ def get_lessons(username, password):
     tomorrow_timetable = {}
     lesson_list = []
     lesson_list2 = []
-    lesson_info = open("./lib/csv/daymap_html.txt", "w")
+    #lesson_info = open("./usr/daymap_html.txt", "w")
     #get html from daymap
     page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
 
@@ -194,7 +194,7 @@ def get_lessons(username, password):
             else:
                 ID = ID + str(char)
         text = daymap_get(f"https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={ID}", username, password)
-        lesson_info.write(text)
+        #lesson_info.write(text)
         #lesson time class finding
         time_index = lesson_line.index("class='t'")
         count = 0
@@ -326,15 +326,15 @@ def get_daymapID(username, password):
     html_text = "{\"lesson_data\":" + html_text + "}"
 
 #opens the json file and the writes the text to it, then closes it
-    data = open("./lib/csv/lesson-id.json", "w")
-    data.write(html_text)
-    data.close()
+    #data = open("./usr/lesson-id.json", "w")
+    #data.write(html_text)
+    #data.close()
 
 #reopens for the json module to sort out the data
     with open("./lib/csv/lesson-id.json") as json_data:
         data = json.load(json_data)
     lesson_data = data["lesson_data"]
-    sorted_data = open("./lib/csv/lesson-id.csv", "w")
+    #sorted_data = open("./lib/csv/lesson-id.csv", "w")
     csv_writer = csv.writer(sorted_data)
     count = 0
 
@@ -460,8 +460,8 @@ def get_tasks(username, password):
 
     #note that this code will cause the webpage to be slow, hence why there is a different section for this
     page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
-    file = open("./lib/csv/web_html", "w")
-    file.write(page_html)
+    #file = open("./lib/csv/web_html", "w")
+    #file.write(page_html)
     page_html = page_html.split("\n")
     page_html.remove("")
     for line in page_html:
