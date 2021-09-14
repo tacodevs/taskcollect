@@ -611,6 +611,7 @@ a.boring-link
 .timetable-lesson
 {
     border-left: 3px solid var(--accent-color);
+    color: #FFFFFF;
     padding: 10px 0 10px 25px;
     margin: 5px 0;
 }
