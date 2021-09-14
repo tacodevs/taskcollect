@@ -10,6 +10,16 @@ from lxml import html
 # Required to print to standard error output
 import sys
 
+#required to parse HTML strings
+import urllib.parse
+
+#date/time management
+import datetime
+
+#json and csv file management
+import json
+import csv
+
 # Function to authenticate and get a resource from DayMap via HTTP.
 def daymap_get(webpage, username, password):
     URL_ROOT = 'https://daymap.gihs.sa.edu.au'
@@ -93,7 +103,6 @@ def daymap_get(webpage, username, password):
     # The HTTP response is stored in 's4.text'.
     return s4.text
 
-# Function to get the timetable for a certain day.
 # Function to get the timetable for a couple of days
 def get_lessons(username, password):
 
@@ -102,7 +111,7 @@ def get_lessons(username, password):
     tomorrow_timetable = {}
     lesson_list = []
     lesson_list2 = []
-
+    lesson_info = open("./lib/csv/daymap_html.txt", "w")
     #get html from daymap
     page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
 
@@ -176,7 +185,16 @@ def get_lessons(username, password):
 
     #loop to find the lesson time and subject
     while Daycount <= limit:
-
+        id_index = lesson_line.index('data-id="')
+        lesson_line = lesson_line[id_index+9:]
+        ID = ""
+        for char in lesson_line:
+            if char == '"':
+                break
+            else:
+                ID = ID + str(char)
+        text = daymap_get(f"https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={ID}", username, password)
+        lesson_info.write(text)
         #lesson time class finding
         time_index = lesson_line.index("class='t'")
         count = 0
@@ -228,7 +246,7 @@ def get_lessons(username, password):
         lesson_list.append(subject[:-2])
 
         #adds it to a dictionary along with the date and time
-        timetable[subject[:-2]] = [today, time]
+        timetable[subject[:-2]] = [today, time, ID]
         Daycount += 1
         #if statement to check if the next school day is monday
     class_index = lesson_line.find("diaryDay")
@@ -258,6 +276,14 @@ def get_lessons(username, password):
         limit = 5
     Daycount = 1
     while Daycount <= limit:
+        id_index = lesson_line.index('data-id="')
+        lesson_line = lesson_line[id_index+9:]
+        ID = ""
+        for char in lesson_line:
+            if char == '"':
+                break
+            else:
+                ID = ID + str(char)
         time_index = lesson_line.index("class='t'")
         count = 0
         lesson_line = lesson_line[time_index+9:]
@@ -286,16 +312,256 @@ def get_lessons(username, password):
                 break
             subject = subject + str(char)
         lesson_list2.append(subject[:-2])
-        tomorrow_timetable[subject[:-2]] = [tomorrow, time]
+        tomorrow_timetable[subject[:-2]] = [tomorrow, time, ID]
         Daycount += 1
     return week, today, timetable, lesson_list, tomorrow_timetable, lesson_list2
+
+#function to pull JSON data from daymap
+def get_daymapID(username, password):
+    
+#gets the json text from daymap
+    html_text = daymap_get("https://daymap.gihs.sa.edu.au/daymap/DWS/Diary.ashx?cmd=EventList&from={2021-15-9}&to={2021-16-9}", username, password)
+
+#formats it like a proper json file
+    html_text = "{\"lesson_data\":" + html_text + "}"
+
+#opens the json file and the writes the text to it, then closes it
+    data = open("./lib/csv/lesson-id.json", "w")
+    data.write(html_text)
+    data.close()
+
+#reopens for the json module to sort out the data
+    with open("./lib/csv/lesson-id.json") as json_data:
+        data = json.load(json_data)
+    lesson_data = data["lesson_data"]
+    sorted_data = open("./lib/csv/lesson-id.csv", "w")
+    csv_writer = csv.writer(sorted_data)
+    count = 0
+
+#sorts the data into csv format
+    for subject in lesson_data:
+        if count == 0:
+            header = subject.keys()
+            csv_writer.writerow(header)
+            count += 1
+        csv_writer.writerow(subject.values())
+    sorted_data.close()
 
 # Function to get the specified user's DayMap messages.
 def get_msgs(username, password):
     msgs = {}
+    page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
+    page_html = page_html.split("\n")
+    for line in page_html:
+        if "<div class='Header'>Messages </div>" in line:
+            break
+        else:
+            page_html.remove(line)
+    index = page_html.index(line)
+    page_html = page_html[index:]
+    for line in page_html:
+        if "Messages" in line:
+            break
+        else:
+            page_html.remove(line)
+    perm_line = line
+    msg_count = 0
+    try:
+
+        while "message|" in perm_line and msg_count < 3:
+            index = line.index("message|")
+            line = line[index+8:]
+            ID = ""
+            for char in line:
+                if char == "'":
+                    break
+                ID = ID + str(char)
+            perm_line = line
+            msg_html = daymap_get(f"https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={ID}&via=4", username, password)
+            msg_html = msg_html.split("\n")
+            for line in msg_html:
+                if "LabelRG msgSentOn" in line:
+                    break
+                else:
+                    None
+            index = line.index("LabelRG msgSentOn")
+            line = line[index:]
+            date = ""
+            count = 0
+            for char in line:
+                count += 1
+                if char == ">":
+                    break 
+            line = line[count:]
+            for char in line:
+                if char == "<":
+                    break
+                date = date + str(char)
+            if "msgSubject" in line:
+                index = line.index("msgSubject")
+                line = line[index:]
+                subject = ""
+                count = 0
+                for char in line:
+                    count += 1
+                    if char == ">":
+                        break 
+                line = line[count:]
+                for char in line:
+                    if char == "<":
+                        break
+                    subject = subject + str(char)
+            else:
+                subject = str(ID)
+            
+            index = line.index("msgSender")
+            line = line[index:]
+            sender = ""
+            count = 0
+            for char in line:
+                count += 1
+                if char == ">":
+                    break 
+            line = line[count:]    
+            for char in line:
+                if char == "<":
+                    break
+                sender = sender + str(char) 
+            index = line.index("msgBody")
+            line = line[index:]
+            body = ""
+            count = 0
+            for char in line:
+                count += 1
+                if char == ">":
+                    break 
+            line = line[count:]   
+                
+            for char in line:
+                if char == "<":
+                    break
+                body = body + str(char)
+            
+            subject = urllib.parse.unquote(subject)
+            body = urllib.parse.unquote(body)
+            date = urllib.parse.unquote(date)
+            sender = urllib.parse.unquote(sender)
+            msgs[ID] = [date, body, sender, subject]
+            line = perm_line
+            msg_count += 1
+    except:
+        None
+    
     return msgs
 
 # Function to get the specified user's tasks from DayMap.
 def get_tasks(username, password):
     tasks = {}
+
+    #note that this code will cause the webpage to be slow, hence why there is a different section for this
+    page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
+    file = open("./lib/csv/web_html", "w")
+    file.write(page_html)
+    page_html = page_html.split("\n")
+    page_html.remove("")
+    for line in page_html:
+        if "ctl00_cp_divAssignments" not in line:
+            page_html.remove(line)
+        else:
+            break 
+    index = page_html.index(line)
+    page_html = page_html[index:]
+    for line in page_html:
+        while ("#68739B" or "#FF4E1F") in line:
+            if ("#68739B" or "#FF4E1F") in line:
+                if ("#FF4E1F" in line) and ("#68739B" in line):
+                    index1 = line.index("#FF4E1F")
+                    index2 = line.index ("#68739B")
+                    if index1 < index2:
+                        print("overdue")
+                        overdue = "class = 'err-bg'"
+                        index = line.index("#FF4E1F")
+                    else:
+                        print("Not overdue")
+                        overdue = ""
+                        index = line.index("#68739B")
+                elif "#68739B" in line:
+                    print("NOT OVERDUE")
+                    overdue = ""
+                    index = line.index("#68739B")
+                elif "#FF4E1F" in line:
+                    print("OVERDUE")
+                    overdue = "class = 'err-bg'"
+                    index = line.index("#FF4E1F")
+                notif_type = "Task"
+                line = line[index:]
+                index = line.index("class='cap'")
+                line = line[index:]
+                count = 0
+                for char in line:
+                    count += 1
+                    if char == ">":
+                        break
+                    
+                line = line[count:-1]
+                
+                subject = ""
+                for char in line:
+                    if char == "<":
+                        break
+                    subject = subject+ str(char)
+                count = 0
+                for char in line:
+                    count += 1
+                    if char == ">":
+                        break
+                line = line[count:]
+                count = 0
+                for char in line:
+                    count += 1
+                    if char == ">":
+                        break
+                line = line[count:]
+                
+                sender = ""
+                for char in line:
+                    if char == "<":
+                        break
+                    sender = sender + char
+                line = line[len(sender)+6:]
+                
+                due = ""
+                for char in line:
+                    if char == "<":
+                        break
+                    due = due + str(char)
+                
+                index = line.index("Caption")
+                line = line[index:]
+                count = 0
+                for char in line:
+                    count += 1
+                    if char == ">":
+                        break
+                line = line[count:]
+                
+                assessment_type = ""
+                for char in line:
+                    if char == "<":
+                        break
+                    assessment_type = assessment_type + str(char)
+                line = line[len(assessment_type)+11:]
+                
+                task_name = ""
+                for char in line:
+                    if char == "<":
+                        break
+                    task_name = task_name + str(char)
+                
+                tasks[task_name] = [subject, sender, due, assessment_type, overdue, notif_type]
+    print(tasks)
     return tasks
+
+    
+
+    
