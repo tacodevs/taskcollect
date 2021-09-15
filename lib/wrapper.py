@@ -4,19 +4,11 @@ def date_from_now(days):
 
 # Function to sort an unsorted TaskCollect dictionary of tasks.
 def tasksort(tasks):
-    sorted_tasks = {}
-    return sorted_tasks
+    return tasks
 
 # Function to shorten a dictionary to a certain number of values.
 def shorten(tasks, amt):
-    sorted_tasks = {}
-
-    if len(tasks) > amt:
-        for x in range(amt):
-            sorted_tasks[x] = tasks[x]
-        return sorted_tasks
-    else:
-        return tasks
+    return tasks
     
 # Function to convert user timetable data into an HTML component, ready for rendering.
 def render_timetable(timetable, timetable2, lesson_list, lesson_list2, week, day):
