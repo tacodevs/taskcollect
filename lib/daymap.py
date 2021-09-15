@@ -494,6 +494,14 @@ def get_tasks(username, password):
                     index = line.index("#FF4E1F")
                 notif_type = "Task"
                 line = line[index:]
+                index = line.index("OpenTask")
+                line = line[index+9:]
+                ID = ""
+                for char in line:
+                    if char == ")":
+                        break
+                    else:
+                        ID += str(char)
                 index = line.index("class='cap'")
                 line = line[index:]
                 count = 0
