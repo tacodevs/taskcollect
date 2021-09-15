@@ -445,19 +445,6 @@ class Handler(BaseHTTPRequestHandler):
                                 html_msgs = wrapper.render_msgs(msgs)
                                 html_tasks = wrapper.render_tasks(tasks)
 
-
-                                tasks = wrapper.tasksort(tasks)
-                                tasks = wrapper.shorten(tasks, 5)
-                                
-                                #get JSON data from daymap
-                                #daymap.get_daymapID(username, password)
-                                #this is commented out because not needed yet
-                        
-                                # Convert user data to HTML components for rendering.
-                                html_today, html_week, html_timetable, html_tomorrow, html_timetable2 = wrapper.render_timetable(timetable, timetable2, lessons, lessons2,  html_week, html_today)
-                                html_msgs = wrapper.render_msgs(msgs)
-                                html_tasks = wrapper.render_tasks(tasks)
-
                                 # Return the HTML document to the user, replacing placeholders with personalised HTML components.
                                 with open("./web/index.html") as f:
 
