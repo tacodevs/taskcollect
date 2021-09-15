@@ -37,7 +37,7 @@ def render_msgs(msgs):
 def render_tasks(tasks):
     html_tasks = ""
     for task in tasks:
-        html_tasks += f'<tr><td {tasks[task][4]}><a href="https://daymap.gihs.sa.edu.au/daymap/student/assignment.aspx?TaskID={tasks[task][-1]}&d=1" target="_blank" rel="noopener noreferrer" class="boring-link no-focus-border"><div class="msgbox daymap-msgbox"><div><b>{tasks[task][0]} {tasks[task][3]}</b><br><p>{task} DUE {tasks[task][2]}</p></div></div></a></td></tr>'
+        html_tasks += f'<tr><td {tasks[task][4]}><a href="https://daymap.gihs.sa.edu.au/daymap/student/assignment.aspx?TaskID={tasks[task][-2]}&d=1" target="_blank" rel="noopener noreferrer" class="boring-link no-focus-border"><div class="msgbox {tasks[task][-1]}"><div><b>{tasks[task][0]} {tasks[task][3]}</b><br><p>{task} DUE {tasks[task][2]}</p></div></div></a></td></tr>'
     return html_tasks
 
 # Function to convert user timetable data into a CSV.
