@@ -565,7 +565,7 @@ def get_tasks(username, password):
                         break
                     task_name = task_name + str(char)
                 
-                tasks[task_name] = [subject, sender, due, assessment_type, overdue, notif_type]
+                tasks[task_name] = [subject, sender, due, assessment_type, overdue, notif_type, ID]
     print(tasks)
     return tasks
 
