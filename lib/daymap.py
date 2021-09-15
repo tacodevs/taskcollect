@@ -326,15 +326,15 @@ def get_daymapID(username, password):
     html_text = "{\"lesson_data\":" + html_text + "}"
 
 #opens the json file and the writes the text to it, then closes it
-    #data = open("./usr/lesson-id.json", "w")
-    #data.write(html_text)
-    #data.close()
+    data = open("./usr/lesson-id.json", "w")
+    data.write(html_text)
+    data.close()
 
 #reopens for the json module to sort out the data
     with open("./lib/csv/lesson-id.json") as json_data:
         data = json.load(json_data)
     lesson_data = data["lesson_data"]
-    #sorted_data = open("./lib/csv/lesson-id.csv", "w")
+    sorted_data = open("./usr/lesson-id.csv", "w")
     csv_writer = csv.writer(sorted_data)
     count = 0
 
@@ -451,7 +451,6 @@ def get_msgs(username, password):
             msg_count += 1
     except:
         None
-    
     return msgs
 
 # Function to get the specified user's tasks from DayMap.
