@@ -17,10 +17,10 @@ def render_timetable(timetable, timetable2, lesson_list, lesson_list2, week, day
     html_timetable = ""
     html_timetable2 = ""
     for item in lesson_list:
-        html_timetable = html_timetable + f"<a href = 'https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={timetable[item][2]}' ><div class = \"timetable-lesson\"><h5>{timetable[item][1]}</h5><h4>{item}</h4></div></a>"
+        html_timetable = html_timetable + f"<a href = 'https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={timetable[item][2]}' class = 'thing'><div class = \"timetable-lesson\"><h5>{timetable[item][1]}</h5><h4>{item}</h4></div></a>"
     
     for item in lesson_list2:
-        html_timetable2 = html_timetable2 + f"<a href = 'https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={timetable2[item][2]}' ><div class = \"timetable-lesson\"><h5>{timetable2[item][1]}</h5><h4>{item}</h4></div></a>"
+        html_timetable2 = html_timetable2 + f"<a href = 'https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={timetable2[item][2]}' class = 'thing'><div class = \"timetable-lesson\"><h5>{timetable2[item][1]}</h5><h4>{item}</h4></div></a>"
     
     html_tomorrow = f"<div class=\"banner-strip\">{timetable2[lesson_list2[-1]][0]}</div>"
 
