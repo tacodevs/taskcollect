@@ -17,7 +17,7 @@ from google.oauth2.credentials import Credentials
 def get_tasks(username, password):
 
     creds = None
-    usrid = username[username.index("\\"):]
+    usrid = username[username.index("\\")+1:]
 
     # If modifying these scopes, delete the file token.json.
     # This development version has all related scopes enabled;
