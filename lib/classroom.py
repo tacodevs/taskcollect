@@ -43,6 +43,10 @@ def get_tasks(username, password):
     I haven't yet found how to authenticate with a username and password;
     this seems to be the 'Google' way:
     https://developers.google.com/classroom/quickstart/python
+
+    Refer to this for increasing Google Classroom performance:
+    https://developers.google.com/classroom/guides/performance
+    We definitely need to work with partial resources.
     """
 
     # If there are no valid credentials available, let the user log in.
@@ -68,6 +72,50 @@ def get_tasks(username, password):
     # Creates a Python object for getting Google Classroom data.
     service = build('classroom', 'v1', credentials=creds)
 
-    # TODO: Collect tasks from 'service'.
+    # Gets a Python dictionary of all Google Classroom subjects.
+    subjects = service.courses().list().execute().get('courses', [])
+
+    tasks = []
+    n = 0
+
+    # Retrieve assignments for all active subjects, and get all necessary data.
+    # BUG: Currently gets data for all subjects, including archived subjects.
+    for subject in subjects:
+
+        assignments = service.courses().courseWork().list(courseId=subject['id']).execute()
+
+        # Puts the necessary data into 'tasks' in the desired format.
+        if 'courseWork' in assignments:
+            for assignment in assignments['courseWork']:
+
+                tasks.append([])
+                tasks[n].append(assignment['title'])
+                tasks[n].append(subject['name'])
+
+                try:
+                    tasks[n].append(assignment['description'])
+                except KeyError:
+                    tasks[n].append("No description.")
+
+                tasks[n].append(assignment['alternateLink'])
+
+                try:
+                    tasks[n].append(assignment['dueDate'])
+                except:
+                    tasks[n].append("No due date.")
+
+                try:
+                    tasks[n].append(assignment['dueTime'])
+                except:
+                    tasks[n].append("No due time.")
+
+                tasks[n].append('overduestatus')
+                tasks[n].append('Google Classroom')
+
+                n += 1
+
+    # NOTE: This is temporary.
+    print("Google Classroom:")
+    print(tasks)
 
     return {}
