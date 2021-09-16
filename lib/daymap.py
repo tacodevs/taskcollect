@@ -1,3 +1,12 @@
+# Required for CSV parsing
+import csv
+
+# Required for easier date/time data manipulation
+import datetime
+
+# Required for JSON parsing
+import json
+
 # Required to send HTTP requests
 import requests
 
@@ -10,15 +19,8 @@ from lxml import html
 # Required to print to standard error output
 import sys
 
-#required to parse HTML strings
+# Required to parse HTML strings
 import urllib.parse
-
-#date/time management
-import datetime
-
-#json and csv file management
-import json
-import csv
 
 # Function to authenticate and get a resource from DayMap via HTTP.
 def daymap_get(webpage, username, password):
@@ -319,18 +321,18 @@ def get_lessons(username, password):
 #function to pull JSON data from daymap
 def get_daymapID(username, password):
     
-#gets the json text from daymap
+    #gets the json text from daymap
     html_text = daymap_get("https://daymap.gihs.sa.edu.au/daymap/DWS/Diary.ashx?cmd=EventList&from={2021-15-9}&to={2021-16-9}", username, password)
 
-#formats it like a proper json file
+    #formats it like a proper json file
     html_text = "{\"lesson_data\":" + html_text + "}"
 
-#opens the json file and the writes the text to it, then closes it
+    #opens the json file and the writes the text to it, then closes it
     data = open("./usr/lesson-id.json", "w")
     data.write(html_text)
     data.close()
 
-#reopens for the json module to sort out the data
+    #reopens for the json module to sort out the data
     with open("./lib/csv/lesson-id.json") as json_data:
         data = json.load(json_data)
     lesson_data = data["lesson_data"]
@@ -338,7 +340,7 @@ def get_daymapID(username, password):
     csv_writer = csv.writer(sorted_data)
     count = 0
 
-#sorts the data into csv format
+    #sorts the data into csv format
     for subject in lesson_data:
         if count == 0:
             header = subject.keys()
@@ -568,7 +570,3 @@ def get_tasks(username, password):
                 tasks[task_name] = [subject, sender, due, assessment_type, overdue, notif_type, ID, "daymap-msgbox"]
     print(tasks)
     return tasks
-
-    
-
-    
