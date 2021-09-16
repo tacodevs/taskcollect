@@ -24,6 +24,8 @@ def render_timetable(timetable, timetable2, lesson_list, lesson_list2, week, day
     
     html_tomorrow = f"<div class=\"banner-strip\">{timetable2[lesson_list2[-1]][0]}</div>"
 
+    # BUG: There's a LOT of return values.
+    # While not a bug, the idea was for the function to return ONE HTML string of the whole timetable.
     return html_day, html_week, html_timetable, html_tomorrow, html_timetable2
 
 # Function to convert user message/email data into an HTML component, ready for rendering.
