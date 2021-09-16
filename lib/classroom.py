@@ -17,23 +17,26 @@ from google.oauth2.credentials import Credentials
 def get_tasks(username, password):
 
     creds = None
-    usrid = username[username.index("\\")+1:]
+    usrid = username[7:]
 
     # If modifying these scopes, delete the file token.json.
     # This development version has all related scopes enabled;
     # strip to the absolute necessary ones in the final version.
 
     SCOPES = [
-            "https://www.googleapis.com/auth/classroom.courses.readonly",
-            "https://www.googleapis.com/auth/classroom.course-work.readonly",
-            "https://www.googleapis.com/auth/classroom.student-submissions.me.readonly",
-            "https://www.googleapis.com/auth/classroom.coursework.me",
-            "https://www.googleapis.com/auth/classroom.coursework.me",
-            "https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly",
-            "https://www.googleapis.com/auth/classroom.topics.readonly"
-            ]
+        "https://www.googleapis.com/auth/classroom.courses.readonly",
+        "https://www.googleapis.com/auth/classroom.course-work.readonly",
+        "https://www.googleapis.com/auth/classroom.student-submissions.me.readonly",
+        "https://www.googleapis.com/auth/classroom.coursework.me",
+        "https://www.googleapis.com/auth/classroom.coursework.me",
+        "https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly",
+        "https://www.googleapis.com/auth/classroom.topics.readonly"
+    ]
 
     # Checks if user credentials are available.
+    # BUG: This frequently fails.
+    # BUG: One bug is that the modules don't create a "refresh-token" field.
+    # BUG: Another that I sometimes get are SSL certificate errors.
     if os.path.isfile(f'./usr/{usrid}/classroom-creds.json'):
         creds = Credentials.from_authorized_user_file(
            f'./usr/{usrid}/classroom-creds.json', SCOPES
@@ -60,6 +63,8 @@ def get_tasks(username, password):
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
                 './usr/classroom-token.json', SCOPES)
+            # BUG: NOTHING should be run locally, so 'run_local_server' does not make sense.
+            # Perhaps try to get authentication working through a username and password.
             creds = flow.run_local_server(port=14701)
 
         if not os.path.isdir(f"./usr/{usrid}"):
@@ -109,6 +114,7 @@ def get_tasks(username, password):
                 except:
                     tasks[n].append("No due time.")
 
+                # BUG: Incomplete code.
                 tasks[n].append('overduestatus')
                 tasks[n].append('Google Classroom')
 
