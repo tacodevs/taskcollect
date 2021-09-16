@@ -1,6 +1,5 @@
 # Required for session token lifetime generation
 import datetime
-from re import U
 
 # Required to decode the user input from HTML query
 import urllib.parse
@@ -31,6 +30,9 @@ import os
 
 # Required to create randomised session tokens
 import random
+
+
+from re import U
 
 # Required to print to standard error output
 import sys
@@ -435,10 +437,6 @@ class Handler(BaseHTTPRequestHandler):
 
                                 tasks = wrapper.tasksort(tasks)
                                 tasks = wrapper.shorten(tasks, 5)
-                                
-                                #get JSON data from daymap
-                                #daymap.get_daymapID(username, password)
-                                #this is commented out because not needed yet
                         
                                 # Convert user data to HTML components for rendering.
                                 html_today, html_week, html_timetable, html_tomorrow, html_timetable2 = wrapper.render_timetable(timetable, timetable2, lessons, lessons2,  html_week, html_today)
