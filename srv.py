@@ -31,7 +31,7 @@ import os
 # Required to create randomised session tokens
 import random
 
-
+# TODO: Find out why this is required
 from re import U
 
 # Required to print to standard error output
@@ -236,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.httpsrv(f"/{http_res}.html", "text/html")
 
                             # If the requested resource is the timetable CSV, generate a personalised version and send it.
-                            elif http_res == "timetable.csv":
+                            elif http_res == "/timetable.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -248,7 +248,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the DayMap messages CSV, generate a personalised version and send it.
-                            elif http_res == "daymap-msgs.csv":
+                            elif http_res == "/daymap-msgs.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -260,7 +260,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the EWS emails CSV, generate a personalised version and send it.
-                            elif http_res == "ews-msgs.csv":
+                            elif http_res == "/ews-msgs.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -272,7 +272,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the messages CSV, generate a personalised version and send it.
-                            elif http_res == "msgs.csv":
+                            elif http_res == "/msgs.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -297,7 +297,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the DayMap tasks CSV, generate a personalised version and send it.
-                            elif http_res == "daymap-tasks.csv":
+                            elif http_res == "/daymap-tasks.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -310,7 +310,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the Google Classroom tasks CSV, generate a personalised version and send it.
-                            elif http_res == "classroom-tasks.csv":
+                            elif http_res == "/classroom-tasks.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -323,7 +323,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the Edpuzzle tasks CSV, generate a personalised version and send it.
-                            elif http_res == "edpuzzle-tasks.csv":
+                            elif http_res == "/edpuzzle-tasks.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -336,7 +336,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the Stile tasks CSV, generate a personalised version and send it.
-                            elif http_res == "stile-tasks.csv":
+                            elif http_res == "/stile-tasks.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
@@ -349,7 +349,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the tasks CSV, generate a personalised version and send it.
-                            elif http_res == "tasks.csv":
+                            elif http_res == "/tasks.csv":
 
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
