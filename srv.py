@@ -238,6 +238,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/csv")
                                 self.end_headers()
 
+                                # TODO: Refactor.    
                                 timetable = daymap.get_lessons(username, password)
                                 csv = wrapper.tocsv_timetable(timetable)
 
@@ -376,8 +377,8 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/html")
                                 self.end_headers()
 
+                                # TODO: Refactor.
                                 # Gets the user's timetable for the next two days, from DayMap.
-
                                 html_week, html_today, timetable, lessons, timetable2, lessons2 = daymap.get_lessons(username, password)
 
                                 # Collects the user's messages and emails into one dictionary, then cuts
@@ -422,6 +423,7 @@ class Handler(BaseHTTPRequestHandler):
                                 tasks = wrapper.shorten(tasks, 5)
                         
                                 # Convert user data to HTML components for rendering.
+                                # TODO: Refactor.
                                 html_today, html_week, html_timetable, html_tomorrow, html_timetable2 = wrapper.render_timetable(timetable, timetable2, lessons, lessons2,  html_week, html_today)
                                 html_msgs = wrapper.render_msgs(msgs)
                                 html_tasks = wrapper.render_tasks(tasks)
@@ -431,6 +433,7 @@ class Handler(BaseHTTPRequestHandler):
 
                                     file = ""
 
+                                    # TODO: Refactor.
                                     for l in f:
                                         l1 = l.replace('<taskcollect plchold="timetable" />', html_timetable)
                                         l2 = l1.replace('<taskcollect plchold="timetable2" />', html_timetable2)
