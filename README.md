@@ -38,6 +38,8 @@ Name SURNAME,user@example.com,CURRIC\XXXXXX,password,blank
 
 **Warning!** After a recent commit, you will get a 500 Internal Server Error if you do not obtain a "usr/classroom-token.json" which allows Google-preferred authentication methods to Google Classroom (through a Google Cloud Project). This file is currently only obtainable from [anthello147](https://github.com/anthello147), or, if you have a Google Cloud project with connection to Google Classroom, you can download the token and save it to "usr/classroom-token.json".
 
+TaskCollect is also going through a refactoring process right now. :-)
+
 ## Help and documentation
 All help and documentation is *supposed to be* available in the 'Help' tab in TaskCollect, or, in `web/help.html` and the `web/doc/` folder. *In reality there's basically nothing except for the license and an incomplete list of active bugs.*
 
