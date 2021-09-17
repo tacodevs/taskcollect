@@ -1,9 +1,6 @@
 # Required for session token lifetime generation
 import datetime
 
-# Required to decode the user input from HTML query
-import urllib.parse
-
 # Required to set up a simple HTTP server
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -31,14 +28,14 @@ import os
 # Required to create randomised session tokens
 import random
 
-# TODO: Find out why this is required
-from re import U
-
 # Required to print to standard error output
 import sys
 
 # Required to output detailed Python error messages
 import traceback
+
+# Required to decode the user input from HTTP queries
+import urllib.parse
 
 # The server request handler.
 class Handler(BaseHTTPRequestHandler):
@@ -66,11 +63,11 @@ class Handler(BaseHTTPRequestHandler):
                 "/index",
                 "/login",
                 "/login-err",
-                "daymap-tasks.csv",
-                "classroom-tasks.csv",
-                "edpuzzle-tasks.csv",
-                "stile-tasks.csv",
-                "tasks.csv"
+                "/daymap-tasks.csv",
+                "/classroom-tasks.csv",
+                "/edpuzzle-tasks.csv",
+                "/stile-tasks.csv",
+                "/tasks.csv"
             ]
 
             # Login handling. Has to be before session token checking.
@@ -145,7 +142,6 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Set-Cookie", f"session_id={randtoken}; expires={tokenexpires}; path=/; SameSite=Strict")
                                 self.end_headers()
 
-                            # BUG: The user does not, currently, get an error message if authentication fails.
                             # If the username and/or password are incorrect, reprovide "login.html".
                             else:
                                 self.send_response(302)
@@ -242,7 +238,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/csv")
                                 self.end_headers()
 
-                                daymap.get_lessons(username, password)
+                                timetable = daymap.get_lessons(username, password)
                                 csv = wrapper.tocsv_timetable(timetable)
 
                                 self.wfile.write(bytes(csv, "utf-8"))
@@ -278,13 +274,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/csv")
                                 self.end_headers()
 
-                                msgs = {}
-                                
-                                msgs.update(
-                                    daymap.get_msgs(
-                                        username, password
-                                    )
-                                )
+                                msgs = daymap.get_msgs(username, password)
 
                                 msgs.update(
                                     ews.get_emails(
@@ -293,7 +283,6 @@ class Handler(BaseHTTPRequestHandler):
                                 )
 
                                 csv = wrapper.tocsv_msgs(msgs)
-
                                 self.wfile.write(bytes(csv, "utf-8"))
 
                             # If the requested resource is the DayMap tasks CSV, generate a personalised version and send it.
@@ -355,13 +344,7 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/csv")
                                 self.end_headers()
 
-                                tasks = {}
-
-                                tasks.update(
-                                    daymap.get_tasks(
-                                        username, password
-                                    )
-                                )
+                                tasks = daymap.get_tasks(username, password)
 
                                 tasks.update(
                                     classroom.get_tasks(
