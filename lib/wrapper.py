@@ -53,6 +53,8 @@ def render_tasks(tasks):
 
     for task in tasks:
 
+        # TODO: We need to consider if certain data fields are empty and render accordingly.
+
         if tasks[task][6]:
             isoverdue = ' class="err-bg"'
         else:
