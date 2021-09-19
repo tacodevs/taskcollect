@@ -16,7 +16,7 @@ def tasksort(tasks):
     return tasks
 
 # Function to shorten a dictionary to a certain number of values.
-def shorten(tasks, amt):
+def dictshorten(tasks, amt):
     sorted_tasks = {}
 
     if len(tasks) > amt:
@@ -34,6 +34,17 @@ def shorten(tasks, amt):
 
         return sorted_tasks
 
+    else:
+        return tasks
+
+# Function to shorten a list to a certain number of values.
+def listshorten(tasks, amt):
+    sorted_tasks = []
+
+    if len(tasks) > amt:
+        for x in range(amt):
+            sorted_tasks.append(tasks[x])
+        return sorted_tasks
     else:
         return tasks
     
@@ -66,14 +77,14 @@ def render_tasks(tasks):
 
         # TODO: We need to consider if certain data fields are empty and render accordingly.
 
-        if tasks[task][6]:
+        if task[6]:
             isoverdue = ' class="err-bg"'
         else:
             isoverdue = ''
 
-        html_tasks += f'<tr><td{isoverdue}><a href="{tasks[task][3]}" target="_blank" rel="noopener noreferrer" '
-        html_tasks += f'class="boring-link no-focus-border"><div class="msgbox {tasks[task][7]}-msgbox">'
-        html_tasks += f'<div><b>{tasks[task][0]}</b><br><p><b>{tasks[task][1]}</b><br>{tasks[task][2]}</p>'
+        html_tasks += f'<tr><td{isoverdue}><a href="{task[3]}" target="_blank" rel="noopener noreferrer" '
+        html_tasks += f'class="boring-link no-focus-border"><div class="msgbox {task[7]}-msgbox">'
+        html_tasks += f'<div><b>{task[0]}</b><br><p><b>{task[1]}</b><br>{task[2]}</p>'
         html_tasks += '</div></div></a></td></tr>'
 
     return html_tasks
