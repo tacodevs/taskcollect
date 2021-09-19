@@ -374,7 +374,7 @@ class Handler(BaseHTTPRequestHandler):
 
                                 msgs = daymap.get_msgs(username, password)
                                 msgs = wrapper.msgsort(msgs)
-                                msgs = wrapper.shorten(msgs, 5)
+                                msgs = wrapper.shorten(msgs, 7)
                                 
                                 # Collects and combines all the user's tasks from each platform into one
                                 # dictionary, then sorts and cuts off excess tasks that won't fit into

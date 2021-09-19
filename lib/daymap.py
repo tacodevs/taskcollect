@@ -4,6 +4,9 @@ import csv
 # Required for easier date/time data manipulation
 import datetime
 
+# Required to encode to HTML
+import html
+
 # Required for JSON parsing
 import json
 
@@ -14,7 +17,7 @@ import requests
 import requests_ntlm
 
 # HTML parser; JS already has one
-from lxml import html
+from lxml import html as xhtml
 
 # Required to print to standard error output
 import sys
@@ -63,7 +66,7 @@ def daymap_get(webpage, username, password):
         exit(1)
 
     # Parses the HTML form using lxml.
-    s3_tree = html.fromstring(s2.content)
+    s3_tree = xhtml.fromstring(s2.content)
 
     # Finds all inputs that aren't submits.
     inputs = s3_tree.xpath('//input[@type!="submit"]')
@@ -85,7 +88,7 @@ def daymap_get(webpage, username, password):
         exit(1)
 
     # Parses the form using lxml.
-    s4_tree = html.fromstring(s3.content)
+    s4_tree = xhtml.fromstring(s3.content)
 
     # Enumerates parameters from inputs.
     inputs = s4_tree.xpath('//input')
@@ -129,158 +132,86 @@ def get_lessons(date, username, password):
 
     count = 0
 
+    # TODO: Complete this function.
+
     return lessons
 
 # Function to get the specified user's DayMap messages.
 def get_msgs(username, password):
 
-    # TODO: Refactor.
-
     msgs = {}
 
+    # Retrieve the default student landing webpage.
     landpage = daymap_get(
         "https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx",
         username, password
     )
 
+    # Remove unnecessary newlines, as each line has an extra newline appended to it.
     landpage = landpage.split("\n")
+    landpage = ''.join(landpage)
 
-    for line in landpage:
-        if "<div class='Header'>Messages </div>" in line:
-            break
+    # Strip the retrieved HTML to the messages section.
+    landpage = landpage[
+        landpage.index("<div tabindex='0' id='message"):
+        landpage.index("<div class='paging' id=\"folder_page\"")
+    ]
+
+    # Split the messages section HTML into separate messages.
+    landpage = landpage.split("<div tabindex='0' id='message|")
+
+    # Parse the HTML and return a simple sane dictionary with required data.
+    for msg in landpage:
+
+        if msg == '':
+            continue
+
         else:
-            landpage.remove(line)
 
-    index = landpage.index(line)
+            # Get the message ID.
+            msg_id = msg[:msg.index("'")]
+            msg = msg[msg.index("'") + 1:]
 
-    landpage = landpage[index:]
+            # Set this in case there is no description in the message.
+            subject = "<i>No title</i>"
+            body = "<i>No description.</i>"
 
-    for line in landpage:
-        if "Messages" in line:
-            break
-        else:
-            landpage.remove(line)
+            # Retrieve the message sender's name.
 
-    perm_line = line
-    msg_count = 0
+            msg = msg[
+                msg.index("<td class='sn'>") + 15
+            :]
 
-    try:
-        while "message|" in perm_line and msg_count < 3:
+            sender = msg[:
+                msg.index("</td>")
+            ]
 
-            index = line.index("message|")
-            line = line[index+8:]
-            ID = ""
+            sender = html.escape(sender)
 
-            for char in line:
-                if char == "'":
-                    break
-                ID = ID + str(char)
+            # Retrieve the date of when the message was sent.
 
-            perm_line = line
+            msg = msg[
+                msg.index("class='sn'>") + 11
+            :]
 
-            msg_html = daymap_get(
-                f"https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={ID}&via=4",
+            date = msg[:
+                msg.index("</td>")
+            ]
+            
+            # Retrieve the message webpage.
+            msgpage = daymap_get(
+                f"https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={msg_id}&via=4",
                 username, password
             )
 
-            msg_html = msg_html.split("\n")
+            # TODO: DayMap cancer.
 
-            for line in msg_html:
-                if "LabelRG msgSentOn" in line:
-                    break
-                else:
-                    None
-
-            index = line.index("LabelRG msgSentOn")
-            line = line[index:]
-            date = ""
-            count = 0
-
-            for char in line:
-                count += 1
-                if char == ">":
-                    break 
-
-            line = line[count:]
-
-            for char in line:
-                if char == "<":
-                    break
-                date = date + str(char)
-
-            if "msgSubject" in line:
-
-                index = line.index("msgSubject")
-                line = line[index:]
-                subject = ""
-                count = 0
-
-                for char in line:
-                    count += 1
-                    if char == ">":
-                        break
-
-                line = line[count:]
-
-                for char in line:
-                    if char == "<":
-                        break
-                    subject = subject + str(char)
-
-            else:
-                subject = "<i>No title.</i>"
-            
-            index = line.index("msgSender")
-            line = line[index:]
-            sender = ""
-            count = 0
-
-            for char in line:
-                count += 1
-                if char == ">":
-                    break
-
-            line = line[count:]
-
-            for char in line:
-                if char == "<":
-                    break
-                sender = sender + str(char)
-
-            index = line.index("msgBody")
-            line = line[index:]
-            body = ""
-            count = 0
-
-            for char in line:
-                count += 1
-                if char == ">":
-                    break 
-            line = line[count:]   
-                
-            for char in line:
-                if char == "<":
-                    break
-                body = body + str(char)
-            
-            subject = urllib.parse.unquote(subject)
-            body = urllib.parse.unquote(body)
-            date = urllib.parse.unquote(date)
-            sender = urllib.parse.unquote(sender)
-
-            msgs[ID] = [date, body, sender, subject]
-
-            line = perm_line
-            msg_count += 1
-
-    except:
-        None
+            # Construct the dictionary.
+            msgs[msg_id] = [date, body, sender, subject]            
 
     return msgs
 
 # Function to get the specified user's tasks from DayMap.
 def get_tasks(username, password):
-
     tasks = []
-
     return tasks
