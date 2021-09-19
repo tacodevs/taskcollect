@@ -114,8 +114,9 @@ def get_tasks(username, password):
                 except:
                     tasks[n].append("<i>No due time.</i>")
 
-                # BUG: Incomplete code.
-                tasks[n].append('overduestatus')
+                # TODO: Check if task is overdue or not.
+                tasks[n].append(0)
+
                 tasks[n].append('classroom')
 
                 n += 1
