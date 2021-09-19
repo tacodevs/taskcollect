@@ -16,9 +16,6 @@ from lib import edpuzzle
 # Imports the Stile TaskCollect driver
 from lib import stile
 
-# Imports the Exchange Web Services driver
-from lib import ews
-
 # Imports the TaskCollect wrapper module
 from lib import wrapper
 
