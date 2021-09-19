@@ -137,66 +137,96 @@ def get_msgs(username, password):
     # TODO: Refactor.
 
     msgs = {}
-    page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
-    page_html = page_html.split("\n")
-    for line in page_html:
+
+    landpage = daymap_get(
+        "https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx",
+        username, password
+    )
+
+    landpage = landpage.split("\n")
+
+    for line in landpage:
         if "<div class='Header'>Messages </div>" in line:
             break
         else:
-            page_html.remove(line)
-    index = page_html.index(line)
-    page_html = page_html[index:]
-    for line in page_html:
+            landpage.remove(line)
+
+    index = landpage.index(line)
+
+    landpage = landpage[index:]
+
+    for line in landpage:
         if "Messages" in line:
             break
         else:
-            page_html.remove(line)
+            landpage.remove(line)
+
     perm_line = line
     msg_count = 0
+
     try:
         while "message|" in perm_line and msg_count < 3:
+
             index = line.index("message|")
             line = line[index+8:]
             ID = ""
+
             for char in line:
                 if char == "'":
                     break
                 ID = ID + str(char)
+
             perm_line = line
-            msg_html = daymap_get(f"https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={ID}&via=4", username, password)
+
+            msg_html = daymap_get(
+                f"https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={ID}&via=4",
+                username, password
+            )
+
             msg_html = msg_html.split("\n")
+
             for line in msg_html:
                 if "LabelRG msgSentOn" in line:
                     break
                 else:
                     None
+
             index = line.index("LabelRG msgSentOn")
             line = line[index:]
             date = ""
             count = 0
+
             for char in line:
                 count += 1
                 if char == ">":
                     break 
+
             line = line[count:]
+
             for char in line:
                 if char == "<":
                     break
                 date = date + str(char)
+
             if "msgSubject" in line:
+
                 index = line.index("msgSubject")
                 line = line[index:]
                 subject = ""
                 count = 0
+
                 for char in line:
                     count += 1
                     if char == ">":
-                        break 
+                        break
+
                 line = line[count:]
+
                 for char in line:
                     if char == "<":
                         break
                     subject = subject + str(char)
+
             else:
                 subject = "<i>No title.</i>"
             
@@ -204,19 +234,24 @@ def get_msgs(username, password):
             line = line[index:]
             sender = ""
             count = 0
+
             for char in line:
                 count += 1
                 if char == ">":
-                    break 
-            line = line[count:]    
+                    break
+
+            line = line[count:]
+
             for char in line:
                 if char == "<":
                     break
-                sender = sender + str(char) 
+                sender = sender + str(char)
+
             index = line.index("msgBody")
             line = line[index:]
             body = ""
             count = 0
+
             for char in line:
                 count += 1
                 if char == ">":
@@ -232,9 +267,12 @@ def get_msgs(username, password):
             body = urllib.parse.unquote(body)
             date = urllib.parse.unquote(date)
             sender = urllib.parse.unquote(sender)
+
             msgs[ID] = [date, body, sender, subject]
+
             line = perm_line
             msg_count += 1
+
     except:
         None
 
