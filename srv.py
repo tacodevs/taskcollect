@@ -234,12 +234,17 @@ class Handler(BaseHTTPRequestHandler):
                             # If the requested resource is the timetable CSV, generate a personalised version and send it.
                             elif http_res == "/timetable.csv":
 
+                                # TODO: Add support for URL queries to allow getting lessons for different timespans.
+
                                 self.send_response(200)
                                 self.send_header("Content-type", "text/csv")
                                 self.end_headers()
 
-                                # TODO: Refactor.    
-                                timetable = daymap.get_lessons(username, password)
+                                timetable = daymap.get_lessons(
+                                    wrapper.date_from_now(0),
+                                    username, password
+                                )
+
                                 csv = wrapper.tocsv_timetable(timetable)
 
                                 self.wfile.write(bytes(csv, "utf-8"))
@@ -347,19 +352,19 @@ class Handler(BaseHTTPRequestHandler):
 
                                 tasks = daymap.get_tasks(username, password)
 
-                                tasks.update(
+                                tasks.extend(
                                     classroom.get_tasks(
                                         username, password
                                     )
                                 )
 
-                                tasks.update(
+                                tasks.extend(
                                     edpuzzle.get_tasks(
                                         username, password
                                     )
                                 )
 
-                                tasks.update(
+                                tasks.extend(
                                     stile.get_tasks(
                                         username, password
                                     )
@@ -377,9 +382,23 @@ class Handler(BaseHTTPRequestHandler):
                                 self.send_header("Content-type", "text/html")
                                 self.end_headers()
 
-                                # TODO: Refactor.
                                 # Gets the user's timetable for the next two days, from DayMap.
-                                html_week, html_today, timetable, lessons, timetable2, lessons2 = daymap.get_lessons(username, password)
+
+                                timetable = {}
+                                
+                                timetable.update(
+                                    daymap.get_lessons(
+                                        wrapper.date_from_now(0),
+                                        username, password
+                                    )
+                                )
+
+                                timetable.update(
+                                    daymap.get_lessons(
+                                        wrapper.date_from_now(1),
+                                        username, password
+                                    )
+                                )
 
                                 # Collects the user's messages and emails into one dictionary, then cuts
                                 # off excess messages that won't fit into the HTML document.
@@ -392,7 +411,7 @@ class Handler(BaseHTTPRequestHandler):
                                     )
                                 )
                                 
-                                msgs = wrapper.tasksort(msgs)
+                                msgs = wrapper.msgsort(msgs)
                                 msgs = wrapper.shorten(msgs, 5)
                                 
                                 # Collects and combines all the user's tasks from each platform into one
@@ -401,19 +420,19 @@ class Handler(BaseHTTPRequestHandler):
 
                                 tasks = daymap.get_tasks(username, password)
 
-                                tasks.update(
+                                tasks.extend(
                                     classroom.get_tasks(
                                         username, password
                                     )
                                 )
 
-                                tasks.update(
+                                tasks.extend(
                                     edpuzzle.get_tasks(
                                         username, password
                                     )
                                 )
 
-                                tasks.update(
+                                tasks.extend(
                                     stile.get_tasks(
                                         username, password
                                     )
@@ -423,8 +442,7 @@ class Handler(BaseHTTPRequestHandler):
                                 tasks = wrapper.shorten(tasks, 5)
                         
                                 # Convert user data to HTML components for rendering.
-                                # TODO: Refactor.
-                                html_today, html_week, html_timetable, html_tomorrow, html_timetable2 = wrapper.render_timetable(timetable, timetable2, lessons, lessons2,  html_week, html_today)
+                                html_timetable = wrapper.render_timetable(timetable)
                                 html_msgs = wrapper.render_msgs(msgs)
                                 html_tasks = wrapper.render_tasks(tasks)
 
@@ -433,16 +451,11 @@ class Handler(BaseHTTPRequestHandler):
 
                                     file = ""
 
-                                    # TODO: Refactor.
                                     for l in f:
                                         l1 = l.replace('<taskcollect plchold="timetable" />', html_timetable)
-                                        l2 = l1.replace('<taskcollect plchold="timetable2" />', html_timetable2)
-                                        l3 = l2.replace('<taskcollect plchold="tomorrow" />', html_tomorrow)
-                                        l4 = l3.replace('<taskcollect plchold="week" />', html_week)
-                                        l5 = l4.replace('<taskcollect plchold="today" />', html_today)
-                                        l6 = l5.replace('<taskcollect plchold="messages" />', html_msgs)
-                                        l7 = l6.replace('<taskcollect plchold="tasks" />', html_tasks)
-                                        file += l7
+                                        l2 = l1.replace('<taskcollect plchold="msgs" />', html_msgs)
+                                        l3 = l2.replace('<taskcollect plchold="tasks" />', html_tasks)
+                                        file += l3
 
                                     self.wfile.write(bytes(file, "utf-8"))
 

@@ -105,9 +105,31 @@ def daymap_get(webpage, username, password):
     # The HTTP response is stored in 's4.text'.
     return s4.text
 
-# Function to get the timetable for a couple of days
-def get_lessons(username, password):
+# Function to get the lessons for a certain day.
+def get_lessons(date, username, password):
 
+    lessons = []
+
+    # Get student landing webpage for DayMap.
+    landpage = daymap_get(
+        "https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx",
+        username, password
+    )
+
+    landpage = landpage.split("\n")
+
+    # Get the line with actual lesson data.
+    lessonline = landpage[211]
+    
+    # Looks for "week" class.
+    week_index = lessonline.find("diaryWeek")
+
+    # Cuts down the lesson line to minimise searching.
+    lessonline = lessonline[week_index+10:-1]
+
+    count = 0
+
+    """
     #define lists and dictionaries: 2 sets, one for each day
     timetable = {}
     tomorrow_timetable = {}
@@ -130,51 +152,21 @@ def get_lessons(username, password):
     class_index = lesson_line.find("diaryWeek")
 
     #cuts it down to minimise searching
-    lesson_line = lesson_line[class_index+10:-1]
+    lesson_line = lesson_line[class_index+10:]
     count = 0
 
     #finds the end of the related tag
-    for char in lesson_line:
-        count += 1
-        if char == ">":
-            break
-
-    #cuts down again to minimise searching for next step
-    lesson_line = lesson_line[count:-1]
-
-    #sets variable for week
-    week = ""
-    for char in lesson_line:
-
-        #loops until the start of the next tag i.e. when the text stops
-        if char == "<":
-            break
-        week = week + char
+    start_index = lesson_line.index(">")
+    end_index = lesson_line.index("<")
+    week = lesson_line[start_index+1:end_index]
     
-    #today var is set
-    today = ""
-
-    #looks for the day class
     class_index = lesson_line.find("diaryDay")
+    lesson_line = lesson_line[class_index+8:]
 
-    #cuts down to minimise searching
-    lesson_line = lesson_line[class_index+9:-1]
-    count = 0
+    start_index = lesson_line.index(">")
+    end_index = lesson_line.index("<")
 
-    #finds the end of the related tag
-    for char in lesson_line:
-        count += 1
-        if char == ">":
-            break
-
-    #cuts down again to minimise searching
-    lesson_line = lesson_line[count:-1]
-    
-    #saves the text between the opening and closing tag
-    for char in lesson_line:
-        if char == "<":
-            break
-        today = today + char  
+    today = lesson_line[start_index+1: end_index]
     
     #checks the day and tells it how many lessons there are on that day to look for
     if "Wednesday" in today:
@@ -187,68 +179,35 @@ def get_lessons(username, password):
 
     #loop to find the lesson time and subject
     while Daycount <= limit:
-        id_index = lesson_line.index('data-id="')
+        id_index = lesson_line.index('data-id=')
         lesson_line = lesson_line[id_index+9:]
-        ID = ""
-        for char in lesson_line:
-            if char == '"':
-                break
-            else:
-                ID = ID + str(char)
-        text = daymap_get(f"https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={ID}", username, password)
-        #lesson_info.write(text)
-        #lesson time class finding
-        time_index = lesson_line.index("class='t'")
-        count = 0
+        end_index = lesson_line.index('"')
+        ID = str(lesson_line[:end_index])
 
-        #cuts down to minimise searching
+        link = daymap_get(f"https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={ID}", username, password)
+        
+        time_index = lesson_line.index("class='t'")
+
         lesson_line = lesson_line[time_index+9:]
 
-        #finds the end of the opening tag
-        for char in lesson_line:
-            count +=1
-            if char == ">":
-                break
-        
-        #cuts down to minimise searching
-        lesson_line = lesson_line[count:]
-        time = ""
-
-        #takes the text between the tags for the time
-        for char in lesson_line:
-            
-            if char == "<":
-                break
-            time = time + str(char)
+        start_index = lesson_line.index(">")
+        end_index = lesson_line.index("<")
+        time = str(lesson_line[start_index + 1: end_index])
         
         #finds the subject class
         subject_index = lesson_line.find("event")
-        count = 0
 
-        #cuts down to minimise searching
         lesson_line = lesson_line[subject_index+6:]
 
-        #finds the end of the tag
-        for char in lesson_line:
-            count += 1
-            if char == ">":
-                break
-        
-        #cuts down to minimise searching
-        lesson_line = lesson_line[count:]
-        subject = ""
+        start_index = lesson_line.index(">")
+        end_index = lesson_line.index("<")
 
-        #notes the subject name
-        for char in lesson_line:
-            if char == "<":
-                break
-            subject = subject + str(char)
+        subject = lesson_line[start_index + 1: end_index]
 
-        #adds it to the list of subjects
         lesson_list.append(subject[:-2])
 
         #adds it to a dictionary along with the date and time
-        timetable[subject[:-2]] = [today, time, ID]
+        timetable[subject[:-2]] = [today, time, link]
         Daycount += 1
         #if statement to check if the next school day is monday
     class_index = lesson_line.find("diaryDay")
@@ -278,79 +237,46 @@ def get_lessons(username, password):
         limit = 5
     Daycount = 1
     while Daycount <= limit:
-        id_index = lesson_line.index('data-id="')
+        id_index = lesson_line.index('data-id=')
         lesson_line = lesson_line[id_index+9:]
-        ID = ""
-        for char in lesson_line:
-            if char == '"':
-                break
-            else:
-                ID = ID + str(char)
+        end_index = lesson_line.index('"')
+        ID = str(lesson_line[:end_index])
+
+        link = daymap_get(f"https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={ID}", username, password)
+        
         time_index = lesson_line.index("class='t'")
-        count = 0
+
         lesson_line = lesson_line[time_index+9:]
-        for char in lesson_line:
-            count +=1
-            if char == ">":
-                break
-        lesson_line = lesson_line[count:]
-        time = ""
-        for char in lesson_line:
-            
-            if char == "<":
-                break
-            time = time + str(char)
+
+        start_index = lesson_line.index(">")
+        end_index = lesson_line.index("<")
+        time = str(lesson_line[start_index + 1: end_index])
+        
+        #finds the subject class
         subject_index = lesson_line.find("event")
-        count = 0
+
         lesson_line = lesson_line[subject_index+6:]
-        for char in lesson_line:
-            count += 1
-            if char == ">":
-                break
-        lesson_line = lesson_line[count:]
-        subject = ""
-        for char in lesson_line:
-            if char == "<":
-                break
-            subject = subject + str(char)
+
+        start_index = lesson_line.index(">")
+        end_index = lesson_line.index("<")
+
+        subject = lesson_line[start_index + 1: end_index]
+
         lesson_list2.append(subject[:-2])
-        tomorrow_timetable[subject[:-2]] = [tomorrow, time, ID]
+
+        #adds it to a dictionary along with the date and time
+        tomorrow_timetable[subject[:-2]] = [today, time, link]
         Daycount += 1
-    return week, today, timetable, lesson_list, tomorrow_timetable, lesson_list2
+    """
 
-#function to pull JSON data from daymap
-def get_daymapID(username, password):
-    
-    #gets the json text from daymap
-    html_text = daymap_get("https://daymap.gihs.sa.edu.au/daymap/DWS/Diary.ashx?cmd=EventList&from={2021-15-9}&to={2021-16-9}", username, password)
-
-    #formats it like a proper json file
-    html_text = "{\"lesson_data\":" + html_text + "}"
-
-    #opens the json file and the writes the text to it, then closes it
-    data = open("./usr/lesson-id.json", "w")
-    data.write(html_text)
-    data.close()
-
-    #reopens for the json module to sort out the data
-    with open("./lib/csv/lesson-id.json") as json_data:
-        data = json.load(json_data)
-    lesson_data = data["lesson_data"]
-    sorted_data = open("./usr/lesson-id.csv", "w")
-    csv_writer = csv.writer(sorted_data)
-    count = 0
-
-    #sorts the data into csv format
-    for subject in lesson_data:
-        if count == 0:
-            header = subject.keys()
-            csv_writer.writerow(header)
-            count += 1
-        csv_writer.writerow(subject.values())
-    sorted_data.close()
+    return lessons
 
 # Function to get the specified user's DayMap messages.
 def get_msgs(username, password):
+
+    msgs = {}
+
+    """
     msgs = {}
     page_html = daymap_get("https://daymap.gihs.sa.edu.au/daymap/student/dayplan.aspx", username, password)
     page_html = page_html.split("\n")
@@ -453,10 +379,16 @@ def get_msgs(username, password):
             msg_count += 1
     except:
         None
+    """
+
     return msgs
 
 # Function to get the specified user's tasks from DayMap.
 def get_tasks(username, password):
+
+    tasks = []
+
+    """
     tasks = {}
 
     #note that this code will cause the webpage to be slow, hence why there is a different section for this
@@ -568,5 +500,6 @@ def get_tasks(username, password):
                     task_name = task_name + str(char)
                 
                 tasks[task_name] = [subject, sender, due, assessment_type, overdue, notif_type, ID, "daymap-msgbox"]
-    print(tasks)
+    """
+
     return tasks
