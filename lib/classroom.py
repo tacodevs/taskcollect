@@ -116,7 +116,7 @@ def get_tasks(username, password):
 
                 # BUG: Incomplete code.
                 tasks[n].append('overduestatus')
-                tasks[n].append('Google Classroom')
+                tasks[n].append('classroom')
 
                 n += 1
 
