@@ -1,6 +1,15 @@
+# Required for Python datetime object usage.
+import datetime
+
 # Function to calculate a Python datetime object for a X days from today.
 def date_from_now(days):
-    return days
+    altdatetime = datetime.datetime.utcnow()
+    altdatetime += datetime.timedelta(days=1)
+    return altdatetime
+
+# Function to sort an unsorted TaskCollect dictionary of messages.
+def msgsort(msgs):
+    return msgs
 
 # Function to sort an unsorted TaskCollect dictionary of tasks.
 def tasksort(tasks):
@@ -8,10 +17,21 @@ def tasksort(tasks):
 
 # Function to shorten a dictionary to a certain number of values.
 def shorten(tasks, amt):
-    return tasks
+    sorted_tasks = {}
+
+    if len(tasks) > amt:
+        for x in range(amt):
+            sorted_tasks[x] = tasks[x]
+        return sorted_tasks
+    else:
+        return tasks
     
 # Function to convert user timetable data into an HTML component, ready for rendering.
-def render_timetable(timetable, timetable2, lesson_list, lesson_list2, week, day):
+def render_timetable(timetable):
+
+    html_timetable = '<p class="fg-red">You did a big oopsy and you didn\'t even know it.</p>'
+
+    """
     html_day = f"<div class=\"banner-strip\">{day}</div>"
     html_week = f"<h5 class=\"tiny-header\">{week}</h5>"
     html_timetable = ""
@@ -23,10 +43,9 @@ def render_timetable(timetable, timetable2, lesson_list, lesson_list2, week, day
         html_timetable2 = html_timetable2 + f"<a href = 'https://daymap.gihs.sa.edu.au/DayMap/Student/plans/class.aspx?eid={timetable2[item][2]}' class = 'thing'><div class = \"timetable-lesson\"><h5>{timetable2[item][1]}</h5><h4>{item}</h4></div></a>"
     
     html_tomorrow = f"<div class=\"banner-strip\">{timetable2[lesson_list2[-1]][0]}</div>"
+    """
 
-    # BUG: There's a LOT of return values.
-    # While not a bug, the idea was for the function to return ONE HTML string of the whole timetable.
-    return html_day, html_week, html_timetable, html_tomorrow, html_timetable2
+    return html_timetable
 
 # Function to convert user message/email data into an HTML component, ready for rendering.
 def render_msgs(msgs):

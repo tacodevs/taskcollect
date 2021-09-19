@@ -120,8 +120,4 @@ def get_tasks(username, password):
 
                 n += 1
 
-    # NOTE: This is temporary.
-    print("Google Classroom:")
-    print(tasks)
-
-    return {}
+    return tasks
