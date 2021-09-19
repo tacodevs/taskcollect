@@ -100,19 +100,19 @@ def get_tasks(username, password):
                 try:
                     tasks[n].append(assignment['description'])
                 except KeyError:
-                    tasks[n].append("No description.")
+                    tasks[n].append("<i>No description.</i>")
 
                 tasks[n].append(assignment['alternateLink'])
 
                 try:
                     tasks[n].append(assignment['dueDate'])
                 except:
-                    tasks[n].append("No due date.")
+                    tasks[n].append("<i>No due date.</i>")
 
                 try:
                     tasks[n].append(assignment['dueTime'])
                 except:
-                    tasks[n].append("No due time.")
+                    tasks[n].append("<i>No due time.</i>")
 
                 # BUG: Incomplete code.
                 tasks[n].append('overduestatus')
