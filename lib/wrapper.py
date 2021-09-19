@@ -33,16 +33,16 @@ def render_timetable(timetable):
 
     return html_timetable
 
-# Function to convert user message/email data into an HTML component, ready for rendering.
+# Function to convert user message data into an HTML component, ready for rendering.
 def render_msgs(msgs):
 
     html_msgs = ""
 
     for msg in msgs:
         html_msgs += f'<tr><td><a href="https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={msg}&via=4" '
-        html_msgs += 'target="_blank" rel="noopener noreferrer" class="msg-box no-focus-border"><div>'
-        html_msgs += f'<div class="msgbox daymap-msgbox"><b>{msgs[msg][3]}</b><br>'
-        html_msgs += f'<p>From {msgs[msg][2]} {msgs[msg][0]}</p><br><p>{msgs[msg][1]}</p></div></div></a></td></tr>'
+        html_msgs += 'target="_blank" rel="noopener noreferrer" class="boring-link no-focus-border">'
+        html_msgs += f'<div class="msgbox daymap-msgbox"><div><b>{msgs[msg][3]}</b><br>'
+        html_msgs += f'<p><b>From {msgs[msg][2]} {msgs[msg][0]}</b><br>{msgs[msg][1]}</p></div></div></a></td></tr>'
 
     return html_msgs
 
