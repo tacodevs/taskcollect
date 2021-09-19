@@ -52,11 +52,15 @@ def render_tasks(tasks):
     html_tasks = ""
 
     for task in tasks:
-        html_tasks += f'<tr><td {tasks[task][4]}>'
-        html_tasks += '<a href="https://daymap.gihs.sa.edu.au/daymap/student/assignment.aspx?TaskID='
-        html_tasks += f'{tasks[task][-2]}&d=1" target="_blank" rel="noopener noreferrer" '
-        html_tasks += f'class="boring-link no-focus-border"><div class="msgbox {tasks[task][-1]}">'
-        html_tasks += f'<div><b>{tasks[task][0]} {tasks[task][3]}</b><br><p>{task} DUE {tasks[task][2]}</p>'
+
+        if tasks[task][6]:
+            isoverdue = ' class="err-bg"'
+        else:
+            isoverdue = ''
+
+        html_tasks += f'<tr><td{isoverdue}><a href="{tasks[task][3]}" target="_blank" rel="noopener noreferrer" '
+        html_tasks += f'class="boring-link no-focus-border"><div class="msgbox {tasks[task][7]}-msgbox">'
+        html_tasks += f'<div><b>{tasks[task][0]}</b><br><p><b>{tasks[task][1]}</b><br>{tasks[task][2]}</p>'
         html_tasks += '</div></div></a></td></tr>'
 
     return html_tasks
