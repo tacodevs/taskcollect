@@ -353,21 +353,14 @@ class Handler(BaseHTTPRequestHandler):
 
                                 # Gets the user's timetable for the next two days, from DayMap.
 
-                                timetable = {}
-                                
-                                timetable.update(
-                                    daymap.get_lessons(
-                                        wrapper.date_from_now(0),
-                                        username, password
-                                    )
-                                )
+                                html_week, timetable, timetable2 = daymap.get_lessons(0, username, password)
 
-                                timetable.update(
+                                '''timetable.update(
                                     daymap.get_lessons(
                                         wrapper.date_from_now(1),
                                         username, password
                                     )
-                                )
+                                )'''
 
                                 # Collects the user's messages and emails into one dictionary, then cuts
                                 # off excess messages that won't fit into the HTML document.
@@ -401,10 +394,10 @@ class Handler(BaseHTTPRequestHandler):
                                 )
 
                                 tasks = wrapper.tasksort(tasks)
-                                tasks = wrapper.listshorten(tasks, 5)
+                                tasks = wrapper.listshorten(tasks, 10)
                         
                                 # Convert user data to HTML components for rendering.
-                                html_timetable = wrapper.render_timetable(timetable)
+                                html_timetable = wrapper.render_timetable(timetable, timetable2, html_week)
                                 html_msgs = wrapper.render_msgs(msgs)
                                 html_tasks = wrapper.render_tasks(tasks)
 

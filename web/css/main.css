@@ -3,8 +3,8 @@
     --accent-color: #0BAB05;
     --accent-shade: #008B00;
     --accent-darker: #006B00;
-    --main-font: "Calibri";
-    --condensed-font: "Roboto Condensed";
+    --main-font: "Times";
+    --condensed-font: "Courier";
     --fg-btn-color: #F0F0F0;
     --icon-btn-daymap: url(../img/daymap-white.svg);
     --icon-btn-webmail: url(../img/webmail-white.svg);
@@ -357,12 +357,32 @@ iframe
     vertical-align: top;
 }
 
+.task_scroll 
+{   
+    overflow-x: hidden;
+    border-top: 5px solid var(--mono-lighter);
+    overflow-y: scroll;
+    height: 550px;
+    width: 420px;
+    align-self: center;
+}
+.msg_scroll 
+{   
+    overflow-x: hidden;
+    border-top: 5px solid var(--mono-lighter);
+    overflow-y: scroll;
+    height: 700px;
+    width: 420px;
+    align-self: center;
+}
+
+
+
 .tccontain-titlediv h3
 {
     display: inline;
     font-weight: normal;
 }
-
 .tccontain-titlediv a button
 {
     background: var(--accent-color);
@@ -611,6 +631,7 @@ a.boring-link
 .timetable-lesson
 {
     border-left: 3px solid var(--accent-color);
+    text-decoration: none;
     color: #FFFFFF;
     padding: 10px 0 10px 25px;
     margin: 5px 0;
