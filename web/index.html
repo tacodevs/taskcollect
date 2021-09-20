@@ -35,7 +35,9 @@
                             </button>
                         </a>
                     </div>
+                    
                     <taskcollect plchold="timetable" />
+
                 </div>
             </div>
             <div class="flex-container">
@@ -53,9 +55,14 @@
                             </button>
                         </a>
                     </div>
-                    <table>
-                        <taskcollect plchold="msgs" />
-                    </table>
+                    <div class = "msg_scroll">
+                        <table>
+                            <thead><th></th></thead>
+                            <tbody>
+                                <taskcollect plchold="msgs" />
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="flex-container last-flex-container">
@@ -93,11 +100,20 @@
                         </tr>
                     </table>
                     <div class="tccontain-titlediv">
-                        <h3>Tasks</h3>
+                        <h3>
+                            Tasks
+                        </h3>
                     </div>
-                    <table>
-                        <taskcollect plchold="tasks" />
-                    </table>
+                    
+                    <div class = "task_scroll">
+                        <table>
+                            <thead><th></th></thead>
+                            <tbody>
+                                <taskcollect plchold="tasks" />
+                            </tbody>
+                        </table>
+                    </div>
+                    
                 </div>
             </div>
         </div>
