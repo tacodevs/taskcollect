@@ -154,7 +154,7 @@ def get_msgs(username, password):
     # Strip the retrieved HTML to the messages section.
     landpage = landpage[
         landpage.index("<div tabindex='0' id='message"):
-        landpage.index("<div class='paging' id=\"folder_page\"")
+        landpage.index('<div id="inboxHolder" class="MasterContent"') - 240
     ]
 
     # Split the messages section HTML into separate messages.
@@ -203,6 +203,10 @@ def get_msgs(username, password):
                 f"https://daymap.gihs.sa.edu.au/daymap/coms/Message.aspx?ID={msg_id}&via=4",
                 username, password
             )
+
+            # Remove unnecessary newlines, as each line has an extra newline appended to it.
+            msgpage = msgpage.split("\n")
+            msgpage = ''.join(msgpage)
 
             # TODO: DayMap cancer.
 
