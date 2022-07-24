@@ -43,7 +43,7 @@ TaskCollect is ***not*** production-ready and should not be deployed to the publ
 Contribute
 ----------
 
-TaskCollect is much like a newborn child, and needs to grow and develop into a secure, robust program. For that we need people testing TaskCollect, finding bugs/issues, providing fixes and suggestions. If you have the time, please consider making a contribution, however small, to TaskCollect development.
+TaskCollect, in its current state, is much like a newborn child, and still needs to grow and develop into a secure, robust program. For that we need people testing TaskCollect, finding bugs/issues, providing fixes and suggestions. If you have the time, please consider making a contribution, however small, to TaskCollect development.
 
 Issues can be reported on the Codeberg issue tracker. If you need to discuss something or ask questions about TaskCollect, this can be done through Matrix: #taskcollect:matrix.org
 
