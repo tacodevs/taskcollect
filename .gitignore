@@ -1,2 +1,4 @@
 prg/
+src/go.mod
+src/go.sum
 tmp/
