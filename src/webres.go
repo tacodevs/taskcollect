@@ -7,6 +7,8 @@ import (
 var errNotFound = errors.New("taskcollect: cannot find resource")
 var errNoPlatform = errors.New("taskcollect: unsupported platform")
 
+// TODO: Use external HTML files and templates for easier management
+
 const htmlHead = `<!DOCTYPE html>
 <html>
 <head>
@@ -39,7 +41,7 @@ const tasksHeader = `<h1>Tasks</h1>
 </tr></thead>
 `
 
-const notdueHeader = `</table>
+const notDueHeader = `</table>
 <h2 id="notdue">No due date</h2>
 <table>
 <thead><tr>
@@ -100,22 +102,23 @@ const loginBody = `<form action="/auth">
 const loginPage = htmlHead + loginHead + loginBody + htmlEnd
 
 const loginFailed = htmlHead + loginHead +
-"<h4>Authentication failed</h4>\n" + loginBody + htmlEnd
+	"<h4>Authentication failed</h4>\n" + loginBody + htmlEnd
 
 const notFoundPage = htmlHead +
-"404 Not Found" +
-htmlNav +
-`<h1>404 Not Found</h1>
+	"404 Not Found" +
+	htmlNav +
+	`<h1>404 Not Found</h1>
 <p>The requested resource was not found on the server.</p>
 ` + htmlEnd
 
 const srvErrPage = htmlHead +
-"500 Internal Server Error" +
-htmlNav +
-`<h1>500 Internal Server Error</h1>
+	"500 Internal Server Error" +
+	htmlNav +
+	`<h1>500 Internal Server Error</h1>
 <p>The server encountered an unexpected error and cannot continue.</p>
 ` + htmlEnd
 
+// TODO: Use external CSS files
 const css = `@import url("https://fonts.googleapis.com/css?family=Noto+Sans");
 
 :root {

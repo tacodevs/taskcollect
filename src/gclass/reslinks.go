@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func getres(c *classroom.Course, svc *classroom.Service, links *map[string][][2]string, rwg *sync.WaitGroup, gerrchan chan error) {
+func getResp(c *classroom.Course, svc *classroom.Service, links *map[string][][2]string, rwg *sync.WaitGroup, gErrChan chan error) {
 	defer rwg.Done()
 
 	resources, err := svc.Courses.CourseWorkMaterials.List(c.Id).Fields(
@@ -22,7 +22,7 @@ func getres(c *classroom.Course, svc *classroom.Service, links *map[string][][2]
 
 	if err != nil {
 		panic(err)
-		gerrchan <- err
+		gErrChan <- err
 		return
 	}
 
@@ -34,26 +34,16 @@ func getres(c *classroom.Course, svc *classroom.Service, links *map[string][][2]
 	}
 }
 
-func Reslinks(creds User, gcid []byte, r chan map[string][][2]string, e chan error) {
-        ctx := context.Background()
+func ResLinks(creds User, gcid []byte, r chan map[string][][2]string, e chan error) {
+	ctx := context.Background()
 
-        gauthcnf, err := google.ConfigFromJSON(
-                gcid,
-                classroom.ClassroomCoursesReadonlyScope,
+	gauthConfig, err := google.ConfigFromJSON(
+		gcid,
+		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-        )
-
-        if err != nil {
-		r <- nil
-                e <- err
-                return
-        }
-
-        reader := strings.NewReader(creds.Token)
-        oatok := &oauth2.Token{}
-        err = json.NewDecoder(reader).Decode(oatok)
+	)
 
 	if err != nil {
 		r <- nil
@@ -61,7 +51,17 @@ func Reslinks(creds User, gcid []byte, r chan map[string][][2]string, e chan err
 		return
 	}
 
-        client := gauthcnf.Client(context.Background(), oatok)
+	reader := strings.NewReader(creds.Token)
+	oauthTok := &oauth2.Token{}
+	err = json.NewDecoder(reader).Decode(oauthTok)
+
+	if err != nil {
+		r <- nil
+		e <- err
+		return
+	}
+
+	client := gauthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(
 		ctx,
@@ -91,29 +91,29 @@ func Reslinks(creds User, gcid []byte, r chan map[string][][2]string, e chan err
 		return
 	}
 
-	reslinks := map[string][][2]string{}
-	gerrchan := make(chan error)
-	var rwg sync.WaitGroup
+	resLinks := map[string][][2]string{}
+	gErrChan := make(chan error)
+	var rwg sync.WaitGroup // TODO: Rename variable
 	i := 0
 
 	for _, c := range resp.Courses {
-		reslinks[c.Name] = [][2]string{}
+		resLinks[c.Name] = [][2]string{}
 		rwg.Add(1)
-		go getres(c, svc, &reslinks, &rwg, gerrchan)
+		go getResp(c, svc, &resLinks, &rwg, gErrChan)
 		i++
 	}
 
 	rwg.Wait()
 
 	select {
-	case gcerr := <-gerrchan:
+	case gcErr := <-gErrChan:
 		r <- nil
-		e <- gcerr
+		e <- gcErr
 		return
 	default:
 		break
 	}
 
-	r <- reslinks
+	r <- resLinks
 	e <- nil
 }

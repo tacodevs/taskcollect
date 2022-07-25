@@ -11,14 +11,14 @@ import (
 	"time"
 )
 
-var ErrAuthFailed = errors.New("daymap: authentication failed")
+var ErrAuthFailed = errors.New("DayMap: authentication failed")
 
 type User struct {
 	Timezone *time.Location
-	Token string
+	Token    string
 }
 
-func get(weburl, username, password string) (string, string, error) {
+func get(webUrl, username, password string) (string, string, error) {
 	// Stage 1 - Get a DayMap redirect to SAML.
 
 	// A persistent cookie jar is required for the entire process.
@@ -31,7 +31,7 @@ func get(weburl, username, password string) (string, string, error) {
 
 	client := &http.Client{Jar: jar}
 
-	s1, err := client.Get(weburl)
+	s1, err := client.Get(webUrl)
 
 	if err != nil {
 		return "", "", err
@@ -251,23 +251,23 @@ func get(weburl, username, password string) (string, string, error) {
 
 	s4page := string(s4body)
 
-	daymapUrl := url.URL {
+	daymapUrl := url.URL{
 		Scheme: "https",
-		Host: "gihs.daymap.net",
+		Host:   "gihs.daymap.net",
 	}
 
 	cookies := jar.Cookies(&daymapUrl)
-	authtok := ""
+	authToken := ""
 
 	for i := 0; i < len(cookies); i++ {
-		authtok += cookies[i].String()
+		authToken += cookies[i].String()
 
 		if i < len(cookies)-1 {
-			authtok += "; "
+			authToken += "; "
 		}
 	}
 
-	return s4page, authtok, nil
+	return s4page, authToken, nil
 }
 
 func Auth(school, usr, pwd string) (User, error) {
@@ -278,7 +278,7 @@ func Auth(school, usr, pwd string) (User, error) {
 	}
 
 	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	_, authtok, err := get(page, usr, pwd)
+	_, authToken, err := get(page, usr, pwd)
 
 	if err != nil {
 		return User{}, err
@@ -286,7 +286,7 @@ func Auth(school, usr, pwd string) (User, error) {
 
 	creds := User{
 		Timezone: timezone,
-		Token: authtok,
+		Token:    authToken,
 	}
 
 	return creds, nil
