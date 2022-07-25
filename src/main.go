@@ -11,21 +11,21 @@ import (
 	"mime"
 	"net/http"
 	"os"
-	osusr	"os/user"
+	osUser "os/user"
 	"strings"
 	"sync"
 )
 
-type authdb struct {
-	lock	*sync.Mutex
-	path	string
-	pwd	[]byte
-	gauth	[]byte
+type authDb struct {
+	lock  *sync.Mutex
+	path  string
+	pwd   []byte
+	gAuth []byte
 }
 
 type postReader struct {
-	div	[]byte
-	reader	io.Reader
+	div    []byte
+	reader io.Reader
 }
 
 func (pr postReader) Read(p []byte) (int, error) {
@@ -34,7 +34,6 @@ func (pr postReader) Read(p []byte) (int, error) {
 
 	for n < len(p) {
 		b, err := reader.ReadByte()
-
 		if err != nil {
 			return n, err
 		}
@@ -42,8 +41,7 @@ func (pr postReader) Read(p []byte) (int, error) {
 		i := 0
 
 		for i < len(pr.div) {
-			c, err := reader.Peek(i+1)
-
+			c, err := reader.Peek(i + 1)
 			if err != nil {
 				return n, err
 			}
@@ -102,7 +100,7 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	}
 
 	idx := strings.Index(line, "form-data;")
-	_, formvals, err := mime.ParseMediaType(line[idx:])
+	_, formVals, err := mime.ParseMediaType(line[idx:])
 
 	if err != nil {
 		return "", nil, err
@@ -116,10 +114,10 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 		}
 	}
 
-	filename := formvals["filename"]
+	filename := formVals["filename"]
 
 	pr := postReader{
-		div: []byte("\r\n" + div + "--"),
+		div:    []byte("\r\n" + div + "--"),
 		reader: reader,
 	}
 
@@ -128,7 +126,7 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 
 func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
-	statCode := 200
+	statusCode := 200
 	var webpage []byte
 	var headers [][2]string
 
@@ -138,11 +136,11 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 		if err != nil {
 			log.Println("main.go: 130:", err)
 			webpage = []byte(srvErrPage)
-			statCode = 500
+			statusCode = 500
 		} else {
 			index := strings.Index(res, "/submit")
 			headers = [][2]string{{"Location", res[:index]}}
-			statCode = 302
+			statusCode = 302
 		}
 	} else if cmd == "upload" {
 		filename, reader, err := fileFromReq(r)
@@ -157,11 +155,11 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 		if err != nil {
 			log.Println("main.go: 149:", err)
 			webpage = []byte(srvErrPage)
-			statCode = 500
+			statusCode = 500
 		} else {
 			index := strings.Index(res, "/upload")
 			headers = [][2]string{{"Location", res[:index]}}
-			statCode = 302
+			statusCode = 302
 		}
 	} else if cmd == "remove" {
 		filenames := []string{}
@@ -174,27 +172,27 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 
 		if err == errNoPlatform {
 			webpage = []byte(notFoundPage)
-			statCode = 404
+			statusCode = 404
 		} else if err != nil {
 			log.Println("main.go: 170:", err)
 			webpage = []byte(srvErrPage)
-			statCode = 500
+			statusCode = 500
 		} else {
 			index := strings.Index(res, "/remove")
 			headers = [][2]string{{"Location", res[:index]}}
-			statCode = 302
+			statusCode = 302
 		}
 	} else {
 		webpage = []byte(notFoundPage)
-		statCode = 404
+		statusCode = 404
 	}
 
-	return statCode, webpage, headers
+	return statusCode, webpage, headers
 }
 
 func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
-	statCode := 200
+	statusCode := 200
 	var webpage []byte
 	var headers [][2]string
 
@@ -203,7 +201,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 
 	if index == -1 {
 		webpage = []byte(notFoundPage)
-		statCode = 404
+		statusCode = 404
 	}
 
 	taskId := platform[index+1:]
@@ -216,7 +214,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 		if err != nil {
 			log.Println("main.go: 208:", err)
 			webpage = []byte(srvErrPage)
-			statCode = 500
+			statusCode = 500
 		}
 
 		title := html.EscapeString(assignment.Name)
@@ -227,7 +225,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 		taskCmd := taskId[index+1:]
 		taskId = taskId[:index]
 
-		statCode, webpage, headers = handleTaskFunc(
+		statusCode, webpage, headers = handleTaskFunc(
 			r,
 			creds,
 			platform,
@@ -237,10 +235,10 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 		)
 	}
 
-	return statCode, webpage, headers
+	return statusCode, webpage, headers
 }
 
-func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
+func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	res := r.URL.EscapedPath()
 	validAuth := true
 	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd)
@@ -273,7 +271,7 @@ func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
 			db.lock,
 			db.path,
 			db.pwd,
-			db.gauth,
+			db.gAuth,
 		)
 
 		if err == nil {
@@ -281,13 +279,13 @@ func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 			return
-		} else if !errors.Is(err, needsGauth) {
+		} else if !errors.Is(err, needsGAauth) {
 			log.Println(err)
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
 			return
 		}
-	
+
 		gauthloc, err := genGauthloc(db.path)
 
 		if err != nil {
@@ -308,7 +306,7 @@ func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(302)
 	} else if validAuth && res == "/gauth" {
-		err = gauth(creds, r.URL.Query(), db.lock, db.path, db.pwd)
+		err = gAuth(creds, r.URL.Query(), db.lock, db.path, db.pwd)
 
 		if err != nil {
 			log.Println(err)
@@ -330,21 +328,21 @@ func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
 	} else if validAuth && res == "/timetable.png" {
 		genTimetable(creds, w)
 	} else if validAuth && strings.HasPrefix(res, "/tasks/") {
-		statCode, respBody, respHeaders := handleTaskReq(
-			r, creds, db.gauth,
+		statusCode, respBody, respHeaders := handleTaskReq(
+			r, creds, db.gAuth,
 		)
 
 		for _, respHeader := range respHeaders {
 			w.Header().Set(respHeader[0], respHeader[1])
 		}
 
-		w.WriteHeader(statCode)
+		w.WriteHeader(statusCode)
 		w.Write(respBody)
 	} else if validAuth && invalidRes {
 		w.Header().Set("Location", "/tasks")
 		w.WriteHeader(302)
 	} else if validAuth && !invalidRes {
-		webpage, err := genRes(res, creds, db.gauth)
+		webpage, err := genRes(res, creds, db.gAuth)
 
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)
@@ -360,7 +358,7 @@ func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	curUser, err := osusr.Current()
+	curUser, err := osUser.Current()
 
 	if err != nil {
 		strerr := "taskcollect: Can't determine current user's home folder."
@@ -369,30 +367,30 @@ func main() {
 	}
 
 	home := curUser.HomeDir
-	respath := home + "/res/taskcollect/"
-	//certfile := respath + "cert.pem"
-	//keyfile := respath + "key.pem"
+	resPath := home + "/res/taskcollect/"
+	//certfile := resPath + "cert.pem"
+	//keyfile := resPath + "key.pem"
 
-	var dbpwd string
+	var dbPwdInput string
 	fmt.Print("Passphrase to user credentials file: ")
-	fmt.Scanln(&dbpwd)
-	dbp := []byte(dbpwd)
+	fmt.Scanln(&dbPwdInput)
+	dbPwd := []byte(dbPwdInput)
 
-	dbmutex := new(sync.Mutex)
+	dbMutex := new(sync.Mutex)
 
-	gcid, err := ioutil.ReadFile(respath + "gauth.json")
+	gcid, err := ioutil.ReadFile(resPath + "gauth.json")
 
 	if err != nil {
-		strerr := "taskcollect: Can't read Google client ID file."
-		os.Stderr.WriteString(strerr + "\n")
+		strErr := "taskcollect: Can't read Google client ID file."
+		os.Stderr.WriteString(strErr + "\n")
 		os.Exit(1)
 	}
 
-	db := authdb{
-		lock: dbmutex,
-		path: respath,
-		pwd: dbp,
-		gauth: gcid,
+	db := authDb{
+		lock:  dbMutex,
+		path:  resPath,
+		pwd:   dbPwd,
+		gAuth: gcid,
 	}
 
 	http.HandleFunc("/", db.handler)

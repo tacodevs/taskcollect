@@ -9,28 +9,28 @@ import (
 )
 
 type task struct {
-	Name string
-	Class string
-	Link string
-	Desc string
-	Due time.Time
-	Reslinks [][2]string
-	Upload bool
-	Worklinks [][2]string
+	Name      string
+	Class     string
+	Link      string
+	Desc      string
+	Due       time.Time
+	ResLinks  [][2]string
+	Upload    bool
+	WorkLinks [][2]string
 	Submitted bool
-	Grade string
-	Comment string
-	Platform string
-	Id string
+	Grade     string
+	Comment   string
+	Platform  string
+	Id        string
 }
 
 type lesson struct {
-	Start time.Time
-	End time.Time
-	Class string
-	Room string
+	Start   time.Time
+	End     time.Time
+	Class   string
+	Room    string
 	Teacher string
-	Notice string
+	Notice  string
 }
 
 func reslistContains(reslist [][2]string, reslink [2]string) bool {
@@ -48,7 +48,7 @@ func getLessons(creds user) ([][]lesson, error) {
 
 	dmcreds := daymap.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["daymap"],
+		Token:    creds.SiteTokens["daymap"],
 	}
 
 	dmlessons, err := daymap.GetLessons(dmcreds)
@@ -68,28 +68,28 @@ func getLessons(creds user) ([][]lesson, error) {
 
 func getTasks(creds user, gcid []byte) (map[string][]task, error) {
 	gcchan := make(chan map[string][]gclass.Task)
-	gcerr := make(chan error)
+	gcErr := make(chan error)
 
 	gccreds := gclass.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["gclass"],
+		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ListTasks(gccreds, gcid, gcchan, gcerr)
+	go gclass.ListTasks(gccreds, gcid, gcchan, gcErr)
 
 	dmchan := make(chan map[string][]daymap.Task)
 	dmerr := make(chan error)
 
 	dmcreds := daymap.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["daymap"],
+		Token:    creds.SiteTokens["daymap"],
 	}
 
 	go daymap.ListTasks(dmcreds, dmchan, dmerr)
 
 	t := map[string][]task{}
 	tasks := map[string][]task{}
-	gctasks, err := <-gcchan, <-gcerr
+	gctasks, err := <-gcchan, <-gcErr
 	dmtasks, err := <-dmchan, <-dmerr
 
 	if err != nil {
@@ -152,20 +152,20 @@ func getReslinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 
 	gccreds := gclass.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["gclass"],
+		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.Reslinks(gccreds, gcid, grchan, gechan)
+	go gclass.ResLinks(gccreds, gcid, grchan, gechan)
 
 	dmrchan := make(chan map[string][][2]string)
 	dmechan := make(chan error)
 
 	dmcreds := daymap.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["daymap"],
+		Token:    creds.SiteTokens["daymap"],
 	}
 
-	go daymap.Reslinks(dmcreds, dmrchan, dmechan)
+	go daymap.ResLinks(dmcreds, dmrchan, dmechan)
 
 	r := map[string][][2]string{}
 	gcreslinks, err := <-grchan, <-gechan
@@ -191,7 +191,7 @@ func getReslinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 		}
 	}
 
-	reslinks := map[string][][2]string{}
+	resLinks := map[string][][2]string{}
 	classes := []string{}
 
 	for c := range r {
@@ -214,14 +214,14 @@ func getReslinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 		for i := 0; i < len(res); i++ {
 			linkIdx := residx[res[i]]
 
-			reslinks[c] = append(
-				reslinks[c],
+			resLinks[c] = append(
+				resLinks[c],
 				[2]string{rls[linkIdx][0], res[i]},
 			)
 		}
 	}
 
-	return classes, reslinks, err
+	return classes, resLinks, err
 }
 
 func getTask(platform, taskId string, creds user, gcid []byte) (task, error) {
@@ -232,16 +232,16 @@ func getTask(platform, taskId string, creds user, gcid []byte) (task, error) {
 	case "gclass":
 		gccreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
 
-		gctask, gcerr := gclass.GetTask(gccreds, gcid, taskId)
+		gctask, gcErr := gclass.GetTask(gccreds, gcid, taskId)
 		assignment = task(gctask)
-		err = gcerr
+		err = gcErr
 	case "daymap":
 		dmcreds := daymap.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["daymap"],
+			Token:    creds.SiteTokens["daymap"],
 		}
 
 		dmtask, dmerr := daymap.GetTask(dmcreds, taskId)
@@ -259,7 +259,7 @@ func submitTask(creds user, platform, taskId string, gcid []byte) error {
 	case "gclass":
 		gccreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
 
 		err = gclass.SubmitTask(gccreds, gcid, taskId)
@@ -275,14 +275,14 @@ func uploadWork(creds user, platform, id, filename string, f *io.Reader, gcid []
 	case "gclass":
 		gccreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
 
 		err = gclass.UploadWork(gccreds, gcid, id, filename, f)
 	case "daymap":
 		dmcreds := daymap.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["daymap"],
+			Token:    creds.SiteTokens["daymap"],
 		}
 
 		err = daymap.UploadWork(dmcreds, id, filename, f)
@@ -298,14 +298,14 @@ func removeWork(creds user, platform, taskId string, filenames []string, gcid []
 	case "gclass":
 		gccreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
 
 		err = gclass.RemoveWork(gccreds, gcid, taskId, filenames)
 	case "daymap":
 		dmcreds := daymap.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["daymap"],
+			Token:    creds.SiteTokens["daymap"],
 		}
 
 		err = daymap.RemoveWork(dmcreds, taskId, filenames)

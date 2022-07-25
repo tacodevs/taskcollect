@@ -13,7 +13,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func getTask(s *classroom.StudentSubmission, svc *classroom.Service, class string, utask *Task, twg *sync.WaitGroup, gerrchan chan error) {
+func getTask(s *classroom.StudentSubmission, svc *classroom.Service, class string, utask *Task, twg *sync.WaitGroup, gErrChan chan error) {
 	defer twg.Done()
 
 	task, err := svc.Courses.CourseWork.Get(
@@ -21,7 +21,7 @@ func getTask(s *classroom.StudentSubmission, svc *classroom.Service, class strin
 	).Fields("dueTime", "dueDate", "title", "alternateLink").Do()
 
 	if err != nil {
-		gerrchan <- err
+		gErrChan <- err
 		return
 	}
 
@@ -60,9 +60,9 @@ func getTask(s *classroom.StudentSubmission, svc *classroom.Service, class strin
 	utask.Platform = "gclass"
 }
 
-func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task, swg *sync.WaitGroup, gerrchan chan error) {
-        defer swg.Done()
-        resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
+func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task, swg *sync.WaitGroup, gErrChan chan error) {
+	defer swg.Done()
+	resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
 		c.Id, "-",
 	).Fields(
 		"studentSubmissions/id",
@@ -71,10 +71,10 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task,
 		"studentSubmissions/courseWorkId",
 	).Do()
 
-        if err != nil {
-                gerrchan <- err
+	if err != nil {
+		gErrChan <- err
 		return
-        }
+	}
 
 	submissions := make([]Task, len(resp.StudentSubmissions))
 	var twg sync.WaitGroup
@@ -82,7 +82,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task,
 
 	for _, s := range resp.StudentSubmissions {
 		twg.Add(1)
-		go getTask(s, svc, c.Name, &submissions[i], &twg, gerrchan)
+		go getTask(s, svc, c.Name, &submissions[i], &twg, gErrChan)
 		i++
 	}
 
@@ -91,25 +91,15 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task,
 }
 
 func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) {
-        ctx := context.Background()
+	ctx := context.Background()
 
-        gauthcnf, err := google.ConfigFromJSON(
-                gcid,
-                classroom.ClassroomCoursesReadonlyScope,
+	gauthConfig, err := google.ConfigFromJSON(
+		gcid,
+		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-        )
-
-        if err != nil {
-		t <- nil
-                e <- err
-                return
-        }
-
-        r := strings.NewReader(creds.Token)
-        oatok := &oauth2.Token{}
-        err = json.NewDecoder(r).Decode(oatok)
+	)
 
 	if err != nil {
 		t <- nil
@@ -117,7 +107,17 @@ func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) 
 		return
 	}
 
-        client := gauthcnf.Client(context.Background(), oatok)
+	r := strings.NewReader(creds.Token)
+	oauthTok := &oauth2.Token{}
+	err = json.NewDecoder(r).Decode(oauthTok)
+
+	if err != nil {
+		t <- nil
+		e <- err
+		return
+	}
+
+	client := gauthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(
 		ctx,
@@ -147,32 +147,32 @@ func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) 
 		return
 	}
 
-	gerrchan := make(chan error)
+	gErrChan := make(chan error)
 	utasks := make([][]Task, len(resp.Courses))
 	var swg sync.WaitGroup
 	i := 0
 
 	for _, c := range resp.Courses {
 		swg.Add(1)
-		go getSubmissions(c, svc, &utasks[i], &swg, gerrchan)
+		go getSubmissions(c, svc, &utasks[i], &swg, gErrChan)
 		i++
 	}
 
 	swg.Wait()
 
 	select {
-	case gcerr := <-gerrchan:
+	case gcErr := <-gErrChan:
 		t <- nil
-		e <- gcerr
+		e <- gcErr
 		return
 	default:
 		break
 	}
 
 	tasks := map[string][]Task{
-		"tasks": {},
-		"notdue": {},
-		"overdue": {},
+		"tasks":     {},
+		"notdue":    {},
+		"overdue":   {},
 		"submitted": {},
 	}
 
@@ -197,7 +197,7 @@ func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) 
 				tasks["tasks"] = append(
 					tasks["tasks"],
 					utasks[x][y],
-				)				
+				)
 			}
 		}
 	}

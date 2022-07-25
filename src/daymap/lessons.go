@@ -9,24 +9,25 @@ import (
 )
 
 type Lesson struct {
-	Start	time.Time
-	End	time.Time
-	Class	string
-	Room	string
-	Teacher	string
-	Notice	string
+	Start   time.Time
+	End     time.Time
+	Class   string
+	Room    string
+	Teacher string
+	Notice  string
 }
 
+// TODO: What does "dmlent" actually mean?
 type dmlent struct {
-	Text	string
-	Id	int
-	Start	string
-	Finish	string
-	Title	string
+	Text   string
+	Id     int
+	Start  string
+	Finish string
+	Title  string
 }
 
 func GetLessons(creds User) ([][]Lesson, error) {
-	var wsi, wei int
+	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)
 
 	now := time.Date(
@@ -39,20 +40,20 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	switch weekday {
 	case 6:
-		wsi = 2
-		wei = 6
+		weekStartIdx = 2
+		weekEndIdx = 6
 	default:
-		wsi = 1-int(weekday)
-		wei = 5-int(weekday)
+		weekStartIdx = 1 - int(weekday)
+		weekEndIdx = 5 - int(weekday)
 	}
 
-	weekstart := now.AddDate(0, 0, wsi)
-	weekend := now.AddDate(0, 0, wei)
+	weekStart := now.AddDate(0, 0, weekStartIdx)
+	weekEnd := now.AddDate(0, 0, weekEndIdx)
 
 	lessonsUrl := "https://gihs.daymap.net/daymap/DWS/Diary.ashx"
 	lessonsUrl += "?cmd=EventList&from="
-	lessonsUrl += weekstart.Format("2006-01-02") + "&to="
-	lessonsUrl += weekend.Format("2006-01-02")
+	lessonsUrl += weekStart.Format("2006-01-02") + "&to="
+	lessonsUrl += weekEnd.Format("2006-01-02")
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", lessonsUrl, nil)
@@ -68,8 +69,8 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		return nil, err
 	}
 
-	dmjson := []dmlent{}
-	err = json.NewDecoder(resp.Body).Decode(&dmjson)
+	dmJson := []dmlent{}
+	err = json.NewDecoder(resp.Body).Decode(&dmJson)
 
 	if err != nil {
 		return nil, err
@@ -77,7 +78,7 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	lessons := make([][]Lesson, 5)
 
-	for _, l := range dmjson {
+	for _, l := range dmJson {
 		start, err := time.Parse("2006-01-02T15:04:05.0000000", l.Start)
 
 		if err != nil {
@@ -103,8 +104,8 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		}
 
 		room := re.FindString(class)
-		roomidx := re.FindStringIndex(class)
-		class = class[:roomidx[0]-1]
+		roomIdx := re.FindStringIndex(class)
+		class = class[:roomIdx[0]-1]
 		notice := ""
 
 		if !strings.HasPrefix(l.Text, "<div") && len(l.Text) > 0 {
@@ -127,7 +128,7 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 		i := 0
 
-		for day.After(weekstart.AddDate(0, 0, i)) {
+		for day.After(weekStart.AddDate(0, 0, i)) {
 			i++
 		}
 
@@ -136,12 +137,12 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		}
 
 		lesson := Lesson{
-			Start: start,
-			End: finish,
-			Class: class,
-			Room: room,
+			Start:   start,
+			End:     finish,
+			Class:   class,
+			Room:    room,
 			Teacher: "",
-			Notice: notice,
+			Notice:  notice,
 		}
 
 		lessons[i] = append(lessons[i], lesson)

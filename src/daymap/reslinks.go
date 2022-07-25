@@ -10,15 +10,15 @@ import (
 
 /*
 ISSUE: For some reason, updating *r from classRes does not seem to affect res in
-Reslinks.
+ResLinks.
 */
 
 func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
-	classurl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
+	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", classurl, nil)
 
+	req, err := http.NewRequest("GET", classUrl, nil)
 	if err != nil {
 		e <- err
 		return
@@ -26,21 +26,19 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
-
 	if err != nil {
 		e <- err
 		return
 	}
 
-	rb, err := ioutil.ReadAll(resp.Body)
-
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		e <- err
 		return
 	}
 
 	div := "</div><div class='lpTitle'><a href='javascript:DMU.ViewPlan("
-	b := string(rb)
+	b := string(respBody)
 	i := strings.Index(b, div)
 
 	for i != -1 {
@@ -50,35 +48,35 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 		i = strings.Index(b, ");")
 
 		if i == -1 {
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errors.New("DayMap: invalid HTML response")
 			return
 		}
 
-		resid := b[:i]
+		resId := b[:i]
 		b = b[i+4:]
 		i = strings.Index(b, "</a>")
 
 		if i == -1 {
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errors.New("DayMap: invalid HTML response")
 			return
 		}
 
 		name := b[:i]
 		b = b[i:]
-		link := "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resid
+		link := "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resId
 		*r = append(*r, [2]string{link, name})
 		b = b[i:]
 		i = strings.Index(b, div)
 	}
 }
 
-func Reslinks(creds User, r chan map[string][][2]string, e chan error) {
-	homeurl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	reslinks := map[string][][2]string{}
+func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
+	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
+	resLinks := map[string][][2]string{}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", homeurl, nil)
 
+	req, err := http.NewRequest("GET", homeUrl, nil)
 	if err != nil {
 		r <- nil
 		e <- err
@@ -86,16 +84,15 @@ func Reslinks(creds User, r chan map[string][][2]string, e chan error) {
 	}
 
 	req.Header.Set("Cookie", creds.Token)
-	resp, err := client.Do(req)
 
+	resp, err := client.Do(req)
 	if err != nil {
 		r <- nil
 		e <- err
 		return
 	}
 
-	rb, err := ioutil.ReadAll(resp.Body)
-
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		r <- nil
 		e <- err
@@ -103,7 +100,7 @@ func Reslinks(creds User, r chan map[string][][2]string, e chan error) {
 	}
 
 	classes := map[string]string{}
-	b := string(rb)
+	b := string(respBody)
 	i := strings.Index(b, "plans/class.aspx?id=")
 
 	for i != -1 {
@@ -114,7 +111,7 @@ func Reslinks(creds User, r chan map[string][][2]string, e chan error) {
 
 		if i == -1 {
 			r <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errors.New("DayMap: invalid HTML response")
 			return
 		}
 
@@ -124,38 +121,38 @@ func Reslinks(creds User, r chan map[string][][2]string, e chan error) {
 
 		if i == -1 {
 			r <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errors.New("DayMap: invalid HTML response")
 			return
 		}
 
 		class := b[:i]
 		b = b[i:]
 		classes[class] = id
-		i = strings.Index(b, "plans/class.aspx?id=")		
+		i = strings.Index(b, "plans/class.aspx?id=")
 	}
 
 	res := make([][][2]string, len(classes))
-	errchan := make(chan error)
+	errChan := make(chan error)
 	var wg sync.WaitGroup
 	x := 0
 
 	for _, id := range classes {
 		wg.Add(1)
-		go classRes(creds, id, &res[x], &wg, errchan)
+		go classRes(creds, id, &res[x], &wg, errChan)
 		x++
 	}
 
 	x = 0
 
 	for class := range classes {
-		reslinks[class] = res[x]
+		resLinks[class] = res[x]
 		x++
 	}
 
 	wg.Wait()
 
 	select {
-	case err = <-errchan:
+	case err = <-errChan:
 		r <- nil
 		e <- err
 		return
@@ -163,6 +160,6 @@ func Reslinks(creds User, r chan map[string][][2]string, e chan error) {
 		break
 	}
 
-	r <- reslinks
+	r <- resLinks
 	e <- err
 }

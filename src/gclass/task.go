@@ -17,22 +17,22 @@ import (
 )
 
 type Task struct {
-	Name string
-	Class string
-	Link string
-	Desc string
-	Due time.Time
-	Reslinks [][2]string
-	Upload bool
-	Worklinks [][2]string
+	Name      string
+	Class     string
+	Link      string
+	Desc      string
+	Due       time.Time
+	ResLinks  [][2]string
+	Upload    bool
+	WorkLinks [][2]string
 	Submitted bool
-	Grade string
-	Comment string
-	Platform string
-	Id string
+	Grade     string
+	Comment   string
+	Platform  string
+	Id        string
 }
 
-func getclass(svc *classroom.Service, courseId string, cchan chan string, echan chan error) {
+func getClass(svc *classroom.Service, courseId string, cchan chan string, echan chan error) {
 	course, err := svc.Courses.Get(courseId).Fields("name").Do()
 
 	if err != nil {
@@ -46,7 +46,7 @@ func getclass(svc *classroom.Service, courseId string, cchan chan string, echan 
 	return
 }
 
-func getGtask(svc *classroom.Service, courseId, workId string, gchan chan classroom.CourseWork, errchan chan error) {
+func getGCTask(svc *classroom.Service, courseId, workId string, gChan chan classroom.CourseWork, errChan chan error) {
 	task, err := svc.Courses.CourseWork.Get(courseId, workId).Fields(
 		"title",
 		"alternateLink",
@@ -59,13 +59,13 @@ func getGtask(svc *classroom.Service, courseId, workId string, gchan chan classr
 	).Do()
 
 	if err != nil {
-		gchan <- classroom.CourseWork{}
-		errchan <- err
+		gChan <- classroom.CourseWork{}
+		errChan <- err
 		return
 	}
 
-	gchan <- *task
-	errchan <- nil
+	gChan <- *task
+	errChan <- nil
 	return
 }
 
@@ -83,7 +83,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 
 	ctx := context.Background()
 
-	gauthcnf, err := google.ConfigFromJSON(
+	gauthConfig, err := google.ConfigFromJSON(
 		gcid,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
@@ -96,14 +96,14 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 	}
 
 	r := strings.NewReader(creds.Token)
-	oatok := &oauth2.Token{}
-	err = json.NewDecoder(r).Decode(oatok)
+	oauthTok := &oauth2.Token{}
+	err = json.NewDecoder(r).Decode(oauthTok)
 
 	if err != nil {
 		return Task{}, err
 	}
 
-	client := gauthcnf.Client(context.Background(), oatok)
+	client := gauthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(
 		ctx,
@@ -116,11 +116,11 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 
 	cchan := make(chan string)
 	echan := make(chan error)
-	go getclass(svc, cid[0], cchan, echan)
+	go getClass(svc, cid[0], cchan, echan)
 
-	gchan := make(chan classroom.CourseWork)
-	errchan := make(chan error)
-	go getGtask(svc, cid[0], cid[1], gchan, errchan)
+	gChan := make(chan classroom.CourseWork)
+	errChan := make(chan error)
+	go getGCTask(svc, cid[0], cid[1], gChan, errChan)
 
 	s, err := svc.Courses.CourseWork.StudentSubmissions.Get(
 		cid[0], cid[1], cid[2],
@@ -130,7 +130,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 		return Task{}, err
 	}
 
-	c, err := <-gchan, <-errchan
+	c, err := <-gChan, <-errChan
 
 	if err != nil {
 		return Task{}, err
@@ -143,12 +143,12 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 	}
 
 	task := Task{
-		Name: c.Title,
-		Class: class,
-		Link: c.AlternateLink,
-		Desc: c.Description,
+		Name:     c.Title,
+		Class:    class,
+		Link:     c.AlternateLink,
+		Desc:     c.Description,
 		Platform: "gclass",
-		Id: id,
+		Id:       id,
 	}
 
 	if c.WorkType == "ASSIGNMENT" {
@@ -180,7 +180,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 			}
 
 			worklink := [2]string{link, name}
-			task.Worklinks = append(task.Worklinks, worklink)
+			task.WorkLinks = append(task.WorkLinks, worklink)
 		}
 	}
 
@@ -208,11 +208,11 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 		}
 
 		reslink := [2]string{link, name}
-		task.Reslinks = append(task.Reslinks, reslink)
+		task.ResLinks = append(task.ResLinks, reslink)
 	}
 
 	if s.AssignedGrade != 0 && c.MaxPoints != 0 {
-		percent := s.AssignedGrade/c.MaxPoints*100
+		percent := s.AssignedGrade / c.MaxPoints * 100
 		task.Grade = fmt.Sprintf("%.f%%", percent)
 	}
 
@@ -268,53 +268,53 @@ How this issue should be managed is open to discussion.
 
 func SubmitTask(creds User, gcid []byte, id string) error {
 	/*
-	cid := strings.SplitN(id, "-", 3)
+		cid := strings.SplitN(id, "-", 3)
 
-	if len(cid) != 3 {
-		return errors.New("gclass: invalid task ID")
-	}
+		if len(cid) != 3 {
+			return errors.New("gclass: invalid task ID")
+		}
 
-	ctx := context.Background()
+		ctx := context.Background()
 
-	gauthcnf, err := google.ConfigFromJSON(
-		gcid,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-	)
+		gauthConfig, err := google.ConfigFromJSON(
+			gcid,
+			classroom.ClassroomCoursesReadonlyScope,
+			classroom.ClassroomStudentSubmissionsMeReadonlyScope,
+			classroom.ClassroomCourseworkMeScope,
+			classroom.ClassroomCourseworkmaterialsReadonlyScope,
+		)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	r := strings.NewReader(creds.Token)
-	oatok := &oauth2.Token{}
-	err = json.NewDecoder(r).Decode(oatok)
+		r := strings.NewReader(creds.Token)
+		oauthTok := &oauth2.Token{}
+		err = json.NewDecoder(r).Decode(oauthTok)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	client := gauthcnf.Client(context.Background(), oatok)
+		client := gauthConfig.Client(context.Background(), oauthTok)
 
-	svc, err := classroom.NewService(
-		ctx,
-		option.WithHTTPClient(client),
-	)
+		svc, err := classroom.NewService(
+			ctx,
+			option.WithHTTPClient(client),
+		)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	_, err = svc.Courses.CourseWork.StudentSubmissions.TurnIn(
-		cid[0], cid[1], cid[2],
-		&classroom.TurnInStudentSubmissionRequest{},
-	).Do()
+		_, err = svc.Courses.CourseWork.StudentSubmissions.TurnIn(
+			cid[0], cid[1], cid[2],
+			&classroom.TurnInStudentSubmissionRequest{},
+		).Do()
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 	*/
 
 	return nil
