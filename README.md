@@ -35,7 +35,13 @@ cd taskcollect/src/
 make
 ```
 
-If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing executable programs for all major operating systems and CPU architectures. From here, deployment is easy: simply run the program for your OS and CPU, and the web server will start. For more information about deployment and running of TaskCollect, see `doc/en/cmd/taskcollect`.
+If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing executable programs for all major operating systems and CPU architectures.
+
+From here, deployment is simple:
+
+  1. Create an empty file for the credentials database and obtain a Google OAuth 2.0 client ID (see `doc/en/cmd/taskcollect` for more info)
+
+  2. Run the program for your OS and CPU, and the web server will start.
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
 

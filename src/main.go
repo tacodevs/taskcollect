@@ -11,7 +11,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
-	osusr	"os/user"
+	osusr "os/user"
 	"strings"
 	"sync"
 )
@@ -376,7 +376,21 @@ func main() {
 	var dbpwd string
 	fmt.Print("Passphrase to user credentials file: ")
 	fmt.Scanln(&dbpwd)
-	dbp := []byte(dbpwd)
+	pwdbytes := []byte(dbpwd)
+	var dbp []byte
+
+	if len(pwdbytes) == 32 {
+		dbp = pwdbytes
+	} else if len(pwdbytes) > 32 {
+		dbp = pwdbytes[:32]
+	} else {
+		zerolen := 32 - len(pwdbytes)
+		dbp = pwdbytes
+
+		for i := 0; i < zerolen; i++ {
+			dbp = append(dbp, 0x00)
+		}
+	}
 
 	dbmutex := new(sync.Mutex)
 
