@@ -27,12 +27,11 @@ Build dependencies:
   * Go
   * Make
 
-TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `make configure` and `make`:
+TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `make`:
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
 cd taskcollect/src/
-make configure
 make
 ```
 

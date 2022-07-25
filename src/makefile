@@ -1,9 +1,5 @@
 all: i386-linux amd64-linux arm-linux arm64-linux i386-windows amd64-windows amd64-osx arm64-osx
 
-configure:
-	rm -rf ../prg/ go.mod
-	go mod init main && go mod tidy
-
 i386-linux:
 	CGO_ENABLED=0 GOARCH=386 GOOS=linux go build -ldflags="-s -w" -o ../prg/i386/linux/taskcollect .
 
