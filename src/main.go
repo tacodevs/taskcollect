@@ -14,6 +14,7 @@ import (
 	osusr "os/user"
 	"strings"
 	"sync"
+	_ "time/tzdata"
 )
 
 type authdb struct {
