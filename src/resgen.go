@@ -562,7 +562,7 @@ func genRes(resource string, creds user, gcid []byte) ([]byte, error) {
 
 	if resource == "/timetable" {
 		title = "Timetable"
-		htmlBody = `<img src="/timetable.png" alt="timetable.png">`
+		htmlBody = `<img id="timetable" src="/timetable.png" alt="timetable.png">`
 		htmlBody += "\n"
 	} else if resource == "/tasks" {
 		title = "Tasks"
