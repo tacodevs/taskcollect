@@ -267,7 +267,21 @@ func (db *authdb) handler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		w.Write([]byte(css))
+		cssFile, err := os.Open(db.path + "styles.css")
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		_, err = io.Copy(w, cssFile)
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		cssFile.Close()
 	} else if !validAuth && res == "/auth" {
 		cookie, err := auth(
 			r.URL.Query(),

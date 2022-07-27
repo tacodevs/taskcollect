@@ -39,9 +39,11 @@ If all the build dependencies are installed and no errors occur, the folder `prg
 
 From here, deployment is simple:
 
-  1. Create an empty file for the credentials database and obtain a Google OAuth 2.0 client ID (see `doc/en/cmd/taskcollect` for more info)
+  1. Copy the contents of the `res/` folder into `$home/res/taskcollect/` where `$home` is the current user's home directory.
 
-  2. Run the program for your OS and CPU, and the web server will start.
+  2. Obtain a Google OAuth 2.0 client ID and save it to `$home/res/taskcollect/` (see `doc/en/cmd/taskcollect` for more info)
+
+  3. Run the program for your OS and CPU, and the web server will start.
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
 
