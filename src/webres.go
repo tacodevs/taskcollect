@@ -42,7 +42,7 @@ const tasksHeader = `<h1>Tasks</h1>
 `
 
 const notDueHeader = `</table>
-<h2 id="notdue">No due date</h2>
+<h2 id="notDue">No due date</h2>
 <table>
 <thead><tr>
 <th>Subject</th>
@@ -111,7 +111,7 @@ const notFoundPage = htmlHead +
 <p>The requested resource was not found on the server.</p>
 ` + htmlEnd
 
-const srvErrPage = htmlHead +
+const serverErrorPage = htmlHead +
 	"500 Internal Server Error" +
 	htmlNav +
 	`<h1>500 Internal Server Error</h1>

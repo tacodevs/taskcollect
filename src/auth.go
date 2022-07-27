@@ -37,7 +37,7 @@ type user struct {
 }
 
 func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
-	ecrfile, err := ioutil.ReadFile(dbPath)
+	ecrFile, err := ioutil.ReadFile(dbPath)
 
 	if err != nil {
 		return nil, err
@@ -72,18 +72,18 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 
 	nonceSize := gcm.NonceSize()
 
-	if len(ecrfile) < nonceSize {
+	if len(ecrFile) < nonceSize {
 		return nil, err
 	}
 
-	nonce, ecrfile := ecrfile[:nonceSize], ecrfile[nonceSize:]
-	dcrfile, err := gcm.Open(nil, nonce, ecrfile, nil)
+	nonce, ecrFile := ecrFile[:nonceSize], ecrFile[nonceSize:]
+	dcrFile, err := gcm.Open(nil, nonce, ecrFile, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	s := string(dcrfile)
+	s := string(dcrFile)
 	sr := strings.NewReader(s)
 	db := bufio.NewReader(sr)
 	return db, nil
@@ -152,7 +152,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 	return creds, nil
 }
 
-func finduser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
+func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 	db, err := decryptDb(dbPath, dbPwd)
 
 	if err != nil {
@@ -180,14 +180,14 @@ func finduser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 	return exists, nil
 }
 
-func genGauthloc(resPath string) (string, error) {
+func genGAuthLoc(resPath string) (string, error) {
 	gcid, err := ioutil.ReadFile(resPath + "gauth.json")
 
 	if err != nil {
 		panic(err)
 	}
 
-	gauthConfig, err := google.ConfigFromJSON(
+	gAuthConfig, err := google.ConfigFromJSON(
 		gcid,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
@@ -199,17 +199,17 @@ func genGauthloc(resPath string) (string, error) {
 		return "", err
 	}
 
-	gauthloc := gauthConfig.AuthCodeURL(
+	gAuthLoc := gAuthConfig.AuthCodeURL(
 		"state-token",
 		oauth2.AccessTypeOffline,
 	)
 
-	return gauthloc, nil
+	return gAuthLoc, nil
 }
 
 func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
 	dbPath := resPath + "creds"
-	authcode := query.Get("code")
+	authCode := query.Get("code")
 
 	clientId, err := ioutil.ReadFile(resPath + "gauth.json")
 
@@ -217,26 +217,23 @@ func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbP
 		return nil
 	}
 
-	gauthConfig, err := google.ConfigFromJSON(
+	gAuthConfig, err := google.ConfigFromJSON(
 		clientId,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
 	)
-
 	if err != nil {
 		return err
 	}
 
-	gTok, err := gauthConfig.Exchange(context.TODO(), authcode)
-
+	gTok, err := gAuthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
 		return err
 	}
 
 	token, err := json.Marshal(gTok)
-
 	if err != nil {
 		return err
 	}
@@ -245,7 +242,6 @@ func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbP
 
 	authDb.Lock()
 	err = writeCreds(creds, dbPath, dbPwd)
-
 	if err != nil {
 		return err
 	}
@@ -254,9 +250,8 @@ func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbP
 	return nil
 }
 
-func getgtok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
-	db, err := decryptDb(dbPath, dbp)
-
+func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
+	db, err := decryptDb(dbPath, dbPwd)
 	if err != nil {
 		return "", err
 	}
@@ -266,13 +261,11 @@ func getgtok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 
 	for {
 		line, err := db.ReadString('\n')
-
 		if err != nil {
 			return "", nil
 		}
 
 		ln = strings.Split(line, "\t")
-
 		if usr == ln[2] && pwd == ln[3] {
 			break
 		}
@@ -296,36 +289,31 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	usr := query.Get("usr")
 	pwd := query.Get("pwd")
 
-	gTok, err := getgtok(dbPath, dbPwd, usr, pwd)
-
+	gTok, err := getGTok(dbPath, dbPwd, usr, pwd)
 	if err != nil {
 		return "", err
 	}
 
-	gtesterr := make(chan error)
-
+	gTestErr := make(chan error)
 	if gTok != "" {
-		go gclass.Test(gcid, gTok, gtesterr)
+		go gclass.Test(gcid, gTok, gTestErr)
 	}
 
-	dmcreds, err := daymap.Auth(school, usr, pwd)
-
+	dmCreds, err := daymap.Auth(school, usr, pwd)
 	if errors.Is(err, daymap.ErrAuthFailed) {
 		return "", errAuthFailed
 	} else if err != nil {
-		userExists, err := finduser(dbPath, dbPwd, usr, pwd)
-
+		userExists, err := findUser(dbPath, dbPwd, usr, pwd)
 		if err != nil {
 			return "", err
 		}
-
 		if !userExists {
 			return "", errAuthFailed
 		}
 	}
 
 	siteTokens := map[string]string{
-		"daymap": dmcreds.Token,
+		"daymap": dmCreds.Token,
 		"gclass": "",
 	}
 
@@ -339,20 +327,19 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	token := base64.StdEncoding.EncodeToString(b)
 	cookie := "token=" + token + "; Expires="
 	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
-	timezone := dmcreds.Timezone
+	timezone := dmCreds.Timezone
 
 	if err != nil {
 		return "", err
 	}
 
-	gauthStatus := needsGAauth
+	gAuthStatus := needsGAauth
 
 	if gTok != "" {
-		err = <-gtesterr
-
+		err = <-gTestErr
 		if err == nil {
 			siteTokens["gclass"] = gTok
-			gauthStatus = nil
+			gAuthStatus = nil
 		}
 	}
 
@@ -367,13 +354,12 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 
 	authDb.Lock()
 	err = writeCreds(creds, dbPath, dbPwd)
-
 	if err != nil {
 		return "", err
 	}
 
 	authDb.Unlock()
-	return cookie, gauthStatus
+	return cookie, gAuthStatus
 }
 
 func logout(creds user, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
@@ -386,7 +372,6 @@ func logout(creds user, authDb *sync.Mutex, resPath string, dbPwd []byte) error 
 
 	authDb.Lock()
 	err := writeCreds(creds, dbPath, dbPwd)
-
 	if err != nil {
 		return err
 	}
@@ -414,8 +399,7 @@ func genCredLine(creds user) string {
 }
 
 func writeCreds(creds user, dbPath string, pwd []byte) error {
-	ecrfile, err := ioutil.ReadFile(dbPath)
-
+	ecrFile, err := ioutil.ReadFile(dbPath)
 	if err != nil {
 		return err
 	}
@@ -429,38 +413,33 @@ func writeCreds(creds user, dbPath string, pwd []byte) error {
 	} else {
 		zeroLen := 32 - len(pwd)
 		key = pwd
-
 		for i := 0; i != zeroLen; i++ {
 			key = append(key, 0x00)
 		}
 	}
 
 	aesCipher, err := aes.NewCipher(key)
-
 	if err != nil {
 		return err
 	}
 
 	gcm, err := cipher.NewGCM(aesCipher)
-
 	if err != nil {
 		return err
 	}
 
 	nonceSize := gcm.NonceSize()
-
-	if len(ecrfile) < nonceSize {
+	if len(ecrFile) < nonceSize {
 		return err
 	}
 
-	nonce, ecrfile := ecrfile[:nonceSize], ecrfile[nonceSize:]
-	dcrfile, err := gcm.Open(nil, nonce, ecrfile, nil)
-
+	nonce, ecrFile := ecrFile[:nonceSize], ecrFile[nonceSize:]
+	dcrFile, err := gcm.Open(nil, nonce, ecrFile, nil)
 	if err != nil {
 		return err
 	}
 
-	s := string(dcrfile)
+	s := string(dcrFile)
 	sr := strings.NewReader(s)
 	db := bufio.NewReader(sr)
 	var new string
@@ -492,9 +471,8 @@ func writeCreds(creds user, dbPath string, pwd []byte) error {
 		new += line
 	}
 
-	newfile := gcm.Seal(nonce, nonce, []byte(new), nil)
-	err = ioutil.WriteFile(dbPath, newfile, 0640)
-
+	newFile := gcm.Seal(nonce, nonce, []byte(new), nil)
+	err = ioutil.WriteFile(dbPath, newFile, 0640)
 	if err != nil {
 		return err
 	}

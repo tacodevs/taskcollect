@@ -37,13 +37,13 @@ type fileUploader struct {
 }
 
 /*func (u fileUploader) Read(p []byte) (int, error) {
-	mimediv := strings.NewReader(u.MimeDivider)
-	mimehead := strings.NewReader(u.MimeHeader)
+	mimeDiv := strings.NewReader(u.MimeDivider)
+	mimeHead := strings.NewReader(u.MimeHeader)
 	mimeend := strings.NewReader(u.MimeDivider + "--")
 	n := 0
 
 	for n < len(p) {
-		b, err := mimediv.ReadByte()
+		b, err := mimeDiv.ReadByte()
 
 		if err != nil && err != io.EOF {
 			return n, err
@@ -51,7 +51,7 @@ type fileUploader struct {
 			continue
 		}
 
-		b, err = mimehead.ReadByte()
+		b, err = mimeHead.ReadByte()
 
 		if err != nil && err != io.EOF {
 			return n, err
@@ -88,7 +88,6 @@ func contains(a []string, s string) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -233,40 +232,40 @@ func GetTask(creds User, id string) (Task, error) {
 			return Task{}, errors.New("DayMap: invalid task HTML response")
 		}
 
-		wlhtml := b[:i]
+		wlHtml := b[:i]
 		b = b[i:]
-		x := strings.Index(wlhtml, `<a href="`)
+		x := strings.Index(wlHtml, `<a href="`)
 
 		for x != -1 {
 			x += len(`<a href="`)
-			wlhtml = wlhtml[x:]
-			x = strings.Index(wlhtml, `"`)
+			wlHtml = wlHtml[x:]
+			x = strings.Index(wlHtml, `"`)
 
 			if x == -1 {
 				return Task{}, errors.New("DayMap: invalid task HTML response")
 			}
 
-			wll := wlhtml[:x]
-			wlhtml = wlhtml[x:]
+			wll := wlHtml[:x]
+			wlHtml = wlHtml[x:]
 			link := "https://gihs.daymap.net" + wll
-			x = strings.Index(wlhtml, "&nbsp;")
+			x = strings.Index(wlHtml, "&nbsp;")
 
 			if x == -1 {
 				return Task{}, errors.New("DayMap: invalid task HTML response")
 			}
 
 			x += len("&nbsp;")
-			wlhtml = wlhtml[x:]
-			x = strings.Index(wlhtml, "</a>")
+			wlHtml = wlHtml[x:]
+			x = strings.Index(wlHtml, "</a>")
 
 			if x == -1 {
 				return Task{}, errors.New("DayMap: invalid task HTML response")
 			}
 
-			name := wlhtml[:x]
-			wlhtml = wlhtml[x:]
+			name := wlHtml[:x]
+			wlHtml = wlHtml[x:]
 			task.WorkLinks = append(task.WorkLinks, [2]string{link, name})
-			x = strings.Index(wlhtml, `<a href="`)
+			x = strings.Index(wlHtml, `<a href="`)
 		}
 	}
 
@@ -310,17 +309,17 @@ func GetTask(creds User, id string) (Task, error) {
 			return Task{}, errors.New("DayMap: invalid task HTML response")
 		}
 
-		strmark := b[:i]
+		markStr := b[:i]
 		b = b[i:]
 
-		x := strings.Index(strmark, " / ")
+		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
 			return Task{}, errors.New("DayMap: invalid task HTML response")
 		}
 
-		st := strmark[:x]
-		sb := strmark[x+3:]
+		st := markStr[:x]
+		sb := markStr[x+3:]
 
 		it, err := strconv.Atoi(st)
 
@@ -375,40 +374,40 @@ func GetTask(creds User, id string) (Task, error) {
 			return Task{}, errors.New("DayMap: invalid task HTML response")
 		}
 
-		rlhtml := b[:i]
+		rlHtml := b[:i]
 		b = b[i:]
-		x := strings.Index(rlhtml, "DMU.OpenAttachment(")
+		x := strings.Index(rlHtml, "DMU.OpenAttachment(")
 
 		for x != -1 {
 			x += len("DMU.OpenAttachment(")
-			rlhtml = rlhtml[x:]
-			x = strings.Index(rlhtml, ")")
+			rlHtml = rlHtml[x:]
+			x = strings.Index(rlHtml, ")")
 
 			if x == -1 {
 				return Task{}, errors.New("DayMap: invalid task HTML response")
 			}
 
-			rlid := rlhtml[:x]
-			rlhtml = rlhtml[x:]
-			link := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + rlid
-			x = strings.Index(rlhtml, "&nbsp;")
+			rlId := rlHtml[:x]
+			rlHtml = rlHtml[x:]
+			link := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + rlId
+			x = strings.Index(rlHtml, "&nbsp;")
 
 			if x == -1 {
 				return Task{}, errors.New("DayMap: invalid task HTML response")
 			}
 
 			x += len("&nbsp;")
-			rlhtml = rlhtml[x:]
-			x = strings.Index(rlhtml, "</a>")
+			rlHtml = rlHtml[x:]
+			x = strings.Index(rlHtml, "</a>")
 
 			if x == -1 {
 				return Task{}, errors.New("DayMap: invalid task HTML response")
 			}
 
-			name := rlhtml[:x]
-			rlhtml = rlhtml[x:]
+			name := rlHtml[:x]
+			rlHtml = rlHtml[x:]
 			task.ResLinks = append(task.ResLinks, [2]string{link, name})
-			x = strings.Index(rlhtml, "DMU.OpenAttachment(")
+			x = strings.Index(rlHtml, "DMU.OpenAttachment(")
 		}
 	}
 
@@ -438,13 +437,13 @@ func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 	/*
 		uploadUrl := "URL TO UPLOAD TO"
 
-		mimediv := "--MultipartMimeHtmlFormBoundaryPiFa8ZSp8tLEoC81"
-		mimehead := `Content-Disposition: form-data; name="file"; filename="`
-		mimehead += filename + "\"\nContent-Type: application/octet-stream\n\n"
+		mimeDiv := "--MultipartMimeHtmlFormBoundaryPiFa8ZSp8tLEoC81"
+		mimeHead := `Content-Disposition: form-data; name="file"; filename="`
+		mimeHead += filename + "\"\nContent-Type: application/octet-stream\n\n"
 
 		uploader := fileUploader{
-			MimeDivider: mimediv,
-			MimeHeader: mimehead,
+			MimeDivider: mimeDiv,
+			MimeHeader: mimeHead,
 			FileReader: *f,
 		}
 
@@ -457,7 +456,7 @@ func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 
 		req.Header.Set(
 			"Content-Type",
-			`multipart/form-data; boundary="` + mimediv + `"`,
+			`multipart/form-data; boundary="` + mimeDiv + `"`,
 		)
 
 		req.Header.Set("Cookie", creds.Token)
@@ -520,10 +519,10 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		return errors.New("DayMap: invalid task HTML response")
 	}
 
-	rwurl := b[:i]
-	rwurl = html.UnescapeString(rwurl)
+	rwUrl := b[:i]
+	rwUrl = html.UnescapeString(rwUrl)
 	b = b[i:]
-	rwform := url.Values{}
+	rwForm := url.Values{}
 	i = strings.Index(b, "<input ")
 
 	for i != -1 {
@@ -570,8 +569,8 @@ func RemoveWork(creds User, id string, filenames []string) error {
 			return errors.New("DayMap: invalid task HTML response")
 		}
 
-		valtest := b[:i]
-		i = strings.Index(valtest, ` value="`)
+		valTest := b[:i]
+		i = strings.Index(valTest, ` value="`)
 
 		if i != -1 {
 			b = b[i:]
@@ -589,7 +588,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		}
 
 		if inputType != "checkbox" {
-			rwform.Set(name, value)
+			rwForm.Set(name, value)
 			i = strings.Index(b, "<input ")
 			continue
 		}
@@ -613,29 +612,29 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		b = b[i:]
 
 		if contains(filenames, fname) {
-			rwform.Set(name, "del")
+			rwForm.Set(name, "del")
 		}
 
 		i = strings.Index(b, "<input ")
 	}
 
-	rwform.Set("Cmd", "delete")
-	rwform.Set("__EVENTTARGET", "")
-	rwform.Set("__EVENTARGUMENT", "")
+	rwForm.Set("Cmd", "delete")
+	rwForm.Set("__EVENTTARGET", "")
+	rwForm.Set("__EVENTARGUMENT", "")
 
-	rwdata := strings.NewReader(rwform.Encode())
-	rwfurl := "https://gihs.daymap.net/daymap/student" + rwurl[1:]
-	post, err := http.NewRequest("POST", rwfurl, rwdata)
-	fmt.Println(rwform)
+	rwData := strings.NewReader(rwForm.Encode())
+	rwfurl := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]
+	fmt.Println(rwForm)
 
+	post, err := http.NewRequest("POST", rwfurl, rwData)
 	if err != nil {
 		return err
 	}
 
 	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	post.Header.Set("Cookie", creds.Token)
-	fail, err := client.Do(req)
 
+	fail, err := client.Do(req)
 	if err != nil {
 		return err
 	}
