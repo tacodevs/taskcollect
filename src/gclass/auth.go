@@ -20,7 +20,7 @@ type User struct {
 func Test(gcid []byte, gTok string, e chan error) {
 	ctx := context.Background()
 
-	gauthConfig, err := google.ConfigFromJSON(
+	gAuthConfig, err := google.ConfigFromJSON(
 		gcid,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
@@ -35,24 +35,22 @@ func Test(gcid []byte, gTok string, e chan error) {
 
 	r := strings.NewReader(gTok)
 	oauthTok := &oauth2.Token{}
-	err = json.NewDecoder(r).Decode(oauthTok)
 
+	err = json.NewDecoder(r).Decode(oauthTok)
 	if err != nil {
 		e <- err
 		return
 	}
 
-	client := gauthConfig.Client(context.Background(), oauthTok)
+	client := gAuthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(ctx, option.WithHTTPClient(client))
-
 	if err != nil {
 		e <- err
 		return
 	}
 
 	_, err = svc.Courses.List().PageSize(1).Do()
-
 	if err != nil {
 		e <- err
 		return

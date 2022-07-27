@@ -12,10 +12,10 @@ import (
 	"google.golang.org/api/option"
 )
 
-func getResp(c *classroom.Course, svc *classroom.Service, links *map[string][][2]string, rwg *sync.WaitGroup, gErrChan chan error) {
-	defer rwg.Done()
+func getResp(course *classroom.Course, svc *classroom.Service, links *map[string][][2]string, resWG *sync.WaitGroup, gErrChan chan error) {
+	defer resWG.Done()
 
-	resources, err := svc.Courses.CourseWorkMaterials.List(c.Id).Fields(
+	resources, err := svc.Courses.CourseWorkMaterials.List(course.Id).Fields(
 		"courseWorkMaterial/title",
 		"courseWorkMaterial/alternateLink",
 	).Do()
@@ -27,8 +27,8 @@ func getResp(c *classroom.Course, svc *classroom.Service, links *map[string][][2
 	}
 
 	for _, res := range resources.CourseWorkMaterial {
-		(*links)[c.Name] = append(
-			(*links)[c.Name],
+		(*links)[course.Name] = append(
+			(*links)[course.Name],
 			[2]string{res.AlternateLink, res.Title},
 		)
 	}
@@ -37,7 +37,7 @@ func getResp(c *classroom.Course, svc *classroom.Service, links *map[string][][2
 func ResLinks(creds User, gcid []byte, r chan map[string][][2]string, e chan error) {
 	ctx := context.Background()
 
-	gauthConfig, err := google.ConfigFromJSON(
+	gAuthConfig, err := google.ConfigFromJSON(
 		gcid,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
@@ -61,7 +61,7 @@ func ResLinks(creds User, gcid []byte, r chan map[string][][2]string, e chan err
 		return
 	}
 
-	client := gauthConfig.Client(context.Background(), oauthTok)
+	client := gAuthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(
 		ctx,
@@ -93,17 +93,17 @@ func ResLinks(creds User, gcid []byte, r chan map[string][][2]string, e chan err
 
 	resLinks := map[string][][2]string{}
 	gErrChan := make(chan error)
-	var rwg sync.WaitGroup // TODO: Rename variable
+	var resWG sync.WaitGroup // TODO: Rename variable
 	i := 0
 
-	for _, c := range resp.Courses {
-		resLinks[c.Name] = [][2]string{}
-		rwg.Add(1)
-		go getResp(c, svc, &resLinks, &rwg, gErrChan)
+	for _, course := range resp.Courses {
+		resLinks[course.Name] = [][2]string{}
+		resWG.Add(1)
+		go getResp(course, svc, &resLinks, &resWG, gErrChan)
 		i++
 	}
 
-	rwg.Wait()
+	resWG.Wait()
 
 	select {
 	case gcErr := <-gErrChan:

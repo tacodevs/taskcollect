@@ -45,11 +45,9 @@ func (pr postReader) Read(p []byte) (int, error) {
 			if err != nil {
 				return n, err
 			}
-
 			if c[i] != pr.div[i] {
 				break
 			}
-
 			i++
 		}
 
@@ -59,12 +57,10 @@ func (pr postReader) Read(p []byte) (int, error) {
 		if i == len(pr.div) {
 			for x := 0; x < i; x++ {
 				_, err := reader.ReadByte()
-
 				if err != nil {
 					return n, err
 				}
 			}
-
 			return n, nil
 		}
 	}
@@ -75,7 +71,6 @@ func (pr postReader) Read(p []byte) (int, error) {
 func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	reader := bufio.NewReader(r.Body)
 	line, err := reader.ReadString('\n')
-
 	if err != nil {
 		return "", nil, err
 	}
@@ -85,7 +80,6 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 
 	for line != "\n" {
 		line, err = reader.ReadString('\n')
-
 		if err != nil {
 			return "", nil, err
 		}
@@ -108,7 +102,6 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 
 	for line != "\r\n" {
 		line, err = reader.ReadString('\n')
-
 		if err != nil {
 			return "", nil, err
 		}
@@ -125,6 +118,9 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 }
 
 func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
+	// TODO: Could rename to just handleTask because "Func" is rather redundant.
+	// Or perhaps change to taskHandler since it is a handler?
+
 	res := r.URL.EscapedPath()
 	statusCode := 200
 	var webpage []byte
@@ -135,7 +131,7 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 
 		if err != nil {
 			log.Println("main.go: 130:", err)
-			webpage = []byte(srvErrPage)
+			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		} else {
 			index := strings.Index(res, "/submit")
@@ -144,17 +140,15 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 		}
 	} else if cmd == "upload" {
 		filename, reader, err := fileFromReq(r)
-
 		if err != nil {
 			log.Println("main.go: 142:", err)
-			return 500, []byte(srvErrPage), nil
+			return 500, []byte(serverErrorPage), nil
 		}
 
 		err = uploadWork(c, p, id, filename, &reader, gcid)
-
 		if err != nil {
 			log.Println("main.go: 149:", err)
-			webpage = []byte(srvErrPage)
+			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		} else {
 			index := strings.Index(res, "/upload")
@@ -169,13 +163,12 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 		}
 
 		err := removeWork(c, p, id, filenames, gcid)
-
 		if err == errNoPlatform {
 			webpage = []byte(notFoundPage)
 			statusCode = 404
 		} else if err != nil {
 			log.Println("main.go: 170:", err)
-			webpage = []byte(srvErrPage)
+			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		} else {
 			index := strings.Index(res, "/remove")
@@ -213,7 +206,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 
 		if err != nil {
 			log.Println("main.go: 208:", err)
-			webpage = []byte(srvErrPage)
+			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		}
 
@@ -247,7 +240,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		log.Println("main.go: 248:", err)
-		w.Write([]byte(srvErrPage))
+		w.Write([]byte(serverErrorPage))
 		return
 	}
 
@@ -273,7 +266,6 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			db.pwd,
 			db.gAuth,
 		)
-
 		if err == nil {
 			w.Header().Set("Location", "/tasks")
 			w.Header().Set("Set-Cookie", cookie)
@@ -286,15 +278,15 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		gauthloc, err := genGauthloc(db.path)
-
+		gAuthLoc, err := genGAuthLoc(db.path)
 		if err != nil {
 			log.Println(err)
 		} else {
-			w.Header().Set("Location", gauthloc)
+			w.Header().Set("Location", gAuthLoc)
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		}
+
 	} else if !validAuth && res == "/login" {
 		if r.URL.Query().Get("auth") == "failed" {
 			w.WriteHeader(401)
@@ -302,29 +294,30 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.Write([]byte(loginPage))
 		}
+
 	} else if !validAuth && !resIsLogin {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(302)
 	} else if validAuth && res == "/gauth" {
 		err = gAuth(creds, r.URL.Query(), db.lock, db.path, db.pwd)
-
 		if err != nil {
 			log.Println(err)
 		}
 
 		w.Header().Set("Location", "/tasks")
 		w.WriteHeader(302)
+
 	} else if validAuth && res == "/logout" {
 		err = logout(creds, db.lock, db.path, db.pwd)
-
 		if err == nil {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
 		} else {
 			log.Println("main.go: 317:", err)
 			w.WriteHeader(500)
-			w.Write([]byte(srvErrPage))
+			w.Write([]byte(serverErrorPage))
 		}
+
 	} else if validAuth && res == "/timetable.png" {
 		genTimetable(creds, w)
 	} else if validAuth && strings.HasPrefix(res, "/tasks/") {
@@ -350,7 +343,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		} else if err != nil {
 			log.Println("main.go: 343:", err)
 			w.WriteHeader(500)
-			w.Write([]byte(srvErrPage))
+			w.Write([]byte(serverErrorPage))
 		} else {
 			w.Write(webpage)
 		}
@@ -361,15 +354,15 @@ func main() {
 	curUser, err := osUser.Current()
 
 	if err != nil {
-		strerr := "taskcollect: Can't determine current user's home folder."
-		os.Stderr.WriteString(strerr + "\n")
+		errStr := "taskcollect: Can't determine current user's home folder."
+		os.Stderr.WriteString(errStr + "\n")
 		os.Exit(1)
 	}
 
 	home := curUser.HomeDir
 	resPath := home + "/res/taskcollect/"
-	//certfile := resPath + "cert.pem"
-	//keyfile := resPath + "key.pem"
+	//certFile := resPath + "cert.pem"
+	//keyFile := resPath + "key.pem"
 
 	var dbPwdInput string
 	fmt.Print("Passphrase to user credentials file: ")
@@ -379,7 +372,6 @@ func main() {
 	dbMutex := new(sync.Mutex)
 
 	gcid, err := ioutil.ReadFile(resPath + "gauth.json")
-
 	if err != nil {
 		strErr := "taskcollect: Can't read Google client ID file."
 		os.Stderr.WriteString(strErr + "\n")
@@ -393,7 +385,9 @@ func main() {
 		gAuth: gcid,
 	}
 
+	// TODO: Use http.NewServeMux
+
 	http.HandleFunc("/", db.handler)
 	http.ListenAndServe(":8080", nil)
-	//http.ListenAndServeTLS(":443", certfile, keyfile, nil)
+	//http.ListenAndServeTLS(":443", certFile, keyFile, nil)
 }

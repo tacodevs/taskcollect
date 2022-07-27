@@ -57,21 +57,18 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", lessonsUrl, nil)
-
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
 
 	dmJson := []dmlent{}
 	err = json.NewDecoder(resp.Body).Decode(&dmJson)
-
 	if err != nil {
 		return nil, err
 	}
@@ -80,13 +77,11 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	for _, l := range dmJson {
 		start, err := time.Parse("2006-01-02T15:04:05.0000000", l.Start)
-
 		if err != nil {
 			return nil, err
 		}
 
 		finish, err := time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
-
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +93,6 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		}
 
 		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
-
 		if err != nil {
 			return nil, err
 		}
