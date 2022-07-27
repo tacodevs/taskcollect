@@ -25,6 +25,7 @@ FILES
     $home/res/taskcollect/creds         User credentials database
     $home/res/taskcollect/gauth.json    Google OAuth 2.0 client ID
     $home/res/taskcollect/key.pem       TLS private key
+    $home/res/taskcollect/styles.css    Web style rules
 
 SOURCE
     /src/taskcollect/
