@@ -298,7 +298,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	usr := query.Get("usr")
 	pwd := query.Get("pwd")
 
-	gtok, err := getgtok(dbpath, dbp, usr, pwd)
+	gTok, err := getGTok(dbPath, dbPwd, usr, pwd)
 
 	if !errors.Is(err, errInvalidAuth) && err != nil {
 		return "", err
@@ -409,7 +409,7 @@ func genCredLine(creds user) string {
 }
 
 func writeCreds(creds user, dbpath string, pwd []byte) error {
-	db, err := decryptdb(dbpath, pwd)
+	db, err := decryptDb(dbpath, pwd)
 
 	if err != nil {
 		return err

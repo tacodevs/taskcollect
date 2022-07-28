@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func getResp(course *classroom.Course, svc *classroom.Service, links *map[string][][2]string, resWG *sync.WaitGroup, gErrChan chan error) {
+func getResources(course *classroom.Course, svc *classroom.Service, links *map[string][][2]string, resWG *sync.WaitGroup, gErrChan chan error) {
 	defer resWG.Done()
 
 	resources, err := svc.Courses.CourseWorkMaterials.List(course.Id).Fields(
@@ -21,7 +21,6 @@ func getResp(course *classroom.Course, svc *classroom.Service, links *map[string
 	).Do()
 
 	if err != nil {
-		panic(err)
 		gErrChan <- err
 		return
 	}
@@ -99,7 +98,7 @@ func ResLinks(creds User, gcid []byte, r chan map[string][][2]string, e chan err
 	for _, course := range resp.Courses {
 		resLinks[course.Name] = [][2]string{}
 		resWG.Add(1)
-		go getResp(course, svc, &resLinks, &resWG, gErrChan)
+		go getResources(course, svc, &resLinks, &resWG, gErrChan)
 		i++
 	}
 
