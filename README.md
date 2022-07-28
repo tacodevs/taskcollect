@@ -27,16 +27,23 @@ Build dependencies:
   * Go
   * Make
 
-TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `make configure` and `make`:
+TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `make`:
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
 cd taskcollect/src/
-make configure
 make
 ```
 
-If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing executable programs for all major operating systems and CPU architectures. From here, deployment is easy: simply run the program for your OS and CPU, and the web server will start. For more information about the deployment and running of TaskCollect, see `doc/en/cmd/taskcollect`.
+If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing executable programs for all major operating systems and CPU architectures.
+
+From here, deployment is simple:
+
+  1. Copy the contents of the `res/` folder into `$home/res/taskcollect/` where `$home` is the current user's home directory.
+
+  2. Obtain a Google OAuth 2.0 client ID and save it to `$home/res/taskcollect/` (see `doc/en/cmd/taskcollect` for more info)
+
+  3. Run the program for your OS and CPU, and the web server will start.
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
 
