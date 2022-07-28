@@ -13,35 +13,35 @@ import (
 	"google.golang.org/api/option"
 )
 
-func getTask(s *classroom.StudentSubmission, svc *classroom.Service, class string, utask *Task, twg *sync.WaitGroup, gerrchan chan error) {
-	defer twg.Done()
+func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class string, task *Task, taskWG *sync.WaitGroup, gErrChan chan error) {
+	defer taskWG.Done()
 
-	task, err := svc.Courses.CourseWork.Get(
-		s.CourseId, s.CourseWorkId,
+	gcTask, err := svc.Courses.CourseWork.Get(
+		studSub.CourseId, studSub.CourseWorkId,
 	).Fields("dueTime", "dueDate", "title", "alternateLink").Do()
 
 	if err != nil {
-		gerrchan <- err
+		gErrChan <- err
 		return
 	}
 
 	var hours, minutes, seconds, nanoseconds int
-	utask.Id = s.CourseId + "-" + s.CourseWorkId + "-" + s.Id
+	task.Id = studSub.CourseId + "-" + studSub.CourseWorkId + "-" + studSub.Id
 
-	if task.DueTime == nil {
+	if gcTask.DueTime == nil {
 		hours, minutes, seconds, nanoseconds = 0, 0, 0, 0
 	} else {
-		hours = int(task.DueTime.Hours)
-		minutes = int(task.DueTime.Minutes)
-		seconds = int(task.DueTime.Seconds)
-		nanoseconds = int(task.DueTime.Nanos)
+		hours = int(gcTask.DueTime.Hours)
+		minutes = int(gcTask.DueTime.Minutes)
+		seconds = int(gcTask.DueTime.Seconds)
+		nanoseconds = int(gcTask.DueTime.Nanos)
 	}
 
-	if task.DueDate != nil {
-		utask.Due = time.Date(
-			int(task.DueDate.Year),
-			time.Month(task.DueDate.Month),
-			int(task.DueDate.Day),
+	if gcTask.DueDate != nil {
+		task.Due = time.Date(
+			int(gcTask.DueDate.Year),
+			time.Month(gcTask.DueDate.Month),
+			int(gcTask.DueDate.Day),
 			hours,
 			minutes,
 			seconds,
@@ -50,19 +50,19 @@ func getTask(s *classroom.StudentSubmission, svc *classroom.Service, class strin
 		)
 	}
 
-	if s.State == "TURNED_IN" || s.State == "RETURNED" {
-		utask.Submitted = true
+	if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {
+		task.Submitted = true
 	}
 
-	utask.Name = task.Title
-	utask.Class = class
-	utask.Link = task.AlternateLink
-	utask.Platform = "gclass"
+	task.Name = gcTask.Title
+	task.Class = class
+	task.Link = gcTask.AlternateLink
+	task.Platform = "gclass"
 }
 
-func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task, swg *sync.WaitGroup, gerrchan chan error) {
-        defer swg.Done()
-        resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
+func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, swg *sync.WaitGroup, gErrChan chan error) {
+	defer swg.Done()
+	resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
 		c.Id, "-",
 	).Fields(
 		"studentSubmissions/id",
@@ -71,45 +71,35 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, utasks *[]Task,
 		"studentSubmissions/courseWorkId",
 	).Do()
 
-        if err != nil {
-                gerrchan <- err
+	if err != nil {
+		gErrChan <- err
 		return
-        }
+	}
 
 	submissions := make([]Task, len(resp.StudentSubmissions))
-	var twg sync.WaitGroup
+	var taskWG sync.WaitGroup
 	i := 0
 
-	for _, s := range resp.StudentSubmissions {
-		twg.Add(1)
-		go getTask(s, svc, c.Name, &submissions[i], &twg, gerrchan)
+	for _, studSub := range resp.StudentSubmissions {
+		taskWG.Add(1)
+		go getTask(studSub, svc, c.Name, &submissions[i], &taskWG, gErrChan)
 		i++
 	}
 
-	twg.Wait()
-	*utasks = submissions
+	taskWG.Wait()
+	*tasks = submissions
 }
 
 func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) {
-        ctx := context.Background()
+	ctx := context.Background()
 
-        gauthcnf, err := google.ConfigFromJSON(
-                gcid,
-                classroom.ClassroomCoursesReadonlyScope,
+	gAuthConfig, err := google.ConfigFromJSON(
+		gcid,
+		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-        )
-
-        if err != nil {
-		t <- nil
-                e <- err
-                return
-        }
-
-        r := strings.NewReader(creds.Token)
-        oatok := &oauth2.Token{}
-        err = json.NewDecoder(r).Decode(oatok)
+	)
 
 	if err != nil {
 		t <- nil
@@ -117,7 +107,17 @@ func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) 
 		return
 	}
 
-        client := gauthcnf.Client(context.Background(), oatok)
+	r := strings.NewReader(creds.Token)
+	oauthTok := &oauth2.Token{}
+	err = json.NewDecoder(r).Decode(oauthTok)
+
+	if err != nil {
+		t <- nil
+		e <- err
+		return
+	}
+
+	client := gAuthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(
 		ctx,
@@ -147,61 +147,61 @@ func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) 
 		return
 	}
 
-	gerrchan := make(chan error)
-	utasks := make([][]Task, len(resp.Courses))
+	gErrChan := make(chan error)
+	tasks := make([][]Task, len(resp.Courses))
 	var swg sync.WaitGroup
 	i := 0
 
 	for _, c := range resp.Courses {
 		swg.Add(1)
-		go getSubmissions(c, svc, &utasks[i], &swg, gerrchan)
+		go getSubmissions(c, svc, &tasks[i], &swg, gErrChan)
 		i++
 	}
 
 	swg.Wait()
 
 	select {
-	case gcerr := <-gerrchan:
+	case gcErr := <-gErrChan:
 		t <- nil
-		e <- gcerr
+		e <- gcErr
 		return
 	default:
 		break
 	}
 
-	tasks := map[string][]Task{
-		"tasks": {},
-		"notdue": {},
-		"overdue": {},
+	gcTasks := map[string][]Task{
+		"tasks":     {},
+		"notDue":    {},
+		"overdue":   {},
 		"submitted": {},
 	}
 
-	for x := 0; x < len(utasks); x++ {
-		for y := 0; y < len(utasks[x]); y++ {
-			if utasks[x][y].Submitted {
-				tasks["submitted"] = append(
-					tasks["submitted"],
-					utasks[x][y],
+	for x := 0; x < len(tasks); x++ {
+		for y := 0; y < len(tasks[x]); y++ {
+			if tasks[x][y].Submitted {
+				gcTasks["submitted"] = append(
+					gcTasks["submitted"],
+					tasks[x][y],
 				)
-			} else if (utasks[x][y].Due == time.Time{}) {
-				tasks["notdue"] = append(
-					tasks["notdue"],
-					utasks[x][y],
+			} else if (tasks[x][y].Due == time.Time{}) {
+				gcTasks["notDue"] = append(
+					gcTasks["notDue"],
+					tasks[x][y],
 				)
-			} else if utasks[x][y].Due.Before(time.Now()) {
-				tasks["overdue"] = append(
-					tasks["overdue"],
-					utasks[x][y],
+			} else if tasks[x][y].Due.Before(time.Now()) {
+				gcTasks["overdue"] = append(
+					gcTasks["overdue"],
+					tasks[x][y],
 				)
 			} else {
-				tasks["tasks"] = append(
-					tasks["tasks"],
-					utasks[x][y],
-				)				
+				gcTasks["tasks"] = append(
+					gcTasks["tasks"],
+					tasks[x][y],
+				)
 			}
 		}
 	}
 
-	t <- tasks
+	t <- gcTasks
 	e <- nil
 }

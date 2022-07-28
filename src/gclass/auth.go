@@ -14,13 +14,13 @@ import (
 
 type User struct {
 	Timezone *time.Location
-	Token string
+	Token    string
 }
 
-func Test(gcid []byte, gtok string, e chan error) {
+func Test(gcid []byte, gTok string, e chan error) {
 	ctx := context.Background()
 
-	gauthcnf, err := google.ConfigFromJSON(
+	gAuthConfig, err := google.ConfigFromJSON(
 		gcid,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
@@ -33,26 +33,24 @@ func Test(gcid []byte, gtok string, e chan error) {
 		return
 	}
 
-	r := strings.NewReader(gtok)
-	oatok := &oauth2.Token{}
-	err = json.NewDecoder(r).Decode(oatok)
+	r := strings.NewReader(gTok)
+	oauthTok := &oauth2.Token{}
 
+	err = json.NewDecoder(r).Decode(oauthTok)
 	if err != nil {
 		e <- err
 		return
 	}
 
-	client := gauthcnf.Client(context.Background(), oatok)
+	client := gAuthConfig.Client(context.Background(), oauthTok)
 
 	svc, err := classroom.NewService(ctx, option.WithHTTPClient(client))
-
 	if err != nil {
 		e <- err
-                return
+		return
 	}
 
 	_, err = svc.Courses.List().PageSize(1).Do()
-
 	if err != nil {
 		e <- err
 		return

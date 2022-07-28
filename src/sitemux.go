@@ -10,33 +10,33 @@ import (
 )
 
 type task struct {
-	Name string
-	Class string
-	Link string
-	Desc string
-	Due time.Time
-	Reslinks [][2]string
-	Upload bool
-	Worklinks [][2]string
+	Name      string
+	Class     string
+	Link      string
+	Desc      string
+	Due       time.Time
+	ResLinks  [][2]string
+	Upload    bool
+	WorkLinks [][2]string
 	Submitted bool
-	Grade string
-	Comment string
-	Platform string
-	Id string
+	Grade     string
+	Comment   string
+	Platform  string
+	Id        string
 }
 
 type lesson struct {
-	Start time.Time
-	End time.Time
-	Class string
-	Room string
+	Start   time.Time
+	End     time.Time
+	Class   string
+	Room    string
 	Teacher string
-	Notice string
+	Notice  string
 }
 
-func reslistContains(reslist [][2]string, reslink [2]string) bool {
-	for i := 0; i < len(reslist); i++ {
-		if reslist[i] == reslink {
+func resListContains(resList [][2]string, resLink [2]string) bool {
+	for i := 0; i < len(resList); i++ {
+		if resList[i] == resLink {
 			return true
 		}
 	}
@@ -47,18 +47,18 @@ func reslistContains(reslist [][2]string, reslink [2]string) bool {
 func getLessons(creds user) ([][]lesson, error) {
 	lessons := [][]lesson{}
 
-	dmcreds := daymap.User{
+	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["daymap"],
+		Token:    creds.SiteTokens["daymap"],
 	}
 
-	dmlessons, err := daymap.GetLessons(dmcreds)
+	dmLessons, err := daymap.GetLessons(dmCreds)
 
-	for i := 0; i < len(dmlessons); i++ {
+	for i := 0; i < len(dmLessons); i++ {
 		day := []lesson{}
 
-		for j := 0; j < len(dmlessons[i]); j++ {
-			day = append(day, lesson(dmlessons[i][j]))
+		for j := 0; j < len(dmLessons[i]); j++ {
+			day = append(day, lesson(dmLessons[i][j]))
 		}
 
 		lessons = append(lessons, day)
@@ -68,25 +68,25 @@ func getLessons(creds user) ([][]lesson, error) {
 }
 
 func getTasks(creds user, gcid []byte) (map[string][]task, error) {
-	gcchan := make(chan map[string][]gclass.Task)
-	gcerr := make(chan error)
+	gcChan := make(chan map[string][]gclass.Task)
+	gcErr := make(chan error)
 
-	gccreds := gclass.User{
+	gcCreds := gclass.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["gclass"],
+		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ListTasks(gccreds, gcid, gcchan, gcerr)
+	go gclass.ListTasks(gcCreds, gcid, gcChan, gcErr)
 
-	dmchan := make(chan map[string][]daymap.Task)
-	dmerr := make(chan error)
+	dmChan := make(chan map[string][]daymap.Task)
+	dmErr := make(chan error)
 
-	dmcreds := daymap.User{
+	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["daymap"],
+		Token:    creds.SiteTokens["daymap"],
 	}
 
-	go daymap.ListTasks(dmcreds, dmchan, dmerr)
+	go daymap.ListTasks(dmCreds, dmChan, dmErr)
 
 	t := map[string][]task{}
 	tasks := map[string][]task{}
@@ -98,53 +98,55 @@ func getTasks(creds user, gcid []byte) (map[string][]task, error) {
 
 	dmtasks, err := <-dmchan, <-dmerr
 
+	gcTasks, err := <-gcChan, <-gcErr
+	dmTasks, err := <-dmChan, <-dmErr
 	if err != nil {
 		log.Println(err)
 	}
 
-	for c, tasklist := range gctasks {
-		for i := 0; i < len(tasklist); i++ {
-			t[c] = append(t[c], task(tasklist[i]))
+	for c, taskList := range gcTasks {
+		for i := 0; i < len(taskList); i++ {
+			t[c] = append(t[c], task(taskList[i]))
 		}
 	}
 
-	for c, tasklist := range dmtasks {
-		for i := 0; i < len(tasklist); i++ {
-			t[c] = append(t[c], task(tasklist[i]))
+	for c, taskList := range dmTasks {
+		for i := 0; i < len(taskList); i++ {
+			t[c] = append(t[c], task(taskList[i]))
 		}
 	}
 
-	for c, tasklist := range t {
+	for c, taskList := range t {
 		if c == "tasks" {
 			times := []int{}
-			tidx := map[int]int{}
+			taskIdx := map[int]int{}
 
-			for i := 0; i < len(tasklist); i++ {
-				time := int(tasklist[i].Due.Unix())
+			for i := 0; i < len(taskList); i++ {
+				time := int(taskList[i].Due.Unix())
 				times = append(times, time)
-				tidx[time] = i
+				taskIdx[time] = i
 			}
 
 			sort.Ints(times)
 
 			for i := 0; i < len(times); i++ {
-				x := tidx[times[i]]
-				tasks[c] = append(tasks[c], tasklist[x])
+				x := taskIdx[times[i]]
+				tasks[c] = append(tasks[c], taskList[x])
 			}
 		} else {
 			names := []string{}
-			tidx := map[string]int{}
+			taskIdx := map[string]int{}
 
-			for i := 0; i < len(tasklist); i++ {
-				names = append(names, tasklist[i].Name)
-				tidx[tasklist[i].Name] = i
+			for i := 0; i < len(taskList); i++ {
+				names = append(names, taskList[i].Name)
+				taskIdx[taskList[i].Name] = i
 			}
 
 			sort.Strings(names)
 
 			for i := 0; i < len(names); i++ {
-				x := tidx[names[i]]
-				tasks[c] = append(tasks[c], tasklist[x])
+				x := taskIdx[names[i]]
+				tasks[c] = append(tasks[c], taskList[x])
 			}
 		}
 	}
@@ -152,26 +154,26 @@ func getTasks(creds user, gcid []byte) (map[string][]task, error) {
 	return tasks, err
 }
 
-func getReslinks(creds user, gcid []byte) ([]string, map[string][][2]string, error) {
-	grchan := make(chan map[string][][2]string)
-	gechan := make(chan error)
+func getResLinks(creds user, gcid []byte) ([]string, map[string][][2]string, error) {
+	gResChan := make(chan map[string][][2]string)
+	gErrChan := make(chan error)
 
-	gccreds := gclass.User{
+	gcCreds := gclass.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["gclass"],
+		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.Reslinks(gccreds, gcid, grchan, gechan)
+	go gclass.ResLinks(gcCreds, gcid, gResChan, gErrChan)
 
-	dmrchan := make(chan map[string][][2]string)
-	dmechan := make(chan error)
+	dmResChan := make(chan map[string][][2]string)
+	dmErrChan := make(chan error)
 
-	dmcreds := daymap.User{
+	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
-		Token: creds.SiteTokens["daymap"],
+		Token:    creds.SiteTokens["daymap"],
 	}
 
-	go daymap.Reslinks(dmcreds, dmrchan, dmechan)
+	go daymap.ResLinks(dmCreds, dmResChan, dmErrChan)
 
 	r := map[string][][2]string{}
 	gcreslinks, err := <-grchan, <-gechan
@@ -186,23 +188,23 @@ func getReslinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 		log.Println(err)
 	}
 
-	for c, reslist := range gcreslinks {
-		for i := 0; i < len(reslist); i++ {
-			if !reslistContains(r[c], reslist[i]) {
-				r[c] = append(r[c], reslist[i])
+	for c, resList := range gcResLinks {
+		for i := 0; i < len(resList); i++ {
+			if !resListContains(r[c], resList[i]) {
+				r[c] = append(r[c], resList[i])
 			}
 		}
 	}
 
-	for c, reslist := range dmreslinks {
-		for i := 0; i < len(reslist); i++ {
-			if !reslistContains(r[c], reslist[i]) {
-				r[c] = append(r[c], reslist[i])
+	for c, resList := range dmResLinks {
+		for i := 0; i < len(resList); i++ {
+			if !resListContains(r[c], resList[i]) {
+				r[c] = append(r[c], resList[i])
 			}
 		}
 	}
 
-	reslinks := map[string][][2]string{}
+	resLinks := map[string][][2]string{}
 	classes := []string{}
 
 	for c := range r {
@@ -213,26 +215,26 @@ func getReslinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 
 	for c, rls := range r {
 		res := []string{}
-		residx := map[string]int{}
+		resIdx := map[string]int{}
 
 		for i := 0; i < len(rls); i++ {
 			res = append(res, rls[i][1])
-			residx[rls[i][1]] = i
+			resIdx[rls[i][1]] = i
 		}
 
 		sort.Strings(res)
 
 		for i := 0; i < len(res); i++ {
-			linkIdx := residx[res[i]]
+			linkIdx := resIdx[res[i]]
 
-			reslinks[c] = append(
-				reslinks[c],
+			resLinks[c] = append(
+				resLinks[c],
 				[2]string{rls[linkIdx][0], res[i]},
 			)
 		}
 	}
 
-	return classes, reslinks, err
+	return classes, resLinks, err
 }
 
 func getTask(platform, taskId string, creds user, gcid []byte) (task, error) {
@@ -241,23 +243,21 @@ func getTask(platform, taskId string, creds user, gcid []byte) (task, error) {
 
 	switch platform {
 	case "gclass":
-		gccreds := gclass.User{
+		gcCreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
-
-		gctask, gcerr := gclass.GetTask(gccreds, gcid, taskId)
-		assignment = task(gctask)
-		err = gcerr
+		gcTask, gcErr := gclass.GetTask(gcCreds, gcid, taskId)
+		assignment = task(gcTask)
+		err = gcErr
 	case "daymap":
-		dmcreds := daymap.User{
+		dmCreds := daymap.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["daymap"],
+			Token:    creds.SiteTokens["daymap"],
 		}
-
-		dmtask, dmerr := daymap.GetTask(dmcreds, taskId)
-		assignment = task(dmtask)
-		err = dmerr
+		dmTask, dmErr := daymap.GetTask(dmCreds, taskId)
+		assignment = task(dmTask)
+		err = dmErr
 	}
 
 	return assignment, err
@@ -268,12 +268,11 @@ func submitTask(creds user, platform, taskId string, gcid []byte) error {
 
 	switch platform {
 	case "gclass":
-		gccreds := gclass.User{
+		gcCreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
-
-		err = gclass.SubmitTask(gccreds, gcid, taskId)
+		err = gclass.SubmitTask(gcCreds, gcid, taskId)
 	}
 
 	return err
@@ -284,19 +283,17 @@ func uploadWork(creds user, platform, id, filename string, f *io.Reader, gcid []
 
 	switch platform {
 	case "gclass":
-		gccreds := gclass.User{
+		gcCreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
-
-		err = gclass.UploadWork(gccreds, gcid, id, filename, f)
+		err = gclass.UploadWork(gcCreds, gcid, id, filename, f)
 	case "daymap":
-		dmcreds := daymap.User{
+		dmCreds := daymap.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["daymap"],
+			Token:    creds.SiteTokens["daymap"],
 		}
-
-		err = daymap.UploadWork(dmcreds, id, filename, f)
+		err = daymap.UploadWork(dmCreds, id, filename, f)
 	}
 
 	return err
@@ -307,19 +304,17 @@ func removeWork(creds user, platform, taskId string, filenames []string, gcid []
 
 	switch platform {
 	case "gclass":
-		gccreds := gclass.User{
+		gcCreds := gclass.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["gclass"],
+			Token:    creds.SiteTokens["gclass"],
 		}
-
-		err = gclass.RemoveWork(gccreds, gcid, taskId, filenames)
+		err = gclass.RemoveWork(gcCreds, gcid, taskId, filenames)
 	case "daymap":
-		dmcreds := daymap.User{
+		dmCreds := daymap.User{
 			Timezone: creds.Timezone,
-			Token: creds.SiteTokens["daymap"],
+			Token:    creds.SiteTokens["daymap"],
 		}
-
-		err = daymap.RemoveWork(dmcreds, taskId, filenames)
+		err = daymap.RemoveWork(dmCreds, taskId, filenames)
 	}
 
 	return err
