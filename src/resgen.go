@@ -22,16 +22,16 @@ import (
 )
 
 var colors = []color.RGBA{
-	{0x00, 0x28, 0x70, 0xff},
-	{0x00, 0x70, 0x00, 0xff},
-	{0x58, 0x09, 0x7e, 0xff},
-	{0xab, 0x31, 0x7b, 0xff},
-	{0xaa, 0x00, 0x00, 0xff},
-	{0xab, 0x63, 0x00, 0xff},
-	{0x70, 0x26, 0x00, 0xff},
-	{0x00, 0x58, 0x70, 0xff},
-	{0x1b, 0x86, 0x69, 0xff},
-	{0x60, 0x60, 0x60, 0xff},
+	{0x00, 0x28, 0x70, 0xff}, // Dark blue
+	{0x00, 0x70, 0x00, 0xff}, // Green
+	{0x58, 0x09, 0x7e, 0xff}, // Purple
+	{0xab, 0x31, 0x7b, 0xff}, // Fuchsia
+	{0xaa, 0x00, 0x00, 0xff}, // Dark red
+	{0xab, 0x63, 0x00, 0xff}, // Tan
+	{0x70, 0x26, 0x00, 0xff}, // Brown
+	{0x00, 0x58, 0x70, 0xff}, // Dark azure
+	{0x1b, 0x86, 0x69, 0xff}, // Teal
+	{0x60, 0x60, 0x60, 0xff}, // Grey
 }
 
 func contains(strSlice []string, str string) bool {
@@ -44,10 +44,10 @@ func contains(strSlice []string, str string) bool {
 	return false
 }
 
-func dueDateString(due time.Time, creds user) string {
+func genDueStr(due time.Time, creds user) string {
 	var dueDate string
 	now := time.Now().In(creds.Timezone)
-	ldue := due.In(creds.Timezone)
+	localDueDate := due.In(creds.Timezone)
 
 	todayStart := time.Date(
 		now.Year(),
@@ -61,49 +61,45 @@ func dueDateString(due time.Time, creds user) string {
 	tmrEnd := todayStart.AddDate(0, 0, 2)
 	weekEnd := todayStart.AddDate(0, 0, 7)
 
-	if ldue.Before(todayStart) {
-		dueDate = strconv.Itoa(ldue.Day())
-		dueDate += " " + ldue.Month().String()
-
-		if ldue.Year() != now.Year() {
-			dueDate += " " + strconv.Itoa(ldue.Year())
+	if localDueDate.Before(todayStart) {
+		dueDate = strconv.Itoa(localDueDate.Day())
+		dueDate += " " + localDueDate.Month().String()
+		if localDueDate.Year() != now.Year() {
+			dueDate += " " + strconv.Itoa(localDueDate.Year())
 		}
-	} else if ldue.Before(todayEnd) {
+	} else if localDueDate.Before(todayEnd) {
 		dueDate = "Today"
-	} else if ldue.Before(tmrEnd) {
+	} else if localDueDate.Before(tmrEnd) {
 		dueDate = "Tomorrow"
-	} else if ldue.Before(weekEnd) {
-		dueDate = ldue.Weekday().String()
+	} else if localDueDate.Before(weekEnd) {
+		dueDate = localDueDate.Weekday().String()
 	} else {
-		dueDate = strconv.Itoa(ldue.Day())
-		dueDate += " " + ldue.Month().String()
-
-		if ldue.Year() != now.Year() {
-			dueDate += " " + strconv.Itoa(ldue.Year())
+		dueDate = strconv.Itoa(localDueDate.Day())
+		dueDate += " " + localDueDate.Month().String()
+		if localDueDate.Year() != now.Year() {
+			dueDate += " " + strconv.Itoa(localDueDate.Year())
 		}
 	}
 
-	if ldue.Hour() != 0 || ldue.Minute() != 0 {
-		strHour := strconv.Itoa(ldue.Hour())
-
+	if localDueDate.Hour() != 0 || localDueDate.Minute() != 0 {
+		strHour := strconv.Itoa(localDueDate.Hour())
 		if len(strHour) == 1 {
 			strHour = "0" + strHour
 		}
 
-		strMinute := strconv.Itoa(ldue.Minute())
-
+		strMinute := strconv.Itoa(localDueDate.Minute())
 		if len(strMinute) == 1 {
 			strMinute = "0" + strMinute
 		}
 
-		dueDate += ", " + strHour + ":" + strMinute		
+		dueDate += ", " + strHour + ":" + strMinute
 	}
 
 	return dueDate
 }
 
-func genLesson(dwg *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l lesson) {
-	defer dwg.Done()
+func genLesson(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l lesson) {
+	defer daymapWG.Done()
 
 	canvas := image.NewRGBA(
 		image.Rectangle{
@@ -118,44 +114,42 @@ func genLesson(dwg *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l 
 		}
 	}
 
-	boldfont, err := freetype.ParseFont(gobold.TTF)
-
+	boldFont, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
 		*img = canvas
-		dwg.Done()
+		daymapWG.Done()
 		return
 	}
 
-	regfont, err := freetype.ParseFont(goregular.TTF)
-
+	regFont, err := freetype.ParseFont(goregular.TTF)
 	if err != nil {
 		*img = canvas
-		dwg.Done()
+		daymapWG.Done()
 		return
 	}
 
-	headface := truetype.NewFace(boldfont, &truetype.Options{
-		Size: 16.0,
-		DPI: 72,
+	headFace := truetype.NewFace(boldFont, &truetype.Options{
+		Size:    16.0,
+		DPI:     72,
 		Hinting: font.HintingNone,
 	})
 
-	boldface := truetype.NewFace(boldfont, &truetype.Options{
-		Size: 12.0,
-		DPI: 72,
+	boldface := truetype.NewFace(boldFont, &truetype.Options{
+		Size:    12.0,
+		DPI:     72,
 		Hinting: font.HintingNone,
 	})
 
-	regface := truetype.NewFace(regfont, &truetype.Options{
-		Size: 12.0,
-		DPI: 72,
+	regFace := truetype.NewFace(regFont, &truetype.Options{
+		Size:    12.0,
+		DPI:     72,
 		Hinting: font.HintingNone,
 	})
 
 	d := font.Drawer{
-		Dst: canvas,
-		Src: image.White,
-		Face: headface,
+		Dst:  canvas,
+		Src:  image.White,
+		Face: headFace,
 	}
 
 	d.Dot = fixed.Point26_6{
@@ -178,11 +172,11 @@ func genLesson(dwg *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l 
 	}
 
 	d.Src = image.White
-	d.Face = regface
+	d.Face = regFace
 
 	d.Dot = fixed.Point26_6{
 		X: fixed.I(5),
-		Y: fixed.I(35+offset),
+		Y: fixed.I(35 + offset),
 	}
 
 	s := l.Start.Format("15:04") + "-" + l.End.Format("15:04")
@@ -191,52 +185,51 @@ func genLesson(dwg *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l 
 
 	d.Dot = fixed.Point26_6{
 		X: fixed.I(5),
-		Y: fixed.I(50+offset),
+		Y: fixed.I(50 + offset),
 	}
 
 	d.DrawString(l.Teacher)
 	*img = canvas
 }
 
-func genDay(wg *sync.WaitGroup, img *image.Image, w, h int, c color.RGBA, lc map[string]color.RGBA, day []lesson) {
+func genDay(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, colorList map[string]color.RGBA, day []lesson) {
 	defer wg.Done()
 
 	minPerDay := float64(600)
-	pxPerMin := float64(h)/minPerDay
+	pxPerMin := float64(h) / minPerDay
 	lessonStartPx := []int{}
 	lessonDurationPx := []int{}
 
 	for i := 0; i < len(day); i++ {
 		minOffset := day[i].Start.Hour()*60 + day[i].Start.Minute()
-		minOffset -= 8*60
-		pxOffset := float64(minOffset)*pxPerMin
+		minOffset -= 8 * 60
+		pxOffset := float64(minOffset) * pxPerMin
 		lessonStartPx = append(lessonStartPx, int(pxOffset))
 	}
 
 	for i := 0; i < len(day); i++ {
 		maxOffset := day[i].End.Hour()*60 + day[i].End.Minute()
 		maxOffset -= day[i].Start.Hour()*60 + day[i].Start.Minute()
-		pxOffset := float64(maxOffset)*pxPerMin
+		pxOffset := float64(maxOffset) * pxPerMin
 		lessonDurationPx = append(lessonDurationPx, int(pxOffset))
 	}
 
-	imgnil := image.NewRGBA(image.Rectangle{
+	imgNil := image.NewRGBA(image.Rectangle{
 		image.Point{0, 0}, image.Point{0, 0},
 	})
 
 	lessons := []image.Image{}
-	var dwg sync.WaitGroup
+	var daymapWG sync.WaitGroup
 
 	for i := 0; i < len(day); i++ {
-		lessons = append(lessons, imgnil)
+		lessons = append(lessons, imgNil)
 	}
 
 	for i := 0; i < len(day); i++ {
-		dwg.Add(1)
-
+		daymapWG.Add(1)
 		go genLesson(
-			&dwg,
-			lc[day[i].Class],
+			&daymapWG,
+			colorList[day[i].Class],
 			&lessons[i],
 			w,
 			lessonDurationPx[i],
@@ -257,7 +250,7 @@ func genDay(wg *sync.WaitGroup, img *image.Image, w, h int, c color.RGBA, lc map
 		}
 	}
 
-	dwg.Wait()
+	daymapWG.Wait()
 
 	for i := 0; i < len(day); i++ {
 		sr := lessons[i].Bounds()
@@ -281,10 +274,10 @@ func genTimetable(creds user, w http.ResponseWriter) {
 	const width = 1135
 	const height = 800
 	const numOfDays = 5
-	const dayWidth = 1135/numOfDays
+	const dayWidth = 1135 / numOfDays
 
 	weekday := int(time.Now().Weekday())
-	dayOffset := (weekday-1)*dayWidth
+	dayOffset := (weekday - 1) * dayWidth
 	classes := []string{}
 
 	for i := 0; i < len(lessons); i++ {
@@ -295,11 +288,11 @@ func genTimetable(creds user, w http.ResponseWriter) {
 		}
 	}
 
-	lc := map[string]color.RGBA{}
+	colorList := map[string]color.RGBA{}
 
 	for i := 0; i < len(classes); i++ {
-		idx := i%len(colors)
-		lc[classes[i]] = colors[idx]
+		idx := i % len(colors)
+		colorList[classes[i]] = colors[idx]
 	}
 
 	days := [numOfDays]image.Image{}
@@ -322,7 +315,7 @@ func genTimetable(creds user, w http.ResponseWriter) {
 			dayWidth-40,
 			height-80,
 			c,
-			lc,
+			colorList,
 			lessons[i],
 		)
 	}
@@ -366,22 +359,22 @@ func genTimetable(creds user, w http.ResponseWriter) {
 		}
 	}
 
-	boldfont, err := freetype.ParseFont(gobold.TTF)
+	boldFont, err := freetype.ParseFont(gobold.TTF)
 
 	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
 
-	face := truetype.NewFace(boldfont, &truetype.Options{
-		Size: 16.0,
-		DPI: 72,
+	face := truetype.NewFace(boldFont, &truetype.Options{
+		Size:    16.0,
+		DPI:     72,
 		Hinting: font.HintingNone,
 	})
 
 	d := font.Drawer{
-		Dst: canvas,
-		Src: image.White,
+		Dst:  canvas,
+		Src:  image.White,
 		Face: face,
 	}
 
@@ -401,9 +394,9 @@ func genTimetable(creds user, w http.ResponseWriter) {
 		s := time.Weekday(i+1).String() + ", "
 		s += monday.AddDate(0, 0, i).Format("2 January")
 
-		slen := font.MeasureString(face, s).Round()
-		xpt := dayWidth*i
-		xpt += (dayWidth - slen) / 2
+		strLen := font.MeasureString(face, s).Round()
+		xpt := dayWidth * i
+		xpt += (dayWidth - strLen) / 2
 
 		d.Dot = fixed.Point26_6{
 			X: fixed.I(xpt),
@@ -416,7 +409,7 @@ func genTimetable(creds user, w http.ResponseWriter) {
 	wg.Wait()
 
 	for i := 0; i < numOfDays; i++ {
-		xp := dayWidth*i+20
+		xp := dayWidth*i + 20
 		sr := days[i].Bounds()
 		dp := image.Point{xp, 60}
 		r := sr.Sub(sr.Min).Add(dp)
@@ -428,15 +421,16 @@ func genTimetable(creds user, w http.ResponseWriter) {
 	}
 }
 
-func genHtmlTasks(assignment task, nodue bool, creds user) string {
-	dueDate := dueDateString(assignment.Due, creds)
+func genHtmlTasks(assignment task, noDue bool, creds user) string {
+	dueDate := genDueStr(assignment.Due, creds)
 	h := "<tr>\n"
 
-	if !nodue {
+	if !noDue {
 		h += "<td>" + html.EscapeString(dueDate)
 		h += "</td>\n"
 	}
 
+	// TODO: use HTML templates as this is messy.
 	h += "<td>" + html.EscapeString(assignment.Class)
 	h += "</td>\n<td>" + `<a href="/tasks/`
 	h += html.EscapeString(assignment.Platform) + "/"
@@ -450,7 +444,7 @@ func genHtmlTasks(assignment task, nodue bool, creds user) string {
 	return h
 }
 
-func genHtmlReslinks(class string, res [][2]string) string {
+func genHtmlResLinks(class string, res [][2]string) string {
 	h := "<h2>" + html.EscapeString(class)
 	h += "</h2>\n<ul>\n"
 
@@ -477,7 +471,7 @@ func genHtmlTask(assignment task, creds user) string {
 
 	if !assignment.Due.IsZero() {
 		h += "<h4>Due "
-		h += html.EscapeString(dueDateString(assignment.Due, creds))
+		h += html.EscapeString(genDueStr(assignment.Due, creds))
 		h += "</h4>\n"
 	}
 
@@ -489,23 +483,21 @@ func genHtmlTask(assignment task, creds user) string {
 	}
 
 	if assignment.Desc != "" {
-		taskdesc := html.EscapeString(assignment.Desc)
-		taskdesc = strings.ReplaceAll(taskdesc, "\n", "<br>")
+		taskDesc := html.EscapeString(assignment.Desc)
+		taskDesc = strings.ReplaceAll(taskDesc, "\n", "<br>")
 		h += "<hr>\n<h4>Task description</h4>\n<p>"
-		h += taskdesc + "</p>\n"
+		h += taskDesc + "</p>\n"
 	}
 
-	if assignment.Reslinks != nil {
+	if assignment.ResLinks != nil {
 		h += "<hr>\n<h4>Linked resources</h4>\n<ul>\n"
-
-		for i := 0; i < len(assignment.Reslinks); i++ {
+		for i := 0; i < len(assignment.ResLinks); i++ {
 			h += "<li><a href=\""
-			h += html.EscapeString(assignment.Reslinks[i][0])
+			h += html.EscapeString(assignment.ResLinks[i][0])
 			h += "\">"
-			h += html.EscapeString(assignment.Reslinks[i][1])
+			h += html.EscapeString(assignment.ResLinks[i][1])
 			h += "</a></li>\n"
 		}
-
 		h += "</ul>\n"
 	}
 
@@ -517,15 +509,15 @@ func genHtmlTask(assignment task, creds user) string {
 		h += html.EscapeString(assignment.Platform) + "/"
 		h += html.EscapeString(assignment.Id) + "/remove\">\n"
 
-		for i := 0; i < len(assignment.Worklinks); i++ {
+		for i := 0; i < len(assignment.WorkLinks); i++ {
 			h += `<input type="checkbox" name="`
-			h += html.EscapeString(assignment.Worklinks[i][1])
+			h += html.EscapeString(assignment.WorkLinks[i][1])
 			h += `">` + "\n" + `<label for="`
-			h += html.EscapeString(assignment.Worklinks[i][1])
+			h += html.EscapeString(assignment.WorkLinks[i][1])
 			h += `"><a href="`
-			h += html.EscapeString(assignment.Worklinks[i][0])
+			h += html.EscapeString(assignment.WorkLinks[i][0])
 			h += `">`
-			h += html.EscapeString(assignment.Worklinks[i][1])
+			h += html.EscapeString(assignment.WorkLinks[i][1])
 			h += "</a></label><br>\n"
 		}
 
@@ -542,10 +534,10 @@ func genHtmlTask(assignment task, creds user) string {
 	}
 
 	if assignment.Comment != "" {
-		taskcmt := html.EscapeString(assignment.Comment)
-		taskcmt = strings.ReplaceAll(taskcmt, "\n", "<br>")
+		taskCmt := html.EscapeString(assignment.Comment)
+		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
 		h += "<h4>Teacher comment:</h4>\n<p>"
-		h += taskcmt + "</p>\n"
+		h += taskCmt + "</p>\n"
 	}
 
 	return h
@@ -581,11 +573,11 @@ func genRes(resource string, creds user, gcid []byte) ([]byte, error) {
 			)
 		}
 
-		htmlBody += notdueHeader
+		htmlBody += notDueHeader
 
-		for i := 0; i < len(tasks["notdue"]); i++ {
+		for i := 0; i < len(tasks["notDue"]); i++ {
 			htmlBody += genHtmlTasks(
-				tasks["notdue"][i],
+				tasks["notDue"][i],
 				true,
 				creds,
 			)
@@ -615,16 +607,16 @@ func genRes(resource string, creds user, gcid []byte) ([]byte, error) {
 	} else if resource == "/res" {
 		title = "Resources"
 		htmlBody = "<h1>Resources</h1>\n"
-		classes, reslinks, err := getReslinks(creds, gcid)
 
+		classes, resLinks, err := getResLinks(creds, gcid)
 		if err != nil {
 			return []byte{}, err
 		}
 
 		for i := 0; i < len(classes); i++ {
-			htmlBody += genHtmlReslinks(
+			htmlBody += genHtmlResLinks(
 				classes[i],
-				reslinks[classes[i]],
+				resLinks[classes[i]],
 			)
 		}
 	} else {

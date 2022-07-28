@@ -11,28 +11,26 @@ import (
 	"time"
 )
 
-var ErrAuthFailed = errors.New("daymap: authentication failed")
+var ErrAuthFailed = errors.New("DayMap: authentication failed")
 
 type User struct {
 	Timezone *time.Location
-	Token string
+	Token    string
 }
 
-func get(weburl, username, password string) (string, string, error) {
+func get(webUrl, username, password string) (string, string, error) {
 	// Stage 1 - Get a DayMap redirect to SAML.
 
 	// A persistent cookie jar is required for the entire process.
 
 	jar, err := cookiejar.New(nil)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	client := &http.Client{Jar: jar}
 
-	s1, err := client.Get(weburl)
-
+	s1, err := client.Get(webUrl)
 	if err != nil {
 		return "", "", err
 	}
@@ -78,20 +76,17 @@ func get(weburl, username, password string) (string, string, error) {
 	// Send the POST request with the generated form data.
 
 	s2req, err := http.NewRequest("POST", s2url, s2data)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s2, err := client.Do(s2req)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s2body, err := ioutil.ReadAll(s2.Body)
-
 	if err != nil {
 		return "", "", err
 	}
@@ -156,20 +151,17 @@ func get(weburl, username, password string) (string, string, error) {
 
 	s3url := "https://portal.daymap.net/daymapidentity/adfs/gihs/"
 	s3req, err := http.NewRequest("POST", s3url, s3data)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s3req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s3, err := client.Do(s3req)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s3body, err := ioutil.ReadAll(s3.Body)
-
 	if err != nil {
 		return "", "", err
 	}
@@ -231,62 +223,57 @@ func get(weburl, username, password string) (string, string, error) {
 
 	s4url := "https://gihs.daymap.net/Daymap/"
 	s4req, err := http.NewRequest("POST", s4url, s4data)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s4req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s4, err := client.Do(s4req)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s4body, err := ioutil.ReadAll(s4.Body)
-
 	if err != nil {
 		return "", "", err
 	}
 
 	s4page := string(s4body)
 
-	daymapUrl := url.URL {
+	daymapUrl := url.URL{
 		Scheme: "https",
-		Host: "gihs.daymap.net",
+		Host:   "gihs.daymap.net",
 	}
 
 	cookies := jar.Cookies(&daymapUrl)
-	authtok := ""
+	authToken := ""
 
 	for i := 0; i < len(cookies); i++ {
-		authtok += cookies[i].String()
+		authToken += cookies[i].String()
 
 		if i < len(cookies)-1 {
-			authtok += "; "
+			authToken += "; "
 		}
 	}
 
-	return s4page, authtok, nil
+	return s4page, authToken, nil
 }
 
 func Auth(school, usr, pwd string) (User, error) {
 	timezone, err := time.LoadLocation("Australia/Adelaide")
-
 	if err != nil {
 		panic(err)
 	}
 
 	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	_, authtok, err := get(page, usr, pwd)
-
+	_, authToken, err := get(page, usr, pwd)
 	if err != nil {
 		return User{}, err
 	}
 
 	creds := User{
 		Timezone: timezone,
-		Token: authtok,
+		Token:    authToken,
 	}
 
 	return creds, nil
