@@ -77,7 +77,7 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	lessons := make([][]Lesson, 5)
 
-	for _, l := range dmjson {
+	for _, l := range dmJson {
 		startIdx := strings.Index(l.Start, "(") + 1
 		endIdx := strings.Index(l.Start, "000-")
 
@@ -145,7 +145,7 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 		i := 0
 
-		for day.After(weekstart.AddDate(0, 0, i)) {
+		for day.After(weekStart.AddDate(0, 0, i)) {
 			i++
 		}
 

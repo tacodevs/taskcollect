@@ -381,20 +381,20 @@ func main() {
 
 	var dbPwdInput string
 	fmt.Print("Passphrase to user credentials file: ")
-	fmt.Scanln(&dbpwd)
-	pwdbytes := []byte(dbpwd)
-	var dbp []byte
+	fmt.Scanln(&dbPwdInput)
+	pwdBytes := []byte(dbPwdInput)
+	var dbPwd []byte
 
-	if len(pwdbytes) == 32 {
-		dbp = pwdbytes
-	} else if len(pwdbytes) > 32 {
-		dbp = pwdbytes[:32]
+	if len(pwdBytes) == 32 {
+		dbPwd = pwdBytes
+	} else if len(pwdBytes) > 32 {
+		dbPwd = pwdBytes[:32]
 	} else {
-		zerolen := 32 - len(pwdbytes)
-		dbp = pwdbytes
+		zerolen := 32 - len(pwdBytes)
+		dbPwd = pwdBytes
 
 		for i := 0; i < zerolen; i++ {
-			dbp = append(dbp, 0x00)
+			dbPwd = append(dbPwd, 0x00)
 		}
 	}
 

@@ -90,16 +90,14 @@ func getTasks(creds user, gcid []byte) (map[string][]task, error) {
 
 	t := map[string][]task{}
 	tasks := map[string][]task{}
-	gctasks, err := <-gcchan, <-gcerr
+	gcTasks, err := <-gcChan, <-gcErr
 
 	if err != nil {
 		log.Println(err)
 	}
 
-	dmtasks, err := <-dmchan, <-dmerr
-
-	gcTasks, err := <-gcChan, <-gcErr
 	dmTasks, err := <-dmChan, <-dmErr
+
 	if err != nil {
 		log.Println(err)
 	}
@@ -176,13 +174,13 @@ func getResLinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 	go daymap.ResLinks(dmCreds, dmResChan, dmErrChan)
 
 	r := map[string][][2]string{}
-	gcreslinks, err := <-grchan, <-gechan
+	gcResLinks, err := <-gResChan, <-gErrChan
 
 	if err != nil {
 		log.Println(err)
 	}
 
-	dmreslinks, err := <-dmrchan, <-dmechan
+	dmResLinks, err := <-dmResChan, <-dmErrChan
 
 	if err != nil {
 		log.Println(err)
