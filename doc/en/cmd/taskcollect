@@ -14,7 +14,12 @@ DESCRIPTION
 
     In order to write to the encrypted user credentials database, TaskCollect
     requests for the passphrase to the database before attempting to start the
-    web server.
+    web server. If the credentials database is empty, TaskCollect will ask for
+    a passphrase with which it will encrypt the database. TaskCollect will
+    populate the database automatically so there is no need to manually create
+    one, although an existing database can be imported. If TaskCollect is re-
+    run with the same database or if a database is imported, TaskCollect must
+    be provided with the correct passphrase to the credentials database.
 
     TaskCollect requires a Google OAuth 2.0 client ID file in order to
     authenticate to the Google Classroom API. A OAuth 2 client ID may be
