@@ -2,8 +2,10 @@ package daymap
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -75,17 +77,38 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	lessons := make([][]Lesson, 5)
 
-	for _, l := range dmJson {
-		start, err := time.Parse("2006-01-02T15:04:05.0000000", l.Start)
+	for _, l := range dmjson {
+		startIdx := strings.Index(l.Start, "(") + 1
+		endIdx := strings.Index(l.Start, "000-")
+
+		if startIdx == 0 || endIdx == -1 {
+			return nil, errors.New("daymap: invalid lessons JSON")
+		}
+
+		startStr := l.Start[startIdx:endIdx]
+		startInt, err := strconv.Atoi(startStr)
+
 		if err != nil {
 			return nil, err
 		}
 
-		finish, err := time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
+		start := time.Unix(int64(startInt), 0)
+
+		startIdx = strings.Index(l.Finish, "(") + 1
+		endIdx = strings.Index(l.Finish, "000-")
+
+		if startIdx == 0 || endIdx == -1 {
+			return nil, errors.New("daymap: invalid lessons JSON")
+		}
+
+		finishStr := l.Finish[startIdx:endIdx]
+		finishInt, err := strconv.Atoi(finishStr)
+
 		if err != nil {
 			return nil, err
 		}
 
+		finish := time.Unix(int64(finishInt), 0)
 		class := l.Title
 
 		for class[len(class)-1] == ' ' {
@@ -122,7 +145,7 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 		i := 0
 
-		for day.After(weekStart.AddDate(0, 0, i)) {
+		for day.After(weekstart.AddDate(0, 0, i)) {
 			i++
 		}
 
