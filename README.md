@@ -43,7 +43,9 @@ From here, deployment is simple:
 
   2. Obtain a Google OAuth 2.0 client ID and save it to `$home/res/taskcollect/` (see `doc/en/cmd/taskcollect` for more info)
 
-  3. Run the program for your OS and CPU, and the web server will start.
+  3. Run the program for your OS and CPU, and the web server will start, asking you for a passphrase at first.
+
+  4. If running for the first time, specify a passphrase with which the credentials database will be encrypted. If this is not the first time running TaskCollect or if the credentials database has been imported from another TaskCollect session, the passphrase to the existing database must be provided.
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
 
