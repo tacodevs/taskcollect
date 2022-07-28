@@ -45,7 +45,7 @@ From here, deployment is simple:
 
   3. Run the program for your OS and CPU, and the web server will start, asking you for a passphrase at first.
 
-  4. If running for the first time, specify a passphrase with which the credentials database will be encrypted. If this is not the first time running TaskCollect or if the credentials database has been imported from another TaskCollect session, the passphrase to the existing database must be provided.
+  4. If running for the first time, specify a passphrase with which the credentials database will be encrypted. If this is not the first time running TaskCollect or if the credentials database has been imported from another TaskCollect session, the passphrase to the existing database must be provided. TaskCollect will populate the credentials database automatically so there is no need to worry about manually creating one.
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
 
