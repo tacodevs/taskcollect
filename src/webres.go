@@ -117,24 +117,3 @@ const serverErrorPage = htmlHead +
 	`<h1>500 Internal Server Error</h1>
 <p>The server encountered an unexpected error and cannot continue.</p>
 ` + htmlEnd
-
-// TODO: Use external CSS files
-const css = `@import url("https://fonts.googleapis.com/css?family=Noto+Sans");
-
-:root {
-	--font: "Noto Sans";
-}
-
-body {
-	background: #202020;
-	color: #ffffff;
-}
-
-p {
-	font-family: var(--font);
-}
-
-a {
-	color: #629DFF;
-}
-`

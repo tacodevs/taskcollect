@@ -14,6 +14,7 @@ import (
 	osUser "os/user"
 	"strings"
 	"sync"
+	_ "time/tzdata"
 )
 
 type authDb struct {
@@ -257,7 +258,21 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		w.Write([]byte(css))
+		cssFile, err := os.Open(db.path + "styles.css")
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		_, err = io.Copy(w, cssFile)
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		cssFile.Close()
 	} else if !validAuth && res == "/auth" {
 		cookie, err := auth(
 			r.URL.Query(),
@@ -366,8 +381,22 @@ func main() {
 
 	var dbPwdInput string
 	fmt.Print("Passphrase to user credentials file: ")
-	fmt.Scanln(&dbPwdInput)
-	dbPwd := []byte(dbPwdInput)
+	fmt.Scanln(&dbpwd)
+	pwdbytes := []byte(dbpwd)
+	var dbp []byte
+
+	if len(pwdbytes) == 32 {
+		dbp = pwdbytes
+	} else if len(pwdbytes) > 32 {
+		dbp = pwdbytes[:32]
+	} else {
+		zerolen := 32 - len(pwdbytes)
+		dbp = pwdbytes
+
+		for i := 0; i < zerolen; i++ {
+			dbp = append(dbp, 0x00)
+		}
+	}
 
 	dbMutex := new(sync.Mutex)
 

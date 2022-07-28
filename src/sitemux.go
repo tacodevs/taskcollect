@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"log"
 	"main/daymap"
 	"main/gclass"
 	"sort"
@@ -89,11 +90,18 @@ func getTasks(creds user, gcid []byte) (map[string][]task, error) {
 
 	t := map[string][]task{}
 	tasks := map[string][]task{}
+	gctasks, err := <-gcchan, <-gcerr
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	dmtasks, err := <-dmchan, <-dmerr
 
 	gcTasks, err := <-gcChan, <-gcErr
 	dmTasks, err := <-dmChan, <-dmErr
 	if err != nil {
-		return tasks, err
+		log.Println(err)
 	}
 
 	for c, taskList := range gcTasks {
@@ -168,11 +176,16 @@ func getResLinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 	go daymap.ResLinks(dmCreds, dmResChan, dmErrChan)
 
 	r := map[string][][2]string{}
-	gcResLinks, err := <-gResChan, <-gErrChan
-	dmResLinks, err := <-dmResChan, <-dmErrChan
+	gcreslinks, err := <-grchan, <-gechan
 
 	if err != nil {
-		return nil, r, nil
+		log.Println(err)
+	}
+
+	dmreslinks, err := <-dmrchan, <-dmechan
+
+	if err != nil {
+		log.Println(err)
 	}
 
 	for c, resList := range gcResLinks {

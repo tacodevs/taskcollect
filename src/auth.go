@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	cryptorand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -112,6 +113,10 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 
 	if err != nil {
 		return user{}, err
+	}
+
+	if db == nil {
+		return user{}, errInvalidAuth
 	}
 
 	var ln []string
@@ -256,6 +261,10 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 		return "", err
 	}
 
+	if db == nil {
+		return "", errInvalidAuth
+	}
+
 	var ln []string
 	var gTok string
 
@@ -289,8 +298,9 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	usr := query.Get("usr")
 	pwd := query.Get("pwd")
 
-	gTok, err := getGTok(dbPath, dbPwd, usr, pwd)
-	if err != nil {
+	gtok, err := getgtok(dbpath, dbp, usr, pwd)
+
+	if !errors.Is(err, errInvalidAuth) && err != nil {
 		return "", err
 	}
 
@@ -398,27 +408,46 @@ func genCredLine(creds user) string {
 	return line
 }
 
-func writeCreds(creds user, dbPath string, pwd []byte) error {
-	ecrFile, err := ioutil.ReadFile(dbPath)
+func writeCreds(creds user, dbpath string, pwd []byte) error {
+	db, err := decryptdb(dbpath, pwd)
+
 	if err != nil {
 		return err
 	}
 
-	var key []byte
+	var new string
+	exists := false
 
-	if len(pwd) == 32 {
-		key = pwd
-	} else if len(pwd) > 32 {
-		key = pwd[:32]
-	} else {
-		zeroLen := 32 - len(pwd)
-		key = pwd
-		for i := 0; i != zeroLen; i++ {
-			key = append(key, 0x00)
+	if db != nil {
+		for {
+			line, err := db.ReadString('\n')
+
+			if errors.Is(err, io.EOF) && new != "" {
+				break
+			} else if err != nil {
+				return err
+			}
+
+			ln := strings.Split(line, "\t")
+
+			if creds.School == ln[1] && creds.Username == ln[2] {
+				line = genCredLine(creds)
+				exists = true
+				new += line
+				break
+			}
+
+			new += line
 		}
 	}
 
-	aesCipher, err := aes.NewCipher(key)
+	if !exists {
+		line := genCredLine(creds)
+		new += line
+	}
+
+	aesCipher, err := aes.NewCipher(pwd)
+
 	if err != nil {
 		return err
 	}
@@ -428,51 +457,16 @@ func writeCreds(creds user, dbPath string, pwd []byte) error {
 		return err
 	}
 
-	nonceSize := gcm.NonceSize()
-	if len(ecrFile) < nonceSize {
-		return err
-	}
+	nonce := make([]byte, gcm.NonceSize())
+	_, err = io.ReadFull(cryptorand.Reader, nonce)
 
-	nonce, ecrFile := ecrFile[:nonceSize], ecrFile[nonceSize:]
-	dcrFile, err := gcm.Open(nil, nonce, ecrFile, nil)
 	if err != nil {
 		return err
 	}
 
-	s := string(dcrFile)
-	sr := strings.NewReader(s)
-	db := bufio.NewReader(sr)
-	var new string
-	exists := false
+	newfile := gcm.Seal(nonce, nonce, []byte(new), nil)
+	err = ioutil.WriteFile(dbpath, newfile, 0640)
 
-	for {
-		line, err := db.ReadString('\n')
-
-		if errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		ln := strings.Split(line, "\t")
-
-		if creds.School == ln[1] && creds.Username == ln[2] {
-			line = genCredLine(creds)
-			exists = true
-			new += line
-			break
-		}
-
-		new += line
-	}
-
-	if !exists {
-		line := genCredLine(creds)
-		new += line
-	}
-
-	newFile := gcm.Seal(nonce, nonce, []byte(new), nil)
-	err = ioutil.WriteFile(dbPath, newFile, 0640)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css?family=Noto+Sans");
+
+:root {
+	--font: "Noto Sans";
+}
+
+body {
+	background: #202020;
+	color: #ffffff;
+	margin: 80px 40px;
+}
+
+nav {
+	background: black;
+	margin: 0;
+	padding: 12px 20px;
+	position: fixed;
+	width: 100vw;
+	top: 0;
+	left: 0;
+}
+
+nav a {
+	color: white;
+	text-decoration: none;
+}
+
+nav a:hover {
+	text-decoration: underline 3px solid #347aff;
+}
+
+p {
+	font-family: var(--font);
+}
+
+a {
+	color: #629fff;
+}
+
+img#timetable {
+	display: block;
+	margin: 0 auto;
+}
