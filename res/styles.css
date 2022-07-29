@@ -1,17 +1,23 @@
 @import url("https://fonts.googleapis.com/css?family=Noto+Sans");
+@import url("https://fonts.googleapis.com/css?family=Red+Hat+Display");
 
 :root {
 	--font: "Noto Sans";
+	--navfont: "Red Hat Display";
 }
 
 body {
 	background: #202020;
-	color: #ffffff;
-	margin: 80px 40px;
+	color: white;
+	font-family: var(--font);
+	margin: 60px 40px;
 }
 
 nav {
 	background: black;
+	color: black;
+	font-family: var(--navfont);
+	font-weight: bold;
 	margin: 0;
 	padding: 12px 20px;
 	position: fixed;
@@ -29,15 +35,51 @@ nav a:hover {
 	text-decoration: underline 3px solid #347aff;
 }
 
-p {
-	font-family: var(--font);
-}
-
 a {
-	color: #629fff;
+	color: #80b1ff;
 }
 
 img#timetable {
 	display: block;
 	margin: 0 auto;
+}
+
+select {
+	background: #505050;
+	color: white;
+	font-family: var(--font);
+}
+
+input {
+	background: #505050;
+	border: none;
+	color: white;
+	font-family: var(--font);
+}
+
+input.button {
+	background: #347aff;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+}
+
+th.due, th.subject {
+	width: 15%;
+}
+
+th.task, th.link {
+	width: 35%;
+}
+
+th, td {
+	border: 1px solid white;
+	padding: 5px 7px;
+}
+
+th {
+	background: #4a4a4a;
 }
