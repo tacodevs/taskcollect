@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -30,6 +31,17 @@ type Task struct {
 	Comment   string
 	Platform  string
 	Id        string
+}
+
+func getDirectGoogleDriveLink(inputUrl string) (string, error){
+	url, err := url.Parse(inputUrl)
+	if err != nil {
+		return "", err
+	}
+
+	splitUrl := strings.Split(url.Path, "/")
+	finalUrl := "https://drive.google.com/uc?export=download&id=" + splitUrl[3]
+	return finalUrl, nil
 }
 
 func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan error) {
@@ -158,6 +170,12 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 
 			if w.DriveFile != nil {
 				link = w.DriveFile.AlternateLink
+				if strings.Contains(link, "drive.google.com") {
+					link, err = getDirectGoogleDriveLink(w.DriveFile.AlternateLink)
+					if err != nil {
+						panic(err)
+					}
+				}
 				name = w.DriveFile.Title
 			} else if w.Form != nil {
 				link = w.Form.FormUrl
@@ -186,6 +204,12 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 
 		if m.DriveFile != nil {
 			link = m.DriveFile.DriveFile.AlternateLink
+			if strings.Contains(link, "drive.google.com") {
+				link, err = getDirectGoogleDriveLink(m.DriveFile.DriveFile.AlternateLink)
+				if err != nil {
+					panic(err)
+				}
+			}
 			name = m.DriveFile.DriveFile.Title
 		} else if m.Form != nil {
 			link = m.Form.FormUrl
