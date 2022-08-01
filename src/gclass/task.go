@@ -173,7 +173,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 				if strings.Contains(link, "drive.google.com") {
 					link, err = getDirectGoogleDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
-						panic(err)
+						return Task{}, err
 					}
 				}
 				name = w.DriveFile.Title
@@ -207,7 +207,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 			if strings.Contains(link, "drive.google.com") {
 				link, err = getDirectGoogleDriveLink(m.DriveFile.DriveFile.AlternateLink)
 				if err != nil {
-					panic(err)
+					return Task{}, err
 				}
 			}
 			name = m.DriveFile.DriveFile.Title
