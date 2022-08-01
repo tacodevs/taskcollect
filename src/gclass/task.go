@@ -34,12 +34,15 @@ type Task struct {
 }
 
 func getDirectGoogleDriveLink(inputUrl string) (string, error){
-	url, err := url.Parse(inputUrl)
+	urlResult, err := url.Parse(inputUrl)
 	if err != nil {
 		return "", err
 	}
 
-	splitUrl := strings.Split(url.Path, "/")
+	// urlResult.Path contains a leading "/": "/file/d/1234567890/view"
+	// so the split list will have an extra element at the start hence splitUrl[3] and not splitUrl[2]
+	
+	splitUrl := strings.Split(urlResult.Path, "/")
 	finalUrl := "https://drive.google.com/uc?export=download&id=" + splitUrl[3]
 	return finalUrl, nil
 }
