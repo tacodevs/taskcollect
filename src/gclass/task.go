@@ -170,7 +170,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 
 			if w.DriveFile != nil {
 				link = w.DriveFile.AlternateLink
-				if strings.Contains(link, "drive.google.com") {
+				if strings.Contains(link, "://drive.google.com/") {
 					link, err = getDirectGoogleDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
 						return Task{}, err
@@ -204,7 +204,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 
 		if m.DriveFile != nil {
 			link = m.DriveFile.DriveFile.AlternateLink
-			if strings.Contains(link, "drive.google.com") {
+			if strings.Contains(link, "://drive.google.com/") {
 				link, err = getDirectGoogleDriveLink(m.DriveFile.DriveFile.AlternateLink)
 				if err != nil {
 					return Task{}, err
