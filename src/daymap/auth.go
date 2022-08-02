@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-var ErrAuthFailed = errors.New("DayMap: authentication failed")
+var ErrAuthFailed = errors.New("daymap: authentication failed")
+var errInvalidDmJson = errors.New("daymap: invalid lessons JSON")
 
 type User struct {
 	Timezone *time.Location

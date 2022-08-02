@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,8 +18,7 @@ type Lesson struct {
 	Notice  string
 }
 
-// TODO: What does "dmlent" actually mean?
-type dmlent struct {
+type dmJsonEntry struct {
 	Text   string
 	Id     int
 	Start  string
@@ -57,18 +57,21 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", lessonsUrl, nil)
+
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return nil, err
 	}
 
-	dmJson := []dmlent{}
+	dmJson := []dmJsonEntry{}
 	err = json.NewDecoder(resp.Body).Decode(&dmJson)
+
 	if err != nil {
 		return nil, err
 	}
@@ -76,20 +79,47 @@ func GetLessons(creds User) ([][]Lesson, error) {
 	lessons := make([][]Lesson, 5)
 
 	for _, l := range dmJson {
-		start, err := time.Parse("2006-01-02T15:04:05.0000000", l.Start)
+		lesson := Lesson{}
+		lesson.Start, err = time.Parse("2006-01-02T15:04:05.0000000", l.Start)
 
 		if err != nil {
-			return nil, err
-		}
+			startIdx := strings.Index(l.Start, "(") + 1
+			endIdx := strings.Index(l.Start, "000-")
 
-		if err != nil {
-			return nil, err
-		}
+			if startIdx == 0 || endIdx == -1 {
+				return nil, errInvalidDmJson
+			}
 
-		finish, err := time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
+			startStr := l.Start[startIdx:endIdx]
+			startInt, err := strconv.Atoi(startStr)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			lesson.Start = time.Unix(int64(startInt), 0)
+
+			startIdx = strings.Index(l.Finish, "(") + 1
+			endIdx = strings.Index(l.Finish, "000-")
+
+			if startIdx == 0 || endIdx == -1 {
+				return nil, errInvalidDmJson
+			}
+
+			finishStr := l.Finish[startIdx:endIdx]
+			finishInt, err := strconv.Atoi(finishStr)
+
+			if err != nil {
+				return nil, err
+			}
+
+			lesson.End = time.Unix(int64(finishInt), 0)
+		} else {
+			lesson.End, err = time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
+
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		class := l.Title
@@ -99,20 +129,20 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		}
 
 		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
+
 		if err != nil {
 			return nil, err
 		}
 
-		room := re.FindString(class)
+		lesson.Room = re.FindString(class)
 		roomIdx := re.FindStringIndex(class)
-		class = class[:roomIdx[0]-1]
-		notice := ""
+		lesson.Class = class[:roomIdx[0]-1]
 
 		if !strings.HasPrefix(l.Text, "<div") && len(l.Text) > 0 {
 			if strings.Index(l.Text, "<div") != -1 {
-				notice = l.Text[:strings.Index(l.Text, "<div")]
+				lesson.Notice = l.Text[:strings.Index(l.Text, "<div")]
 			} else {
-				notice = l.Text
+				lesson.Notice = l.Text
 			}
 		}
 
@@ -121,7 +151,9 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		}
 
 		day := time.Date(
-			start.Year(), start.Month(), start.Day(),
+			lesson.Start.Year(),
+			lesson.Start.Month(),
+			lesson.Start.Day(),
 			0, 0, 0, 0,
 			creds.Timezone,
 		)
@@ -134,15 +166,6 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 		if i > 4 {
 			continue
-		}
-
-		lesson := Lesson{
-			Start:   start,
-			End:     finish,
-			Class:   class,
-			Room:    room,
-			Teacher: "",
-			Notice:  notice,
 		}
 
 		lessons[i] = append(lessons[i], lesson)
