@@ -17,6 +17,16 @@ import (
 	_ "time/tzdata"
 )
 
+var (
+	errAuthFailed	= errors.New("main: authentication failed")
+	errCorruptMIME	= errors.New("main: corrupt MIME request")
+	errIncompleteCreds	= errors.New("main: user has incomplete credentials")
+	errInvalidAuth	= errors.New("main: invalid session token")
+	errNoPlatform	= errors.New("main: unsupported platform")
+	errNotFound	= errors.New("main: cannot find resource")
+	needsGAauth	= errors.New("main: Google auth required")
+)
+
 type authDb struct {
 	lock  *sync.Mutex
 	path  string
@@ -91,7 +101,7 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	}
 
 	if line == "\n" {
-		return "", nil, errors.New("taskcollect: corrupt MIME request")
+		return "", nil, errCorruptMIME
 	}
 
 	idx := strings.Index(line, "form-data;")
@@ -118,10 +128,7 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	return filename, pr, nil
 }
 
-func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
-	// TODO: Could rename to just handleTask because "Func" is rather redundant.
-	// Or perhaps change to taskHandler since it is a handler?
-
+func handleTask(r *http.Request, c user, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
 	statusCode := 200
 	var webpage []byte
@@ -131,7 +138,7 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 		err := submitTask(c, p, id, gcid)
 
 		if err != nil {
-			log.Println("main.go: 130:", err)
+			log.Println(err)
 			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		} else {
@@ -142,13 +149,13 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 	} else if cmd == "upload" {
 		filename, reader, err := fileFromReq(r)
 		if err != nil {
-			log.Println("main.go: 142:", err)
+			log.Println(err)
 			return 500, []byte(serverErrorPage), nil
 		}
 
 		err = uploadWork(c, p, id, filename, &reader, gcid)
 		if err != nil {
-			log.Println("main.go: 149:", err)
+			log.Println(err)
 			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		} else {
@@ -168,7 +175,7 @@ func handleTaskFunc(r *http.Request, c user, p, id, cmd string, gcid []byte) (in
 			webpage = []byte(notFoundPage)
 			statusCode = 404
 		} else if err != nil {
-			log.Println("main.go: 170:", err)
+			log.Println(err)
 			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		} else {
@@ -206,7 +213,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 		assignment, err := getTask(platform, taskId, creds, gcid)
 
 		if err != nil {
-			log.Println("main.go: 208:", err)
+			log.Println(err)
 			webpage = []byte(serverErrorPage)
 			statusCode = 500
 		}
@@ -219,7 +226,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 		taskCmd := taskId[index+1:]
 		taskId = taskId[:index]
 
-		statusCode, webpage, headers = handleTaskFunc(
+		statusCode, webpage, headers = handleTask(
 			r,
 			creds,
 			platform,
@@ -240,7 +247,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		log.Println("main.go: 248:", err)
+		log.Println(err)
 		w.Write([]byte(serverErrorPage))
 		return
 	}
@@ -281,8 +288,9 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			db.pwd,
 			db.gAuth,
 		)
+
 		if err == nil {
-			w.Header().Set("Location", "/tasks")
+			w.Header().Set("Location", "/timetable")
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 			return
@@ -319,7 +327,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		w.Header().Set("Location", "/tasks")
+		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
 
 	} else if validAuth && res == "/logout" {
@@ -328,7 +336,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
 		} else {
-			log.Println("main.go: 317:", err)
+			log.Println(err)
 			w.WriteHeader(500)
 			w.Write([]byte(serverErrorPage))
 		}
@@ -347,7 +355,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
 		w.Write(respBody)
 	} else if validAuth && invalidRes {
-		w.Header().Set("Location", "/tasks")
+		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
 	} else if validAuth && !invalidRes {
 		webpage, err := genRes(res, creds, db.gAuth)
@@ -356,7 +364,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
 			w.Write([]byte(notFoundPage))
 		} else if err != nil {
-			log.Println("main.go: 343:", err)
+			log.Println(err)
 			w.WriteHeader(500)
 			w.Write([]byte(serverErrorPage))
 		} else {

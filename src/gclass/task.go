@@ -3,7 +3,6 @@ package gclass
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -93,7 +92,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 	cid := strings.SplitN(id, "-", 3)
 
 	if len(cid) != 3 {
-		return Task{}, errors.New("gclass: invalid task ID")
+		return Task{}, errInvalidTaskID
 	}
 
 	ctx := context.Background()
@@ -296,7 +295,7 @@ func SubmitTask(creds User, gcid []byte, id string) error {
 		cid := strings.SplitN(id, "-", 3)
 
 		if len(cid) != 3 {
-			return errors.New("gclass: invalid task ID")
+			return errInvalidTaskID
 		}
 
 		ctx := context.Background()

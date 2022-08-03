@@ -2,6 +2,7 @@ package gclass
 
 import (
 	"context"
+	"errors"
 	"encoding/json"
 	"strings"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"google.golang.org/api/classroom/v1"
 	"google.golang.org/api/option"
 )
+
+var errInvalidTaskID = errors.New("gclass: invalid task ID")
 
 type User struct {
 	Timezone *time.Location

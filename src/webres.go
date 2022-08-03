@@ -1,12 +1,5 @@
 package main
 
-import (
-	"errors"
-)
-
-var errNotFound = errors.New("taskcollect: cannot find resource")
-var errNoPlatform = errors.New("taskcollect: unsupported platform")
-
 // TODO: Use external HTML files and templates for easier management
 
 const htmlHead = `<!DOCTYPE html>

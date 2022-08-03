@@ -11,8 +11,16 @@ import (
 	"time"
 )
 
-var ErrAuthFailed = errors.New("daymap: authentication failed")
-var errInvalidDmJson = errors.New("daymap: invalid lessons JSON")
+var (
+	ErrAuthFailed = errors.New("daymap: authentication failed")
+	errInvalidDmJson = errors.New("daymap: invalid lessons JSON")
+	errInvalidHtmlForm = errors.New("daymap: invalid HTML form")
+	errInvalidResp = errors.New("daymap: invalid HTML response")
+	errInvalidTaskResp = errors.New("daymap: invalid task HTML response")
+	errNoActionAttrib = errors.New(`daymap: canot find "action=" in SAML form`)
+	errNoClientRequestID = errors.New("daymap: could not find client request ID")
+	errUnterminatedClientRequestID = errors.New("daymap: client request ID has no end")
+)
 
 type User struct {
 	Timezone *time.Location
@@ -59,7 +67,7 @@ func get(webUrl, username, password string) (string, string, error) {
 	idIndex := strings.Index(s1page, "&client-request-id=")
 
 	if idIndex == -1 {
-		err = errors.New("daymap: Could not find client request ID.")
+		err = errNoClientRequestID
 		return "", "", err
 	}
 
@@ -67,7 +75,7 @@ func get(webUrl, username, password string) (string, string, error) {
 	idEnd += idIndex
 
 	if idEnd == -1 {
-		err = errors.New("daymap: Client request ID has no end.")
+		err = errUnterminatedClientRequestID
 		return "", "", err
 	}
 
@@ -102,7 +110,7 @@ func get(webUrl, username, password string) (string, string, error) {
 	s3index := strings.Index(s2page, "action=")
 
 	if s3index == -1 {
-		err := errors.New(`daymap: Canot find "action=" in SAML form.`)
+		err := errNoActionAttrib
 		return "", "", err
 	}
 
@@ -119,7 +127,7 @@ func get(webUrl, username, password string) (string, string, error) {
 		s3index = strings.Index(s3search, `"`)
 
 		if s3index == -1 {
-			err := errors.New("daymap: Invalid HTML form.")
+			err := errInvalidHtmlForm
 			return "", "", err
 		}
 
@@ -135,7 +143,7 @@ func get(webUrl, username, password string) (string, string, error) {
 		s3index = strings.Index(s3search, `"`)
 
 		if s3index == -1 {
-			err := errors.New("daymap: Invalid HTML form.")
+			err := errInvalidHtmlForm
 			return "", "", err
 		}
 
@@ -177,7 +185,7 @@ func get(webUrl, username, password string) (string, string, error) {
 	s4index := strings.Index(s3page, "action=")
 
 	if s4index == -1 {
-		err := errors.New(`daymap: Canot find "action=" in SAML form.`)
+		err := errNoActionAttrib
 		return "", "", err
 	}
 
@@ -194,7 +202,7 @@ func get(webUrl, username, password string) (string, string, error) {
 		s4index = strings.Index(s4search, `'`)
 
 		if s4index == -1 {
-			err := errors.New("daymap: Invalid HTML form.")
+			err := errInvalidHtmlForm
 			return "", "", err
 		}
 
@@ -202,7 +210,7 @@ func get(webUrl, username, password string) (string, string, error) {
 		s4index = strings.Index(s4search, `value='`)
 
 		if s4index == -1 {
-			err := errors.New("daymap: Invalid HTML form.")
+			err := errInvalidHtmlForm
 			return "", "", err
 		}
 
@@ -210,7 +218,7 @@ func get(webUrl, username, password string) (string, string, error) {
 		s4index = strings.Index(s4search, `'`)
 
 		if s4index == -1 {
-			err := errors.New("daymap: Invalid HTML form.")
+			err := errInvalidHtmlForm
 			return "", "", err
 		}
 
