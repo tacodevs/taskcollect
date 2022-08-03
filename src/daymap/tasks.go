@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 )
 
@@ -154,9 +153,31 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	}
 
 	b = string(fullBody)
-	os.Stderr.WriteString(fmt.Sprintln(b))
+	unsortedTasks := []Task{}
+	i = strings.Index(b, `href="javascript:ViewAssignment(`)
 
-	// TODO: Parse full list of tasks, sort through list and return.
+	for i != -1 {
+		i += len(`href="javascript:ViewAssignment(`)
+		b = b[i:]
+		task := Task{}
+		i = strings.Index(b, `)">`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		task.Id = b[:i]
+		b = b[i:]
+		task.Link = "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + task.Id
+
+		unsortedTasks = append(unsortedTasks, task)
+		i = strings.Index(b, `href="javascript:ViewAssignment(`)
+	}
+
+	// TODO: Finish parsing of tasks.
+	fmt.Println(unsortedTasks)
 
 	/*
 		task2 := Task{
@@ -166,8 +187,9 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 			Due: time.Date(2023, 1, 1, 0, 0, 0, 0, time.Local),
 			Submitted: false,
 			Platform: "foo",
-			Id: "34573453-4353453",
 		}
+
+		TODO: Tasks need to be sorted in the following format:
 
 		tasks := map[string][]Task{
 			"tasks": {task2, task2},
