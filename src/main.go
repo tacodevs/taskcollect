@@ -242,7 +242,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	res := r.URL.EscapedPath()
 	validAuth := true
-	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd, db.gAuth)
+	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd)
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
@@ -302,6 +302,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		gAuthLoc, err := genGAuthLoc(db.path)
+
 		if err != nil {
 			log.Println(err)
 		} else {

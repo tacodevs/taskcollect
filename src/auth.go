@@ -86,7 +86,7 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	return db, nil
 }
 
-func getCreds(cookies string, resPath string, pwd []byte, gcid []byte) (user, error) {
+func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 	dbPath := resPath + "creds"
 	creds := user{}
 	var token string
@@ -145,14 +145,6 @@ func getCreds(cookies string, resPath string, pwd []byte, gcid []byte) (user, er
 		creds.SiteTokens = map[string]string{
 			"daymap": ln[4],
 			"gclass": ln[5],
-		}
-
-		gTestErr := make(chan error)
-		go gclass.Test(gcid, ln[5], gTestErr)
-		err = <-gTestErr
-
-		if err != nil {
-			return user{}, errInvalidAuth
 		}
 	} else {
 		return user{}, errInvalidAuth
@@ -283,12 +275,15 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 
 	for {
 		line, err := db.ReadString('\n')
+
 		if err != nil {
 			return "", nil
 		}
 
 		ln = strings.Split(line, "\t")
+
 		if usr == ln[2] && pwd == ln[3] {
+			gTok = ln[5]
 			break
 		}
 	}
