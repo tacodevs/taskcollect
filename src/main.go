@@ -18,13 +18,13 @@ import (
 )
 
 var (
-	errAuthFailed	= errors.New("main: authentication failed")
-	errCorruptMIME	= errors.New("main: corrupt MIME request")
-	errIncompleteCreds	= errors.New("main: user has incomplete credentials")
-	errInvalidAuth	= errors.New("main: invalid session token")
-	errNoPlatform	= errors.New("main: unsupported platform")
-	errNotFound	= errors.New("main: cannot find resource")
-	needsGAauth	= errors.New("main: Google auth required")
+	errAuthFailed = errors.New("main: authentication failed")
+	errCorruptMIME = errors.New("main: corrupt MIME request")
+	errIncompleteCreds = errors.New("main: user has incomplete credentials")
+	errInvalidAuth = errors.New("main: invalid session token")
+	errNoPlatform = errors.New("main: unsupported platform")
+	errNotFound = errors.New("main: cannot find resource")
+	needsGAauth = errors.New("main: Google auth required")
 )
 
 type authDb struct {
@@ -242,7 +242,7 @@ func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]
 func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	res := r.URL.EscapedPath()
 	validAuth := true
-	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd)
+	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd, db.gAuth)
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false

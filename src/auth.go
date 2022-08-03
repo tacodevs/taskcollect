@@ -86,7 +86,7 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	return db, nil
 }
 
-func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
+func getCreds(cookies string, resPath string, pwd []byte, gcid []byte) (user, error) {
 	dbPath := resPath + "creds"
 	creds := user{}
 	var token string
@@ -145,6 +145,14 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 		creds.SiteTokens = map[string]string{
 			"daymap": ln[4],
 			"gclass": ln[5],
+		}
+
+		gTestErr := make(chan error)
+		go gclass.Test(gcid, ln[5], gTestErr)
+		err = <-gTestErr
+
+		if err != nil {
+			return user{}, errInvalidAuth
 		}
 	} else {
 		return user{}, errInvalidAuth
@@ -229,16 +237,19 @@ func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbP
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
 	)
+
 	if err != nil {
 		return err
 	}
 
 	gTok, err := gAuthConfig.Exchange(context.TODO(), authCode)
+
 	if err != nil {
 		return err
 	}
 
 	token, err := json.Marshal(gTok)
+
 	if err != nil {
 		return err
 	}
@@ -247,6 +258,7 @@ func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbP
 
 	authDb.Lock()
 	err = writeCreds(creds, dbPath, dbPwd)
+
 	if err != nil {
 		return err
 	}
@@ -306,18 +318,22 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	}
 
 	gTestErr := make(chan error)
+
 	if gTok != "" {
 		go gclass.Test(gcid, gTok, gTestErr)
 	}
 
 	dmCreds, err := daymap.Auth(school, usr, pwd)
+
 	if errors.Is(err, daymap.ErrAuthFailed) {
 		return "", errAuthFailed
 	} else if err != nil {
 		userExists, err := findUser(dbPath, dbPwd, usr, pwd)
+
 		if err != nil {
 			return "", err
 		}
+
 		if !userExists {
 			return "", errAuthFailed
 		}
