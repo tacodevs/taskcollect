@@ -164,6 +164,10 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 		return false, err
 	}
 
+	if db == nil {
+		return false, errInvalidAuth
+	}
+
 	var ln []string
 	exists := false
 
@@ -257,6 +261,7 @@ func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbP
 
 func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 	db, err := decryptDb(dbPath, dbPwd)
+
 	if err != nil {
 		return "", err
 	}
