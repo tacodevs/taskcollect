@@ -24,10 +24,6 @@ import (
 	"google.golang.org/api/classroom/v1"
 )
 
-var errInvalidAuth = errors.New("taskcollect: invalid session token")
-var errAuthFailed = errors.New("taskcollect: authentication failed")
-var needsGAauth = errors.New("taskcollect: Google auth required")
-
 type user struct {
 	Timezone   *time.Location
 	School     string
@@ -286,7 +282,7 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 	}
 
 	if len(ln) != 6 {
-		return "", errors.New("main: user has incomplete credentials")
+		return "", errIncompleteCreds
 	}
 
 	return gTok, nil

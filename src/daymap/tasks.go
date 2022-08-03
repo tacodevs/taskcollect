@@ -1,7 +1,6 @@
 package daymap
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -48,7 +47,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		if i == -1 {
 			panic("1")
 			t <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -59,7 +58,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		if i == -1 {
 			panic("2")
 			t <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -70,7 +69,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		if i == -1 {
 			panic("3")
 			t <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -86,7 +85,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		if i == -1 {
 			panic("4")
 			t <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -97,7 +96,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		if i == -1 {
 			panic("5")
 			t <- nil
-			e <- errors.New("daymap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -112,7 +111,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 			if i == -1 {
 				panic("7")
 				t <- nil
-				e <- errors.New("daymap: invalid HTML response")
+				e <- errInvalidResp
 				return
 			}
 

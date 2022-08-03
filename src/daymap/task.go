@@ -1,7 +1,6 @@
 package daymap
 
 import (
-	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -128,14 +127,14 @@ func GetTask(creds User, id string) (Task, error) {
 	i := strings.Index(b, "ctl00_ctl00_cp_cp_divResults")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
 	i = strings.Index(b, "SectionHeader")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -144,7 +143,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	task.Name = b[:i]
@@ -152,7 +151,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -161,7 +160,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	task.Class = b[:i]
@@ -169,7 +168,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -178,7 +177,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return Task{}, errors.New("DayMap: invalid task HTML response")
+		return Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -191,7 +190,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		dueStr := b[:i]
@@ -222,14 +221,14 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "<div><div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		b = b[i:]
 		i = strings.Index(b, "</div></div></div></div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		wlHtml := b[:i]
@@ -242,7 +241,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(wlHtml, `"`)
 
 			if x == -1 {
-				return Task{}, errors.New("DayMap: invalid task HTML response")
+				return Task{}, errInvalidTaskResp
 			}
 
 			wll := wlHtml[:x]
@@ -251,7 +250,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(wlHtml, "&nbsp;")
 
 			if x == -1 {
-				return Task{}, errors.New("DayMap: invalid task HTML response")
+				return Task{}, errInvalidTaskResp
 			}
 
 			x += len("&nbsp;")
@@ -259,7 +258,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(wlHtml, "</a>")
 
 			if x == -1 {
-				return Task{}, errors.New("DayMap: invalid task HTML response")
+				return Task{}, errInvalidTaskResp
 			}
 
 			name := wlHtml[:x]
@@ -275,7 +274,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "TaskGrade'>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		b = b[i:]
@@ -284,7 +283,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		task.Grade = b[:i]
@@ -297,7 +296,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "TaskGrade'>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		b = b[i:]
@@ -306,7 +305,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		markStr := b[:i]
@@ -315,7 +314,7 @@ func GetTask(creds User, id string) (Task, error) {
 		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		st := markStr[:x]
@@ -351,7 +350,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		task.Comment = b[:i]
@@ -371,7 +370,7 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		rlHtml := b[:i]
@@ -384,7 +383,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(rlHtml, ")")
 
 			if x == -1 {
-				return Task{}, errors.New("DayMap: invalid task HTML response")
+				return Task{}, errInvalidTaskResp
 			}
 
 			rlId := rlHtml[:x]
@@ -393,7 +392,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(rlHtml, "&nbsp;")
 
 			if x == -1 {
-				return Task{}, errors.New("DayMap: invalid task HTML response")
+				return Task{}, errInvalidTaskResp
 			}
 
 			x += len("&nbsp;")
@@ -401,7 +400,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(rlHtml, "</a>")
 
 			if x == -1 {
-				return Task{}, errors.New("DayMap: invalid task HTML response")
+				return Task{}, errInvalidTaskResp
 			}
 
 			name := rlHtml[:x]
@@ -420,7 +419,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errors.New("DayMap: invalid task HTML response")
+			return Task{}, errInvalidTaskResp
 		}
 
 		task.Desc = b[:i]
@@ -500,14 +499,14 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	i := strings.Index(b, "<form")
 
 	if i == -1 {
-		return errors.New("DayMap: invalid task HTML response")
+		return errInvalidTaskResp
 	}
 
 	b = b[i:]
 	i = strings.Index(b, ` action="`)
 
 	if i == -1 {
-		return errors.New("DayMap: invalid task HTML response")
+		return errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -516,7 +515,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	i = strings.Index(b, `"`)
 
 	if i == -1 {
-		return errors.New("DayMap: invalid task HTML response")
+		return errInvalidTaskResp
 	}
 
 	rwUrl := b[:i]
@@ -531,7 +530,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, ` type=`)
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		b = b[i:]
@@ -540,7 +539,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, ` `)
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		inputType := b[:i]
@@ -548,7 +547,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `name="`)
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		b = b[i:]
@@ -557,7 +556,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `"`)
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		name = b[:i]
@@ -566,7 +565,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, "\n")
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		valTest := b[:i]
@@ -580,7 +579,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 			if i == -1 {
 				panic("6")
-				return errors.New("DayMap: invalid task HTML response")
+				return errInvalidTaskResp
 			}
 
 			value = b[:i]
@@ -596,7 +595,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `<span name=filename>`)
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		b = b[i:]
@@ -605,7 +604,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `</span>`)
 
 		if i == -1 {
-			return errors.New("DayMap: invalid task HTML response")
+			return errInvalidTaskResp
 		}
 
 		fname := b[:i]

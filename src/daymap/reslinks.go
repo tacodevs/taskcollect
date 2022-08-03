@@ -1,7 +1,6 @@
 package daymap
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -48,7 +47,7 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 		i = strings.Index(b, ");")
 
 		if i == -1 {
-			e <- errors.New("DayMap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -57,7 +56,7 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 		i = strings.Index(b, "</a>")
 
 		if i == -1 {
-			e <- errors.New("DayMap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -111,7 +110,7 @@ func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
 
 		if i == -1 {
 			r <- nil
-			e <- errors.New("DayMap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
@@ -121,7 +120,7 @@ func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
 
 		if i == -1 {
 			r <- nil
-			e <- errors.New("DayMap: invalid HTML response")
+			e <- errInvalidResp
 			return
 		}
 
