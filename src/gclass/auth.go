@@ -58,4 +58,6 @@ func Test(gcid []byte, gTok string, e chan error) {
 		e <- err
 		return
 	}
+
+	e <- nil
 }
