@@ -26,6 +26,7 @@ Build dependencies:
   * Git
   * Go
   * Make
+  * A Unix shell (for Make)
 
 TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `make`:
 
