@@ -578,7 +578,6 @@ func RemoveWork(creds User, id string, filenames []string) error {
 			i = strings.Index(b, `"`)
 
 			if i == -1 {
-				panic("6")
 				return errInvalidTaskResp
 			}
 

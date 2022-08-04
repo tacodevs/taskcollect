@@ -44,7 +44,6 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(b, ">")
 
 		if i == -1 {
-			panic("1")
 			t <- nil
 			e <- errInvalidResp
 			return
@@ -55,7 +54,6 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			panic("2")
 			t <- nil
 			e <- errInvalidResp
 			return
@@ -66,7 +64,6 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			panic("3")
 			t <- nil
 			e <- errInvalidResp
 			return
@@ -82,7 +79,6 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			panic("4")
 			t <- nil
 			e <- errInvalidResp
 			return
@@ -93,7 +89,6 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			panic("5")
 			t <- nil
 			e <- errInvalidResp
 			return
@@ -108,7 +103,6 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				panic("7")
 				t <- nil
 				e <- errInvalidResp
 				return
@@ -129,6 +123,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 	tdata := strings.NewReader(taskForm.Encode())
 	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
+
 	if err != nil {
 		t <- nil
 		e <- err
@@ -139,6 +134,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	fullReq.Header.Set("Cookie", creds.Token)
 
 	full, err := client.Do(fullReq)
+
 	if err != nil {
 		t <- nil
 		e <- err
@@ -146,6 +142,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	}
 
 	fullBody, err := ioutil.ReadAll(full.Body)
+
 	if err != nil {
 		t <- nil
 		e <- err
