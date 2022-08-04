@@ -1,11 +1,11 @@
 package daymap
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
@@ -157,9 +157,12 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	i = strings.Index(b, `href="javascript:ViewAssignment(`)
 
 	for i != -1 {
+		task := Task{
+			Platform: "daymap",
+		}
+
 		i += len(`href="javascript:ViewAssignment(`)
 		b = b[i:]
-		task := Task{}
 		i = strings.Index(b, `)">`)
 
 		if i == -1 {
@@ -171,36 +174,137 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		task.Id = b[:i]
 		b = b[i:]
 		task.Link = "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + task.Id
+		i = strings.Index(b, `<td>`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		i += len(`<td>`)
+		b = b[i:]
+		i = strings.Index(b, `</td>`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		task.Class = b[:i]
+		i += len(`</td>`)
+		b = b[i:]
+		i = strings.Index(b, `</td><td>`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		i += len(`</td><td>`)
+		b = b[i:]
+		i = strings.Index(b, `</td><td>`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		task.Name = b[:i]
+		i += len(`</td><td>`)
+		b = b[i:]
+		i = strings.Index(b, `</td><td>`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		i += len(`</td><td>`)
+		b = b[i:]
+		i = strings.Index(b, `</td><td>`)
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		dueString := b[:i]
+		dueNoTimezone, err := time.Parse("2/01/06", dueString)
+
+		if err != nil {
+			t <- nil
+			e <- err
+			return
+		}
+
+		task.Due = time.Date(
+			dueNoTimezone.Year(),
+			dueNoTimezone.Month(),
+			dueNoTimezone.Day(),
+			dueNoTimezone.Hour(),
+			dueNoTimezone.Minute(),
+			dueNoTimezone.Second(),
+			dueNoTimezone.Nanosecond(),
+			creds.Timezone,
+		)
+
+		i = strings.Index(b, "\n")
+
+		if i == -1 {
+			t <- nil
+			e <- errInvalidResp
+			return
+		}
+
+		taskLine := b[:i]
+		i = strings.Index(taskLine, `Results have been published`)
+
+		if i != -1 {
+			task.Submitted = true
+		}
+
+		i = strings.Index(taskLine, `Your work has been received`)
+
+		if i != -1 && task.Submitted == false {
+			task.Submitted = true
+		}
 
 		unsortedTasks = append(unsortedTasks, task)
 		i = strings.Index(b, `href="javascript:ViewAssignment(`)
 	}
 
-	// TODO: Finish parsing of tasks.
-	fmt.Println(unsortedTasks)
+	tasks := map[string][]Task{
+		"tasks":	{},
+		"notDue":	{},
+		"overdue":	{},
+		"submitted":	{},
+	}
 
-	/*
-		task2 := Task{
-			Name: "TaskCollect",
-			Class: "Digital Technologies",
-			Link: "https://openbsd.org",
-			Due: time.Date(2023, 1, 1, 0, 0, 0, 0, time.Local),
-			Submitted: false,
-			Platform: "foo",
+	for x := 0; x < len(unsortedTasks); x++ {
+		if unsortedTasks[x].Submitted {
+			tasks["submitted"] = append(
+				tasks["submitted"],
+				unsortedTasks[x],
+			)
+		} else if unsortedTasks[x].Due.Before(time.Now()) {
+			tasks["overdue"] = append(
+				tasks["overdue"],
+				unsortedTasks[x],
+			)
+		} else {
+			tasks["tasks"] = append(
+				tasks["tasks"],
+				unsortedTasks[x],
+			)
 		}
+	}
 
-		TODO: Tasks need to be sorted in the following format:
-
-		tasks := map[string][]Task{
-			"tasks": {task2, task2},
-			"notDue": {task2, task2},
-			"overdue": {task2, task2},
-			"submitted": {task2, task2},
-		}
-
-		t <- tasks
-	*/
-
-	t <- nil
+	t <- tasks
 	e <- nil
 }
