@@ -320,9 +320,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 
 	dmCreds, err := daymap.Auth(school, usr, pwd)
 
-	if errors.Is(err, daymap.ErrAuthFailed) {
-		return "", errAuthFailed
-	} else if err != nil {
+	if err != nil {
 		userExists, err := findUser(dbPath, dbPwd, usr, pwd)
 
 		if err != nil {
@@ -350,10 +348,6 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	cookie := "token=" + token + "; Expires="
 	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
-
-	if err != nil {
-		return "", err
-	}
 
 	gAuthStatus := needsGAauth
 
