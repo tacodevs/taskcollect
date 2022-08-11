@@ -83,3 +83,13 @@ th, td {
 th {
 	background: #4a4a4a;
 }
+
+select#school,
+input#usr,
+input#pwd,
+form[action="/auth"] input[type="submit"]
+{
+	border-radius: 5px;
+	height: 30px;
+	margin-bottom: 5px;
+}
