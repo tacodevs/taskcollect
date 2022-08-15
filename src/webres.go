@@ -77,7 +77,8 @@ const loginHead = `Login</title>
 </head>
 <body>
 <form action="/auth">
-<h1>Login</h1>
+<h1>TaskCollect</h1>
+<h3>Login</h3>
 `
 
 const loginBody = `<label for="school">School:</label><br>

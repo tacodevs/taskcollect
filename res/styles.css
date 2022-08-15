@@ -1,5 +1,5 @@
 @import url("https://fonts.googleapis.com/css?family=Lato");
-@import url("https://fonts.googleapis.com/css?family=Red+Hat+Display");
+@import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500&display=swap");
 
 :root {
 	--accent-color: #347aff;
@@ -112,8 +112,13 @@ form[action="/auth"] {
 	text-align: left;
 }
 
-form[action="/auth"] h1 {
+form[action="/auth"] h1,
+form[action="/auth"] h3 {
 	text-align: center;
+}
+
+form[action="/auth"] h3 {
+	font-size: 15pt;
 }
 
 form[action="/auth"] h4,
@@ -153,6 +158,12 @@ select#school {
 input#usr,
 input#pwd {
 	padding: 5px 10px;
+}
+
+form[action="/auth"] input[type="submit"] {
+	margin-top: 10px;
+	padding: 10px 20px;
+	width: 100%;
 }
 
 input[type="submit"] {
