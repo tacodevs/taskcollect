@@ -1,16 +1,39 @@
-@import url("https://fonts.googleapis.com/css?family=Noto+Sans");
+@import url("https://fonts.googleapis.com/css?family=Lato");
 @import url("https://fonts.googleapis.com/css?family=Red+Hat+Display");
 
 :root {
-	--font: "Noto Sans";
+	--accent-color: #347aff;
+	--accent-hover: #246aef;
+	--accent-click: #044acf;
+	--bg-color: #ffffff;
+	--errbg: #f09090;
+	--fg-color: #000000;
+	--font: "Lato";
+	--font-size: 13pt;
+	--input-color: #e0e0e0;
+	--link-color: #2e6dd3;
+	--login-font-size: 11pt;
 	--navfont: "Red Hat Display";
+	--th-color: #dadada;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg-color: #202020;
+		--errbg: #500000;
+		--fg-color: #ffffff;
+		--input-color: #505050;
+		--link-color: #80b1ff;
+		--th-color: #4a4a4a;
+	}
 }
 
 body {
-	background: #202020;
-	color: white;
+	background: var(--bg-color);
+	color: var(--fg-color);
 	font-family: var(--font);
-	margin: 60px 40px;
+	font-size: var(--font-size);
+	margin: 80px 40px 60px 40px;
 }
 
 nav {
@@ -32,33 +55,16 @@ nav a {
 }
 
 nav a:hover {
-	text-decoration: underline 3px solid #347aff;
+	text-decoration: underline 3px solid var(--accent-color);
 }
 
 a {
-	color: #80b1ff;
+	color: var(--link-color);
 }
 
 img#timetable {
 	display: block;
 	margin: 0 auto;
-}
-
-select {
-	background: #505050;
-	color: white;
-	font-family: var(--font);
-}
-
-input {
-	background: #505050;
-	border: none;
-	color: white;
-	font-family: var(--font);
-}
-
-input.button {
-	background: #347aff;
 }
 
 table {
@@ -76,20 +82,102 @@ th.task, th.link {
 }
 
 th, td {
-	border: 1px solid white;
+	border: 1px solid var(--fg-color);
 	padding: 5px 7px;
 }
 
 th {
-	background: #4a4a4a;
+	background: var(--th-color);
+}
+
+select, input {
+	border: 1px solid #aaaaaa;
+}
+
+select {
+	background: var(--input-color);
+	color: var(--fg-color);
+	font-family: var(--font);
+}
+
+input {
+	background: var(--input-color);
+	color: var(--fg-color);
+	font-family: var(--font);
+}
+
+form[action="/auth"] {
+	margin: auto auto;
+	max-width: 270px;
+	text-align: left;
+}
+
+form[action="/auth"] h1 {
+	text-align: center;
+}
+
+form[action="/auth"] h4,
+select#school,
+input#usr,
+input#pwd {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+form[action="/auth"] h4,
+select#school,
+input#usr,
+input#pwd,
+input[type="submit"] {
+	border-radius: 5px;
+	font-size: 11pt;
+}
+
+form[action="/auth"] h4 {
+	background: var(--errbg);
+	border: 1px solid red;
+	padding: 9px 13px;
 }
 
 select#school,
 input#usr,
 input#pwd,
-form[action="/auth"] input[type="submit"]
-{
-	border-radius: 5px;
-	height: 30px;
-	margin-bottom: 5px;
+input[type="submit"] {
+	margin: 8px 0;
+}
+
+select#school {
+	padding: 3px 5px;
+}
+
+input#usr,
+input#pwd {
+	padding: 5px 10px;
+}
+
+input[type="submit"] {
+	background: var(--accent-color);
+	border: none;
+	color: white;
+	outline: 0 !important;
+	padding: 7px 15px;
+}
+
+input[type="submit"]:hover {
+	background: var(--accent-hover);
+	cursor: pointer;
+}
+
+input[type="submit"]:active {
+	background: var(--accent-click);
+	cursor: pointer;
+}
+
+input:focus,
+select:focus {
+	outline-color: var(--accent-color);
+}
+
+hr {
+	color: #aaaaaa;
 }
