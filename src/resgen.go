@@ -418,6 +418,7 @@ func genTimetable(creds user, w http.ResponseWriter) {
 
 	if err := png.Encode(w, canvas); err != nil {
 		w.WriteHeader(500)
+		return
 	}
 }
 

@@ -15,6 +15,9 @@ import (
 	"strings"
 	"sync"
 	_ "time/tzdata"
+
+	"golang.org/x/image/font/gofont/gobold"
+	"golang.org/x/image/font/gofont/goregular"
 )
 
 var (
@@ -280,6 +283,12 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		cssFile.Close()
+	} else if res == "/goregular.ttf" {
+		w.Header().Set("Content-Type", "font/ttf")
+		w.Write(goregular.TTF)
+	} else if res == "/gobold.ttf" {
+		w.Header().Set("Content-Type", "font/ttf")
+		w.Write(gobold.TTF)
 	} else if !validAuth && res == "/auth" {
 		cookie, err := auth(
 			r.URL.Query(),

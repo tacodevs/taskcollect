@@ -27,10 +27,10 @@ const htmlEnd = `</body>
 const tasksHeader = `<h1>Tasks</h1>
 <table>
 <thead><tr>
-<th>Due date</th>
-<th>Subject</th>
-<th>Task</th>
-<th>Source platform link</th>
+<th class="due">Due date</th>
+<th class="subject">Subject</th>
+<th class="task">Task</th>
+<th class="link">Source platform link</th>
 </tr></thead>
 `
 
@@ -38,9 +38,9 @@ const notDueHeader = `</table>
 <h2 id="notDue">No due date</h2>
 <table>
 <thead><tr>
-<th>Subject</th>
-<th>Task</th>
-<th>Source platform link</th>
+<th class="subject">Subject</th>
+<th class="task">Task</th>
+<th class="link">Source platform link</th>
 </tr></thead>
 `
 
@@ -48,9 +48,9 @@ const overdueHeader = `</table>
 <h2 id="overdue">Overdue tasks</h2>
 <table>
 <thead><tr>
-<th>Subject</th>
-<th>Task</th>
-<th>Source platform link</th>
+<th class="subject">Subject</th>
+<th class="task">Task</th>
+<th class="link">Source platform link</th>
 </tr></thead>
 `
 
@@ -58,9 +58,9 @@ const submittedHeader = `</table>
 <h2 id="submitted">Submitted tasks</h2>
 <table>
 <thead><tr>
-<th>Subject</th>
-<th>Task</th>
-<th>Source platform link</th>
+<th class="subject">Subject</th>
+<th class="task">Task</th>
+<th class="link">Source platform link</th>
 </tr></thead>
 `
 
@@ -76,11 +76,11 @@ const loginHead = `Login</title>
 <link rel="stylesheet" href="/css">
 </head>
 <body>
+<form action="/auth">
 <h1>Login</h1>
 `
 
-const loginBody = `<form action="/auth">
-<label for="school">School:</label><br>
+const loginBody = `<label for="school">School:</label><br>
 <select id="school" name="school">
 <option value="gihs">Glenunga International High School</option>
 </select><br>
