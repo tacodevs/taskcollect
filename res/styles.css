@@ -133,8 +133,10 @@ form[action="/auth"] h4,
 select#school,
 input#usr,
 input#pwd,
-input[type="submit"] {
+input[type="submit"],
+input[type="file"]::-webkit-file-upload-button {
 	border-radius: 5px;
+	font-family: var(--font);
 	font-size: 11pt;
 }
 
@@ -166,7 +168,8 @@ form[action="/auth"] input[type="submit"] {
 	width: 100%;
 }
 
-input[type="submit"] {
+input[type="submit"],
+input[type="file"]::-webkit-file-upload-button {
 	background: var(--accent-color);
 	border: none;
 	color: white;
@@ -174,12 +177,14 @@ input[type="submit"] {
 	padding: 7px 15px;
 }
 
-input[type="submit"]:hover {
+input[type="submit"]:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
 	background: var(--accent-hover);
 	cursor: pointer;
 }
 
-input[type="submit"]:active {
+input[type="submit"]:active,
+input[type="file"]::-webkit-file-upload-button:active {
 	background: var(--accent-click);
 	cursor: pointer;
 }
@@ -190,5 +195,19 @@ select:focus {
 }
 
 hr {
-	color: #aaaaaa;
+	border: 0;
+	border-bottom: 1px solid #aaaaaa;
+	margin: 20px 0;
+}
+
+input[type="file"] {
+	background: var(--bg-color);
+	border: none;
+	font-family: var(--font);
+	font-size: 11pt;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+	padding: 5px 12px;
+	margin: 0 10px 0 5px;
 }
