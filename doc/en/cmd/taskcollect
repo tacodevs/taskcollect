@@ -4,7 +4,7 @@ NAME
     taskcollect - multiplex functionality from web platforms for students
 
 INVOCATION
-    taskcollect
+    taskcollect [-w]
 
 DESCRIPTION
     TaskCollect starts a web server on TCP port 443 which provides a web
@@ -22,8 +22,17 @@ DESCRIPTION
     be provided with the correct passphrase to the credentials database.
 
     TaskCollect requires a Google OAuth 2.0 client ID file in order to
-    authenticate to the Google Classroom API. A OAuth 2 client ID may be
-    obtained from the Google Cloud Console with a valid Google account.
+    authenticate to the Google Classroom API. An OAuth 2 client ID may be
+    obtained from the Google Cloud Console with a valid Google account. The
+    client ID must be made with the permitted access origin set to the server
+    URL(s) (e.g. "https://taskcollect.io") and the redirect URL set to the
+    server URL(s) with "/gauth" appended (e.g. "https://taskcollect.io/gauth").
+
+OPTIONS
+
+    -w    Run TaskCollect without TLS support. TaskCollect will start on port
+          8080 and all connections will be insecure. For use in development
+          only.
 
 FILES
     $home/res/taskcollect/cert.pem      TLS certificate

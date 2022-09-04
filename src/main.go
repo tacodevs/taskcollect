@@ -375,18 +375,30 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	tlsConns := true
+	errStr := "taskcollect: Invalid invocation.\n"
+
+	if len(os.Args) > 2 || len(os.Args) == 2 && os.Args[1] != "-w" {
+		os.Stderr.WriteString(errStr)
+		os.Exit(1)
+	}
+
+	if len(os.Args) == 2 {
+		tlsConns = false
+	}
+
 	curUser, err := osUser.Current()
 
 	if err != nil {
-		errStr := "taskcollect: Can't determine current user's home folder."
+		errStr = "taskcollect: Can't determine current user's home folder."
 		os.Stderr.WriteString(errStr + "\n")
 		os.Exit(1)
 	}
 
 	home := curUser.HomeDir
 	resPath := home + "/res/taskcollect/"
-	//certFile := resPath + "cert.pem"
-	//keyFile := resPath + "key.pem"
+	certFile := resPath + "cert.pem"
+	keyFile := resPath + "key.pem"
 
 	var dbPwdInput string
 	fmt.Print("Passphrase to user credentials file: ")
@@ -426,6 +438,14 @@ func main() {
 	// TODO: Use http.NewServeMux
 
 	http.HandleFunc("/", db.handler)
-	http.ListenAndServe(":8080", nil)
-	//http.ListenAndServeTLS(":443", certFile, keyFile, nil)
+
+	if tlsConns {
+		err = http.ListenAndServeTLS(":443", certFile, keyFile, nil)
+	} else {
+		err = http.ListenAndServe(":8080", nil)
+	}
+
+	if err != nil {
+		log.Println(err)
+	}
 }
