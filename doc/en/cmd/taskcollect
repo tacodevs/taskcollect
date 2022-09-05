@@ -28,6 +28,11 @@ DESCRIPTION
     URL(s) (e.g. "https://taskcollect.io") and the redirect URL set to the
     server URL(s) with "/gauth" appended (e.g. "https://taskcollect.io/gauth").
 
+    TaskCollect requires two TTF font files (for the "Lato" and "Red Hat
+    Display" fonts to be present in its resources folder. Due to licensing
+    issues, these cannot be distributed together with TaskCollect and must be
+    downloaded manually.
+
 OPTIONS
 
     -w    Run TaskCollect without TLS support. TaskCollect will start on port
@@ -35,11 +40,13 @@ OPTIONS
           only.
 
 FILES
-    $home/res/taskcollect/cert.pem      TLS certificate
-    $home/res/taskcollect/creds         User credentials database
-    $home/res/taskcollect/gauth.json    Google OAuth 2.0 client ID
-    $home/res/taskcollect/key.pem       TLS private key
-    $home/res/taskcollect/styles.css    Web style rules
+    $home/res/taskcollect/cert.pem        TLS certificate
+    $home/res/taskcollect/creds           User credentials database
+    $home/res/taskcollect/gauth.json      Google OAuth 2.0 client ID
+    $home/res/taskcollect/key.pem         TLS private key
+	$home/res/taskcollect/mainfont.ttf    Main web interface font (Lato)
+    $home/res/taskcollect/navfont.ttf     Navigation bar font (Red Hat Display)
+    $home/res/taskcollect/styles.css      Web style rules
 
 SOURCE
     /src/taskcollect/
