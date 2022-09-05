@@ -76,7 +76,7 @@ const loginHead = `Login</title>
 <link rel="stylesheet" href="/css">
 </head>
 <body>
-<form action="/auth">
+<form method="POST" enctype="application/x-www-form-urlencoded" action="/auth">
 <h1>TaskCollect</h1>
 <h3>Login</h3>
 `
