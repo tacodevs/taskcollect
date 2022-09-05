@@ -33,6 +33,20 @@ type user struct {
 	SiteTokens map[string]string
 }
 
+func tsvEscapeString(s string) string {
+	s = strings.ReplaceAll(s, "\\", `\\`)
+	s = strings.ReplaceAll(s, "\t", `\t`)
+	s = strings.ReplaceAll(s, "\n", `\n`)
+	return s
+}
+
+func tsvUnescapeString(s string) string {
+	s = strings.ReplaceAll(s, `\n`, "\n")
+	s = strings.ReplaceAll(s, `\t`, "\t")
+	s = strings.ReplaceAll(s, `\\`, "\\")
+	return s
+}
+
 func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	ecrFile, err := ioutil.ReadFile(dbPath)
 
@@ -126,11 +140,11 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 
 		ln = strings.Split(line, "\t")
 
-		if token == ln[0] {
-			creds.Token = ln[0]
-			creds.School = ln[1]
-			creds.Username = ln[2]
-			creds.Password = ln[3]
+		if token == tsvUnescapeString(ln[0]) {
+			creds.Token = tsvUnescapeString(ln[0])
+			creds.School = tsvUnescapeString(ln[1])
+			creds.Username = tsvUnescapeString(ln[2])
+			creds.Password = tsvUnescapeString(ln[3])
 			break
 		}
 	}
@@ -143,8 +157,8 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 		}
 
 		creds.SiteTokens = map[string]string{
-			"daymap": ln[4],
-			"gclass": ln[5],
+			"daymap": tsvUnescapeString(ln[4]),
+			"gclass": tsvUnescapeString(ln[5]),
 		}
 	} else {
 		return user{}, errInvalidAuth
@@ -175,8 +189,10 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 		}
 
 		ln = strings.Split(line, "\t")
+		tsvUsr := tsvUnescapeString(ln[2])
+		tsvPwd := tsvUnescapeString(ln[3])
 
-		if usr == ln[2] && pwd == ln[3] {
+		if usr == tsvUsr && pwd == tsvPwd {
 			exists = true
 			break
 		}
@@ -282,9 +298,11 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 		}
 
 		ln = strings.Split(line, "\t")
+		tsvUsr := tsvUnescapeString(ln[2])
+		tsvPwd := tsvUnescapeString(ln[3])
 
-		if usr == ln[2] && pwd == ln[3] {
-			gTok = ln[5]
+		if usr == tsvUsr && pwd == tsvPwd {
+			gTok = tsvUnescapeString(ln[5])
 			break
 		}
 	}
@@ -402,15 +420,15 @@ func logout(creds user, authDb *sync.Mutex, resPath string, dbPwd []byte) error 
 }
 
 func genCredLine(creds user) string {
-	line := creds.Token + "\t"
-	line += creds.School + "\t"
-	line += creds.Username + "\t"
-	line += creds.Password + "\t"
+	line := tsvEscapeString(creds.Token) + "\t"
+	line += tsvEscapeString(creds.School) + "\t"
+	line += tsvEscapeString(creds.Username) + "\t"
+	line += tsvEscapeString(creds.Password) + "\t"
 
 	platGihs := []string{"daymap", "gclass"}
 
 	for _, plat := range platGihs {
-		line += creds.SiteTokens[plat] + "\t"
+		line += tsvEscapeString(creds.SiteTokens[plat]) + "\t"
 	}
 
 	buf := []rune(line)
@@ -440,8 +458,10 @@ func writeCreds(creds user, dbpath string, pwd []byte) error {
 			}
 
 			ln := strings.Split(line, "\t")
+			tsvSchool := tsvUnescapeString(ln[1])
+			tsvUsr := tsvUnescapeString(ln[2])
 
-			if creds.School == ln[1] && creds.Username == ln[2] {
+			if creds.School == tsvSchool && creds.Username == tsvUsr {
 				line = genCredLine(creds)
 				exists = true
 				new += line
