@@ -11,7 +11,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
-	osUser "os/user"
+	"os/user"
 	"strings"
 	"sync"
 	_ "time/tzdata"
@@ -128,7 +128,7 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	return filename, pr, nil
 }
 
-func handleTask(r *http.Request, c user, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
+func handleTask(r *http.Request, c tcUser, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
 	statusCode := 200
 	var webpage []byte
@@ -191,7 +191,7 @@ func handleTask(r *http.Request, c user, p, id, cmd string, gcid []byte) (int, [
 	return statusCode, webpage, headers
 }
 
-func handleTaskReq(r *http.Request, creds user, gcid []byte) (int, []byte, [][2]string) {
+func handleTaskReq(r *http.Request, creds tcUser, gcid []byte) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
 	statusCode := 200
 	var webpage []byte
@@ -426,7 +426,7 @@ func main() {
 		tlsConns = false
 	}
 
-	curUser, err := osUser.Current()
+	curUser, err := user.Current()
 
 	if err != nil {
 		errStr = "taskcollect: Can't determine current user's home folder."
