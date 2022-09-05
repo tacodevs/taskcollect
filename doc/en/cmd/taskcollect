@@ -37,14 +37,14 @@ OPTIONS
 
     -w    Run TaskCollect without TLS support. TaskCollect will start on port
           8080 and all connections will be insecure. For use in development
-          only.
+          and personal use only; not for production.
 
 FILES
     $home/res/taskcollect/cert.pem        TLS certificate
     $home/res/taskcollect/creds           User credentials database
     $home/res/taskcollect/gauth.json      Google OAuth 2.0 client ID
     $home/res/taskcollect/key.pem         TLS private key
-	$home/res/taskcollect/mainfont.ttf    Main web interface font (Lato)
+    $home/res/taskcollect/mainfont.ttf    Main web interface font (Lato)
     $home/res/taskcollect/navfont.ttf     Navigation bar font (Red Hat Display)
     $home/res/taskcollect/styles.css      Web style rules
 
