@@ -315,13 +315,18 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 
 		fontFile.Close()
 	} else if !validAuth && res == "/auth" {
-		cookie, err := auth(
-			r.URL.Query(),
-			db.lock,
-			db.path,
-			db.pwd,
-			db.gAuth,
-		)
+		var cookie string
+		err = r.ParseForm()
+
+		if err == nil {
+			cookie, err = auth(
+				r.PostForm,
+				db.lock,
+				db.path,
+				db.pwd,
+				db.gAuth,
+			)
+		}
 
 		if err == nil {
 			w.Header().Set("Location", "/timetable")
