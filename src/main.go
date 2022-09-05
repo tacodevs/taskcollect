@@ -280,6 +280,40 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		cssFile.Close()
+	} else if res == "/mainfont.ttf" {
+		w.Header().Set("Content-Type", `font/ttf`)
+		fontFile, err := os.Open(db.path + "mainfont.ttf")
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		_, err = io.Copy(w, fontFile)
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		fontFile.Close()
+	} else if res == "/navfont.ttf" {
+		w.Header().Set("Content-Type", `font/ttf`)
+		fontFile, err := os.Open(db.path + "navfont.ttf")
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		_, err = io.Copy(w, fontFile)
+
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		fontFile.Close()
 	} else if !validAuth && res == "/auth" {
 		cookie, err := auth(
 			r.URL.Query(),

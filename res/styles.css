@@ -1,5 +1,16 @@
-@import url("https://fonts.googleapis.com/css?family=Lato");
-@import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500&display=swap");
+@font-face {
+	font-family: "Lato";
+	font-style: normal;
+	font-weight: 400;
+	src: url(/mainfont.ttf);
+}
+
+@font-face {
+	font-family: "Red Hat Display";
+	font-style: normal;
+	font-weight: 500;
+	src: url(/navfont.ttf);
+}
 
 :root {
 	--accent-color: #347aff;
@@ -8,7 +19,7 @@
 	--bg-color: #ffffff;
 	--errbg: #f09090;
 	--fg-color: #000000;
-	--font: "Lato";
+	--mainfont: "Lato";
 	--font-size: 13pt;
 	--input-color: #e0e0e0;
 	--link-color: #2e6dd3;
@@ -31,7 +42,7 @@
 body {
 	background: var(--bg-color);
 	color: var(--fg-color);
-	font-family: var(--font);
+	font-family: var(--mainfont);
 	font-size: var(--font-size);
 	margin: 80px 40px 60px 40px;
 }
@@ -97,13 +108,13 @@ select, input {
 select {
 	background: var(--input-color);
 	color: var(--fg-color);
-	font-family: var(--font);
+	font-family: var(--mainfont);
 }
 
 input {
 	background: var(--input-color);
 	color: var(--fg-color);
-	font-family: var(--font);
+	font-family: var(--mainfont);
 }
 
 form[action="/auth"] {
@@ -136,7 +147,7 @@ input#pwd,
 input[type="submit"],
 input[type="file"]::-webkit-file-upload-button {
 	border-radius: 5px;
-	font-family: var(--font);
+	font-family: var(--mainfont);
 	font-size: 11pt;
 }
 
@@ -203,7 +214,7 @@ hr {
 input[type="file"] {
 	background: var(--bg-color);
 	border: none;
-	font-family: var(--font);
+	font-family: var(--mainfont);
 	font-size: 11pt;
 }
 
