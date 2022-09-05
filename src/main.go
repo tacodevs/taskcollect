@@ -14,6 +14,7 @@ import (
 	"os/user"
 	"strings"
 	"sync"
+	"time"
 	_ "time/tzdata"
 )
 
@@ -24,7 +25,7 @@ var (
 	errInvalidAuth = errors.New("main: invalid session token")
 	errNoPlatform = errors.New("main: unsupported platform")
 	errNotFound = errors.New("main: cannot find resource")
-	needsGAauth = errors.New("main: Google auth required")
+	needsGAuth = errors.New("main: Google auth required")
 )
 
 type authDb struct {
@@ -37,6 +38,16 @@ type authDb struct {
 type postReader struct {
 	div    []byte
 	reader io.Reader
+}
+
+type tcUser struct {
+	Timezone   *time.Location
+	School     string
+	Username   string
+	Password   string
+	Token      string
+	SiteTokens map[string]string
+	GAuthID    []byte
 }
 
 func (pr postReader) Read(p []byte) (int, error) {
@@ -128,14 +139,14 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	return filename, pr, nil
 }
 
-func handleTask(r *http.Request, c tcUser, p, id, cmd string, gcid []byte) (int, []byte, [][2]string) {
+func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
 	statusCode := 200
 	var webpage []byte
 	var headers [][2]string
 
 	if cmd == "submit" {
-		err := submitTask(c, p, id, gcid)
+		err := submitTask(c, p, id)
 
 		if err != nil {
 			log.Println(err)
@@ -153,7 +164,7 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string, gcid []byte) (int,
 			return 500, []byte(serverErrorPage), nil
 		}
 
-		err = uploadWork(c, p, id, filename, &reader, gcid)
+		err = uploadWork(c, p, id, filename, &reader)
 		if err != nil {
 			log.Println(err)
 			webpage = []byte(serverErrorPage)
@@ -170,7 +181,7 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string, gcid []byte) (int,
 			filenames = append(filenames, name)
 		}
 
-		err := removeWork(c, p, id, filenames, gcid)
+		err := removeWork(c, p, id, filenames)
 		if err == errNoPlatform {
 			webpage = []byte(notFoundPage)
 			statusCode = 404
@@ -191,7 +202,7 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string, gcid []byte) (int,
 	return statusCode, webpage, headers
 }
 
-func handleTaskReq(r *http.Request, creds tcUser, gcid []byte) (int, []byte, [][2]string) {
+func handleTaskReq(r *http.Request, creds tcUser) (int, []byte, [][2]string) {
 	res := r.URL.EscapedPath()
 	statusCode := 200
 	var webpage []byte
@@ -210,7 +221,7 @@ func handleTaskReq(r *http.Request, creds tcUser, gcid []byte) (int, []byte, [][
 	index = strings.Index(taskId, "/")
 
 	if index == -1 {
-		assignment, err := getTask(platform, taskId, creds, gcid)
+		assignment, err := getTask(platform, taskId, creds)
 
 		if err != nil {
 			log.Println(err)
@@ -232,7 +243,6 @@ func handleTaskReq(r *http.Request, creds tcUser, gcid []byte) (int, []byte, [][
 			platform,
 			taskId,
 			taskCmd,
-			gcid,
 		)
 	}
 
@@ -252,6 +262,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	creds.GAuthID = db.gAuth
 	resIsLogin := false
 	invalidRes := false
 
@@ -333,7 +344,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 			return
-		} else if !errors.Is(err, needsGAauth) {
+		} else if !errors.Is(err, needsGAuth) {
 			log.Println(err)
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
@@ -357,7 +368,6 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.Write([]byte(loginPage))
 		}
-
 	} else if !validAuth && !resIsLogin {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(302)
@@ -369,7 +379,6 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
-
 	} else if validAuth && res == "/logout" {
 		err = logout(creds, db.lock, db.path, db.pwd)
 		if err == nil {
@@ -380,13 +389,10 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			w.Write([]byte(serverErrorPage))
 		}
-
 	} else if validAuth && res == "/timetable.png" {
 		genTimetable(creds, w)
 	} else if validAuth && strings.HasPrefix(res, "/tasks/") {
-		statusCode, respBody, respHeaders := handleTaskReq(
-			r, creds, db.gAuth,
-		)
+		statusCode, respBody, respHeaders := handleTaskReq(r, creds)
 
 		for _, respHeader := range respHeaders {
 			w.Header().Set(respHeader[0], respHeader[1])
@@ -398,7 +404,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
 	} else if validAuth && !invalidRes {
-		webpage, err := genRes(res, creds, db.gAuth)
+		webpage, err := genRes(res, creds)
 
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)

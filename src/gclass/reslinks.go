@@ -33,11 +33,11 @@ func getResources(course *classroom.Course, svc *classroom.Service, links *map[s
 	}
 }
 
-func ResLinks(creds User, gcid []byte, r chan map[string][][2]string, e chan error) {
+func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
 	ctx := context.Background()
 
 	gAuthConfig, err := google.ConfigFromJSON(
-		gcid,
+		creds.ClientID,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
