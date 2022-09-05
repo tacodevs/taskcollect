@@ -319,6 +319,10 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 		go gclass.Test(gcid, gTok, gTestErr)
 	}
 
+	if !strings.HasPrefix(usr, `CURRIC\`) {
+		usr = `CURRIC\` + usr
+	}
+
 	dmCreds, err := daymap.Auth(school, usr, pwd)
 
 	if err != nil {
