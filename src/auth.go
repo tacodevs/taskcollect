@@ -206,6 +206,7 @@ func genGAuthLoc(resPath string) (string, error) {
 
 	gAuthLoc := gAuthConfig.AuthCodeURL(
 		"state-token",
+		oauth2.ApprovalForce,
 		oauth2.AccessTypeOffline,
 	)
 
