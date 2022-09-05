@@ -44,7 +44,7 @@ func resListContains(resList [][2]string, resLink [2]string) bool {
 	return false
 }
 
-func getLessons(creds user) ([][]lesson, error) {
+func getLessons(creds tcUser) ([][]lesson, error) {
 	lessons := [][]lesson{}
 
 	dmCreds := daymap.User{
@@ -67,7 +67,7 @@ func getLessons(creds user) ([][]lesson, error) {
 	return lessons, err
 }
 
-func getTasks(creds user, gcid []byte) (map[string][]task, error) {
+func getTasks(creds tcUser, gcid []byte) (map[string][]task, error) {
 	gcChan := make(chan map[string][]gclass.Task)
 	gcErr := make(chan error)
 
@@ -152,7 +152,7 @@ func getTasks(creds user, gcid []byte) (map[string][]task, error) {
 	return tasks, err
 }
 
-func getResLinks(creds user, gcid []byte) ([]string, map[string][][2]string, error) {
+func getResLinks(creds tcUser, gcid []byte) ([]string, map[string][][2]string, error) {
 	gResChan := make(chan map[string][][2]string)
 	gErrChan := make(chan error)
 
@@ -235,7 +235,7 @@ func getResLinks(creds user, gcid []byte) ([]string, map[string][][2]string, err
 	return classes, resLinks, err
 }
 
-func getTask(platform, taskId string, creds user, gcid []byte) (task, error) {
+func getTask(platform, taskId string, creds tcUser, gcid []byte) (task, error) {
 	assignment := task{}
 	err := errNoPlatform
 
@@ -261,7 +261,7 @@ func getTask(platform, taskId string, creds user, gcid []byte) (task, error) {
 	return assignment, err
 }
 
-func submitTask(creds user, platform, taskId string, gcid []byte) error {
+func submitTask(creds tcUser, platform, taskId string, gcid []byte) error {
 	err := errNoPlatform
 
 	switch platform {
@@ -276,7 +276,7 @@ func submitTask(creds user, platform, taskId string, gcid []byte) error {
 	return err
 }
 
-func uploadWork(creds user, platform, id, filename string, f *io.Reader, gcid []byte) error {
+func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader, gcid []byte) error {
 	err := errNoPlatform
 
 	switch platform {
@@ -297,7 +297,7 @@ func uploadWork(creds user, platform, id, filename string, f *io.Reader, gcid []
 	return err
 }
 
-func removeWork(creds user, platform, taskId string, filenames []string, gcid []byte) error {
+func removeWork(creds tcUser, platform, taskId string, filenames []string, gcid []byte) error {
 	err := errNoPlatform
 
 	switch platform {

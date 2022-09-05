@@ -44,7 +44,7 @@ func contains(strSlice []string, str string) bool {
 	return false
 }
 
-func genDueStr(due time.Time, creds user) string {
+func genDueStr(due time.Time, creds tcUser) string {
 	var dueDate string
 	now := time.Now().In(creds.Timezone)
 	localDueDate := due.In(creds.Timezone)
@@ -262,7 +262,7 @@ func genDay(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, co
 	*img = canvas
 }
 
-func genTimetable(creds user, w http.ResponseWriter) {
+func genTimetable(creds tcUser, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 
 	if err != nil {
@@ -422,7 +422,7 @@ func genTimetable(creds user, w http.ResponseWriter) {
 	}
 }
 
-func genHtmlTasks(assignment task, noDue bool, creds user) string {
+func genHtmlTasks(assignment task, noDue bool, creds tcUser) string {
 	dueDate := genDueStr(assignment.Due, creds)
 	h := "<tr>\n"
 
@@ -460,7 +460,7 @@ func genHtmlResLinks(class string, res [][2]string) string {
 	return h
 }
 
-func genHtmlTask(assignment task, creds user) string {
+func genHtmlTask(assignment task, creds tcUser) string {
 	h := "<h1>" + html.EscapeString(assignment.Name) + "</h1>\n<h3>"
 	h += html.EscapeString(assignment.Class) + "</h3>\n" + `<a href="`
 	h += html.EscapeString(assignment.Link)
@@ -549,7 +549,7 @@ func genPage(title, htmlBody string) string {
 	return webpage + htmlEnd
 }
 
-func genRes(resource string, creds user, gcid []byte) ([]byte, error) {
+func genRes(resource string, creds tcUser, gcid []byte) ([]byte, error) {
 	var title string
 	var htmlBody string
 

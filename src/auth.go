@@ -24,7 +24,7 @@ import (
 	"google.golang.org/api/classroom/v1"
 )
 
-type user struct {
+type tcUser struct {
 	Timezone   *time.Location
 	School     string
 	Username   string
@@ -100,14 +100,14 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	return db, nil
 }
 
-func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
+func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 	dbPath := resPath + "creds"
-	creds := user{}
+	creds := tcUser{}
 	var token string
 	start := strings.Index(cookies, "token=")
 
 	if start == -1 {
-		return user{}, errInvalidAuth
+		return tcUser{}, errInvalidAuth
 	}
 
 	start += 6
@@ -122,11 +122,11 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 	db, err := decryptDb(dbPath, pwd)
 
 	if err != nil {
-		return user{}, err
+		return tcUser{}, err
 	}
 
 	if db == nil {
-		return user{}, errInvalidAuth
+		return tcUser{}, errInvalidAuth
 	}
 
 	var ln []string
@@ -135,7 +135,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 		line, err := db.ReadString('\n')
 
 		if err != nil {
-			return user{}, errInvalidAuth
+			return tcUser{}, errInvalidAuth
 		}
 
 		ln = strings.Split(line, "\t")
@@ -153,7 +153,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 
 		if err != nil {
-			return user{}, err
+			return tcUser{}, err
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -161,7 +161,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (user, error) {
 			"gclass": tsvUnescapeString(ln[5]),
 		}
 	} else {
-		return user{}, errInvalidAuth
+		return tcUser{}, errInvalidAuth
 	}
 
 	return creds, nil
@@ -229,7 +229,7 @@ func genGAuthLoc(resPath string) (string, error) {
 	return gAuthLoc, nil
 }
 
-func gAuth(creds user, query url.Values, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
+func gAuth(creds tcUser, query url.Values, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
 	dbPath := resPath + "creds"
 	authCode := query.Get("code")
 
@@ -382,7 +382,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 		}
 	}
 
-	creds := user{
+	creds := tcUser{
 		Timezone:   timezone,
 		School:     school,
 		Username:   usr,
@@ -401,7 +401,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	return cookie, gAuthStatus
 }
 
-func logout(creds user, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
+func logout(creds tcUser, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
 	dbPath := resPath + "creds"
 	creds.Token = ""
 
@@ -419,7 +419,7 @@ func logout(creds user, authDb *sync.Mutex, resPath string, dbPwd []byte) error 
 	return nil
 }
 
-func genCredLine(creds user) string {
+func genCredLine(creds tcUser) string {
 	line := tsvEscapeString(creds.Token) + "\t"
 	line += tsvEscapeString(creds.School) + "\t"
 	line += tsvEscapeString(creds.Username) + "\t"
@@ -437,7 +437,7 @@ func genCredLine(creds user) string {
 	return line
 }
 
-func writeCreds(creds user, dbpath string, pwd []byte) error {
+func writeCreds(creds tcUser, dbpath string, pwd []byte) error {
 	db, err := decryptDb(dbpath, pwd)
 
 	if err != nil {
