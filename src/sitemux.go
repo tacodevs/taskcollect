@@ -67,16 +67,17 @@ func getLessons(creds tcUser) ([][]lesson, error) {
 	return lessons, err
 }
 
-func getTasks(creds tcUser, gcid []byte) (map[string][]task, error) {
+func getTasks(creds tcUser) (map[string][]task, error) {
 	gcChan := make(chan map[string][]gclass.Task)
 	gcErr := make(chan error)
 
 	gcCreds := gclass.User{
+		ClientID: creds.GAuthID,
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ListTasks(gcCreds, gcid, gcChan, gcErr)
+	go gclass.ListTasks(gcCreds, gcChan, gcErr)
 
 	dmChan := make(chan map[string][]daymap.Task)
 	dmErr := make(chan error)
@@ -152,16 +153,17 @@ func getTasks(creds tcUser, gcid []byte) (map[string][]task, error) {
 	return tasks, err
 }
 
-func getResLinks(creds tcUser, gcid []byte) ([]string, map[string][][2]string, error) {
+func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
 	gResChan := make(chan map[string][][2]string)
 	gErrChan := make(chan error)
 
 	gcCreds := gclass.User{
+		ClientID: creds.GAuthID,
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ResLinks(gcCreds, gcid, gResChan, gErrChan)
+	go gclass.ResLinks(gcCreds, gResChan, gErrChan)
 
 	dmResChan := make(chan map[string][][2]string)
 	dmErrChan := make(chan error)
@@ -235,17 +237,18 @@ func getResLinks(creds tcUser, gcid []byte) ([]string, map[string][][2]string, e
 	return classes, resLinks, err
 }
 
-func getTask(platform, taskId string, creds tcUser, gcid []byte) (task, error) {
+func getTask(platform, taskId string, creds tcUser) (task, error) {
 	assignment := task{}
 	err := errNoPlatform
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
+			ClientID: creds.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
-		gcTask, gcErr := gclass.GetTask(gcCreds, gcid, taskId)
+		gcTask, gcErr := gclass.GetTask(gcCreds, taskId)
 		assignment = task(gcTask)
 		err = gcErr
 	case "daymap":
@@ -261,31 +264,33 @@ func getTask(platform, taskId string, creds tcUser, gcid []byte) (task, error) {
 	return assignment, err
 }
 
-func submitTask(creds tcUser, platform, taskId string, gcid []byte) error {
+func submitTask(creds tcUser, platform, taskId string) error {
 	err := errNoPlatform
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
+			ClientID: creds.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
-		err = gclass.SubmitTask(gcCreds, gcid, taskId)
+		err = gclass.SubmitTask(gcCreds, taskId)
 	}
 
 	return err
 }
 
-func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader, gcid []byte) error {
+func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error {
 	err := errNoPlatform
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
+			ClientID: creds.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
-		err = gclass.UploadWork(gcCreds, gcid, id, filename, f)
+		err = gclass.UploadWork(gcCreds, id, filename, f)
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: creds.Timezone,
@@ -297,16 +302,17 @@ func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader, gcid 
 	return err
 }
 
-func removeWork(creds tcUser, platform, taskId string, filenames []string, gcid []byte) error {
+func removeWork(creds tcUser, platform, taskId string, filenames []string) error {
 	err := errNoPlatform
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
+			ClientID: creds.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
-		err = gclass.RemoveWork(gcCreds, gcid, taskId, filenames)
+		err = gclass.RemoveWork(gcCreds, taskId, filenames)
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: creds.Timezone,

@@ -16,6 +16,7 @@ import (
 var errInvalidTaskID = errors.New("gclass: invalid task ID")
 
 type User struct {
+	ClientID []byte
 	Timezone *time.Location
 	Token    string
 }

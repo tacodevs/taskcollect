@@ -549,7 +549,7 @@ func genPage(title, htmlBody string) string {
 	return webpage + htmlEnd
 }
 
-func genRes(resource string, creds tcUser, gcid []byte) ([]byte, error) {
+func genRes(resource string, creds tcUser) ([]byte, error) {
 	var title string
 	var htmlBody string
 
@@ -560,7 +560,7 @@ func genRes(resource string, creds tcUser, gcid []byte) ([]byte, error) {
 	} else if resource == "/tasks" {
 		title = "Tasks"
 		htmlBody = tasksHeader
-		tasks, err := getTasks(creds, gcid)
+		tasks, err := getTasks(creds)
 
 		if err != nil {
 			return []byte{}, err
@@ -609,7 +609,7 @@ func genRes(resource string, creds tcUser, gcid []byte) ([]byte, error) {
 		title = "Resources"
 		htmlBody = "<h1>Resources</h1>\n"
 
-		classes, resLinks, err := getResLinks(creds, gcid)
+		classes, resLinks, err := getResLinks(creds)
 		if err != nil {
 			return []byte{}, err
 		}

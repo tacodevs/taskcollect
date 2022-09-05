@@ -24,15 +24,6 @@ import (
 	"google.golang.org/api/classroom/v1"
 )
 
-type tcUser struct {
-	Timezone   *time.Location
-	School     string
-	Username   string
-	Password   string
-	Token      string
-	SiteTokens map[string]string
-}
-
 func tsvEscapeString(s string) string {
 	s = strings.ReplaceAll(s, "\\", `\\`)
 	s = strings.ReplaceAll(s, "\t", `\t`)
@@ -372,7 +363,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
-	gAuthStatus := needsGAauth
+	gAuthStatus := needsGAuth
 
 	if gTok != "" {
 		err = <-gTestErr

@@ -88,7 +88,7 @@ ISSUE(#6): The Google Classroom API does not seem to have any mechanism to reque
 teacher comments for a task, so task.Comment is always empty.
 */
 
-func GetTask(creds User, gcid []byte, id string) (Task, error) {
+func GetTask(creds User, id string) (Task, error) {
 	cid := strings.SplitN(id, "-", 3)
 
 	if len(cid) != 3 {
@@ -98,7 +98,7 @@ func GetTask(creds User, gcid []byte, id string) (Task, error) {
 	ctx := context.Background()
 
 	gAuthConfig, err := google.ConfigFromJSON(
-		gcid,
+		creds.ClientID,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
@@ -290,7 +290,7 @@ How this issue should be managed is open to discussion:
 https://codeberg.org/kvo/taskcollect/issues/3
 */
 
-func SubmitTask(creds User, gcid []byte, id string) error {
+func SubmitTask(creds User, id string) error {
 	/*
 		cid := strings.SplitN(id, "-", 3)
 
@@ -301,7 +301,7 @@ func SubmitTask(creds User, gcid []byte, id string) error {
 		ctx := context.Background()
 
 		gAuthConfig, err := google.ConfigFromJSON(
-			gcid,
+			creds.ClientID,
 			classroom.ClassroomCoursesReadonlyScope,
 			classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 			classroom.ClassroomCourseworkMeScope,
@@ -344,13 +344,13 @@ func SubmitTask(creds User, gcid []byte, id string) error {
 	return nil
 }
 
-func UploadWork(creds User, gcid []byte, id string, filename string, f *io.Reader) error {
+func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 	// Upload a file as a submission.
 	_, err := io.Copy(os.Stdout, *f)
 	return err
 }
 
-func RemoveWork(creds User, gcid []byte, id string, filenames []string) error {
+func RemoveWork(creds User, id string, filenames []string) error {
 	// Remove file submission.
 	return nil
 }

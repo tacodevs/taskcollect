@@ -90,11 +90,11 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 	*tasks = submissions
 }
 
-func ListTasks(creds User, gcid []byte, t chan map[string][]Task, e chan error) {
+func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	ctx := context.Background()
 
 	gAuthConfig, err := google.ConfigFromJSON(
-		gcid,
+		creds.ClientID,
 		classroom.ClassroomCoursesReadonlyScope,
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
