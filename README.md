@@ -25,15 +25,14 @@ Setup
 Build dependencies:
   * Git
   * Go
-  * Make
-  * A Unix shell (for Make)
+  * Python (for the build script)
 
-TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `make`:
+TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `python3 build.py`:
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
 cd taskcollect/src/
-make
+python3 build.py
 ```
 
 If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing executable programs for all major operating systems and CPU architectures.
