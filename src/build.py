@@ -1,47 +1,95 @@
 #!/usr/bin/python3
 
-from os import *
-import sys
+import os
+import platform
 import subprocess
+import sys
 
-platforms = """
-	386/linux
-	386/windows
-	amd64/darwin
-	amd64/linux
-	amd64/windows
-	arm/linux
-	arm64/darwin
-	arm64/linux
-"""
 
-for platform in platforms.split():
-	platform = platform.split("/")
-	arch = platform[0]
-	os = platform[1]
+platforms = {
+    "darwin": ["amd64", "arm64"],
+    "linux": ["386", "amd64", "arm", "arm64"],
+    "windows": ["386", "amd64"]
+}
 
-	ext = ""
-	if os == "windows":
-		ext = ".exe"
+def build(os_name: str, arch: str):
+    ext = ""
+    if os_name == "windows":
+        ext = ".exe"
 
-	cmd = [
-		"go", "build", "-ldflags=-s -w",
-		"-o", f"../prg/{arch}/{os}/taskcollect{ext}", ".",
-	]
+    output = f"../prg/{os_name}/{arch}/taskcollect{ext}"
+    source = "."
+    cmd = [
+        "go", "build", "-ldflags=-s -w",
+        "-o", output, source
+    ]
 
-	env = environ
-	env["CGO_ENABLED"] = "0"
-	env["GOARCH"] = arch
-	env["GOOS"] = os
+    env = os.environ
+    env["CGO_ENABLED"] = "0"
+    env["GOARCH"] = arch
+    env["GOOS"] = os_name
 
-	try:
-		subprocess.run(
-			cmd,
-			stdin=sys.stdin,
-			stdout=sys.stdout,
-			stderr=sys.stderr,
-			check=True,
-			env=env,
-		)
-	except subprocess.CalledProcessError:
-		sys.exit(1)
+    try:
+        print(f"Compiling taskcollect for {os_name} on {arch}... ", end="", flush=True)
+        subprocess.run(
+            cmd,
+            stdin=sys.stdin,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            check=True,
+            env=env,
+        )
+        print("Done")
+    except subprocess.CalledProcessError as e:
+        print(e)
+        sys.exit(1)
+
+def run(argv: list[str]):
+    argv = argv[1:]
+    if argv[0] == "all":
+        for os_name, archs in platforms.items():
+            for arch in archs:
+                build(os_name, arch)
+    else:
+        for i in argv:
+            # TODO: Add error handling?
+            i = i.split("/")
+            build(i[0], i[1])
+
+def main(argc: int, argv: list[str]):
+    if argc == 1:
+        os_name = platform.system().lower()
+        arch = platform.machine().lower()
+        if arch in ["i386", "x86"]:
+            arch = "386"
+        elif arch in ["x64", "x86_64"]:
+            arch = "amd64"
+        print(f"Automatically building taskcollect for the host system: {os_name}/{arch}")
+        print("See 'help' for more information")
+        argv.append(f"{os_name}/{arch}")
+        run(argv)
+    elif argv[1] == "help":
+        print(
+            "--- taskcollect: Build help ---\n\n"
+            "Supported OS and architectures:\n"
+            "- darwin (amd64, arm64)\n"
+            "- linux (386, amd64, arm, arm64)\n"
+            "- windows (386, arm64)\n"
+            "\n"
+            "USAGE:\n"
+            "    [<<OS>/<ARCH>> ...]\n" # - Provide a valid combination of OS and architecture. Several can be built at once
+            "\n"
+            "COMMANDS:\n"
+            "    all - Build for all platforms (this may take a while)\n"
+            "    help - Shows this command\n"
+        )
+    elif argv[1] == "all" or argc >= 1:
+        run(argv)
+    else:
+        print("Invalid argument")
+
+
+if __name__ == "__main__":
+    argv = sys.argv
+    argc = len(argv)
+    main(argc, argv)
