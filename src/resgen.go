@@ -446,17 +446,19 @@ func genHtmlTasks(assignment task, noDue bool, creds tcUser) string {
 }
 
 func genHtmlResLinks(class string, res [][2]string) string {
-	h := "<h2>" + html.EscapeString(class)
-	h += "</h2>\n<ul>\n"
+	h := "<details>\n<summary>" + html.EscapeString(class)
+	h += "</summary>\n"
 
 	for i := 0; i < len(res); i++ {
-		h += "<li><a href=\""
-		h += html.EscapeString(res[i][0]) + "\">"
+		h += "<div>\n<p>" + `<a href="`
+		h += html.EscapeString(res[i][0]) + `">`
 		h += html.EscapeString(res[i][1])
-		h += "</a></li>\n"
+		h += "</a></p>\n<h5>" + `<a href="`
+		h += html.EscapeString(res[i][0]) + `">`
+		h += "Open in source platform</a></h5>\n</div>\n"
 	}
 
-	h += "</ul>\n"
+	h += "</ul>\n</details>"
 	return h
 }
 
@@ -566,9 +568,9 @@ func genRes(resource string, creds tcUser) ([]byte, error) {
 			return []byte{}, err
 		}
 
-		for i := 0; i < len(tasks["tasks"]); i++ {
+		for i := 0; i < len(tasks["active"]); i++ {
 			htmlBody += genHtmlTasks(
-				tasks["tasks"][i],
+				tasks["active"][i],
 				false,
 				creds,
 			)
@@ -604,7 +606,7 @@ func genRes(resource string, creds tcUser) ([]byte, error) {
 			)
 		}
 
-		htmlBody += "</table>\n"
+		htmlBody += "</table>\n</details>\n"
 	} else if resource == "/res" {
 		title = "Resources"
 		htmlBody = "<h1>Resources</h1>\n"

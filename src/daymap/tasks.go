@@ -223,6 +223,26 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 			return
 		}
 
+		postedString := b[:i]
+		postedNoTimezone, err := time.Parse("2/01/06", postedString)
+
+		if err != nil {
+			t <- nil
+			e <- err
+			return
+		}
+
+		task.Posted = time.Date(
+			postedNoTimezone.Year(),
+			postedNoTimezone.Month(),
+			postedNoTimezone.Day(),
+			postedNoTimezone.Hour(),
+			postedNoTimezone.Minute(),
+			postedNoTimezone.Second(),
+			postedNoTimezone.Nanosecond(),
+			creds.Timezone,
+		)
+
 		i += len(`</td><td>`)
 		b = b[i:]
 		i = strings.Index(b, `</td><td>`)
@@ -279,7 +299,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	}
 
 	tasks := map[string][]Task{
-		"tasks":	{},
+		"active":	{},
 		"notDue":	{},
 		"overdue":	{},
 		"submitted":	{},
@@ -297,8 +317,8 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 				unsortedTasks[x],
 			)
 		} else {
-			tasks["tasks"] = append(
-				tasks["tasks"],
+			tasks["active"] = append(
+				tasks["active"],
 				unsortedTasks[x],
 			)
 		}

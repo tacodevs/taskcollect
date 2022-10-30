@@ -15,6 +15,7 @@ type task struct {
 	Link      string
 	Desc      string
 	Due       time.Time
+	Posted    time.Time
 	ResLinks  [][2]string
 	Upload    bool
 	WorkLinks [][2]string
@@ -116,37 +117,28 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 	}
 
 	for c, taskList := range t {
-		if c == "tasks" {
-			times := []int{}
-			taskIdx := map[int]int{}
+		times := map[int]int{}
+		taskIndexes := []int{}
 
-			for i := 0; i < len(taskList); i++ {
-				time := int(taskList[i].Due.Unix())
-				times = append(times, time)
-				taskIdx[time] = i
+		for i := 0; i < len(taskList); i++ {
+			var time int
+
+			if c == "active" {
+				time = int(taskList[i].Due.UTC().Unix())
+			} else {
+				time = int(taskList[i].Posted.UTC().Unix())
 			}
 
-			sort.Ints(times)
+			times[i] = time
+			taskIndexes = append(taskIndexes, i)
+		}
 
-			for i := 0; i < len(times); i++ {
-				x := taskIdx[times[i]]
-				tasks[c] = append(tasks[c], taskList[x])
-			}
-		} else {
-			names := []string{}
-			taskIdx := map[string]int{}
+		sort.SliceStable(taskIndexes, func(i, j int) bool {
+			return times[taskIndexes[i]] > times[taskIndexes[j]]
+		})
 
-			for i := 0; i < len(taskList); i++ {
-				names = append(names, taskList[i].Name)
-				taskIdx[taskList[i].Name] = i
-			}
-
-			sort.Strings(names)
-
-			for i := 0; i < len(names); i++ {
-				x := taskIdx[names[i]]
-				tasks[c] = append(tasks[c], taskList[x])
-			}
+		for _, x := range taskIndexes {
+			tasks[c] = append(tasks[c], taskList[x])
 		}
 	}
 
