@@ -22,6 +22,7 @@ type Task struct {
 	Link      string
 	Desc      string
 	Due       time.Time
+	Posted    time.Time
 	ResLinks  [][2]string
 	Upload    bool
 	WorkLinks [][2]string

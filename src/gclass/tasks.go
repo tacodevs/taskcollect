@@ -18,7 +18,7 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 
 	gcTask, err := svc.Courses.CourseWork.Get(
 		studSub.CourseId, studSub.CourseWorkId,
-	).Fields("dueTime", "dueDate", "title", "alternateLink").Do()
+	).Fields("creationTime", "dueTime", "dueDate", "title", "alternateLink").Do()
 
 	if err != nil {
 		gErrChan <- err
@@ -27,6 +27,14 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 
 	var hours, minutes, seconds, nanoseconds int
 	task.Id = studSub.CourseId + "-" + studSub.CourseWorkId + "-" + studSub.Id
+
+	posted, err := time.Parse(time.RFC3339Nano, gcTask.CreationTime)
+
+	if err != nil {
+		task.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+	} else {
+		task.Posted = posted
+	}
 
 	if gcTask.DueTime == nil {
 		hours, minutes, seconds, nanoseconds = 0, 0, 0, 0
@@ -170,7 +178,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	}
 
 	gcTasks := map[string][]Task{
-		"tasks":     {},
+		"active":     {},
 		"notDue":    {},
 		"overdue":   {},
 		"submitted": {},
@@ -194,8 +202,8 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 					tasks[x][y],
 				)
 			} else {
-				gcTasks["tasks"] = append(
-					gcTasks["tasks"],
+				gcTasks["active"] = append(
+					gcTasks["active"],
 					tasks[x][y],
 				)
 			}

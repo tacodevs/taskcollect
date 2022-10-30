@@ -25,6 +25,8 @@ const htmlEnd = `</body>
 `
 
 const tasksHeader = `<h1>Tasks</h1>
+<details>
+<summary>Active tasks</summary>
 <table>
 <thead><tr>
 <th class="due">Due date</th>
@@ -35,7 +37,9 @@ const tasksHeader = `<h1>Tasks</h1>
 `
 
 const notDueHeader = `</table>
-<h2 id="notDue">No due date</h2>
+</details>
+<details>
+<summary>No due date</summary>
 <table>
 <thead><tr>
 <th class="subject">Subject</th>
@@ -45,7 +49,9 @@ const notDueHeader = `</table>
 `
 
 const overdueHeader = `</table>
-<h2 id="overdue">Overdue tasks</h2>
+</details>
+<details>
+<summary>Overdue tasks</summary>
 <table>
 <thead><tr>
 <th class="subject">Subject</th>
@@ -55,7 +61,9 @@ const overdueHeader = `</table>
 `
 
 const submittedHeader = `</table>
-<h2 id="submitted">Submitted tasks</h2>
+</details>
+<details>
+<summary>Submitted tasks</summary>
 <table>
 <thead><tr>
 <th class="subject">Subject</th>
