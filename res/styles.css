@@ -78,6 +78,52 @@ img#timetable {
 	margin: 0 auto;
 }
 
+summary:hover {
+	cursor: pointer;
+}
+
+details div,
+summary {
+	border-top: 1px solid var(--input-color);
+	padding: 10px;
+}
+
+div:hover,
+summary:hover {
+	background: var(--th-color);
+}
+
+details div {
+	border-color: var(--fg-color);
+	margin: 0 30px;
+}
+
+details div:first-child {
+	margin-top: 30px;
+}
+
+details div:last-child {
+	border-bottom: 1px solid var(--fg-color);
+	margin-bottom: 30px;
+}
+
+details div * {
+	margin: 5px;
+}
+
+details div * a {
+	color: var(--fg-color);
+	text-decoration: none;
+}
+
+details div * a:hover {
+	text-decoration: underline;
+}
+
+details:last-child summary {
+	border-bottom: 1px solid var(--input-color);
+}
+
 table {
 	border-collapse: collapse;
 	border-spacing: 0;
