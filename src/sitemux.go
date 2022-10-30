@@ -123,7 +123,7 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 		for i := 0; i < len(taskList); i++ {
 			var time int
 
-			if c == "active" {
+			if c == "active" || c == "overdue" {
 				time = int(taskList[i].Due.UTC().Unix())
 			} else {
 				time = int(taskList[i].Posted.UTC().Unix())
