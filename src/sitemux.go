@@ -133,9 +133,15 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 			taskIndexes = append(taskIndexes, i)
 		}
 
-		sort.SliceStable(taskIndexes, func(i, j int) bool {
-			return times[taskIndexes[i]] > times[taskIndexes[j]]
-		})
+		if c == "active" {
+			sort.SliceStable(taskIndexes, func(i, j int) bool {
+				return times[taskIndexes[i]] < times[taskIndexes[j]]
+			})
+		} else {
+			sort.SliceStable(taskIndexes, func(i, j int) bool {
+				return times[taskIndexes[i]] > times[taskIndexes[j]]
+			})
+		}
 
 		for _, x := range taskIndexes {
 			tasks[c] = append(tasks[c], taskList[x])
