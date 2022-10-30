@@ -61,7 +61,7 @@ It should be noted that the issue tracker is for issues and feature requests *on
 Future directions
 -----------------
 
-Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims, for version 1.0.0, are rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
+Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 are rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
 
 Support for:
 
