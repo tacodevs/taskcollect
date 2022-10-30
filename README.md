@@ -57,3 +57,22 @@ TaskCollect, in its current state, is much like a newborn child and still needs 
 Issues can be reported on the Codeberg issue tracker. If you need to discuss something or ask questions about TaskCollect, this can be done through Matrix: #taskcollect:matrix.org
 
 It should be noted that the issue tracker is for issues and feature requests *only*, and the Matrix room is also not a place for general discourse.
+
+Future directions
+-----------------
+
+Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims, for version 1.0.0, are rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
+
+Support for:
+
+  * Edpuzzle
+  * Stile
+  * InThinking
+  * Kognity
+  * Managebac
+
+Additional feature tabs to TaskCollect:
+
+  * Organisation (calendar-oriented organisation space)
+  * Communication (emails, messages, etc.)
+  * Grades (grade summaries per term, grades for individual tasks)
