@@ -263,7 +263,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Debug(err)
+		logger.Error(err)
 		genPage(w, db.templates, statusServerErrorData)
 		return
 	}
