@@ -8,10 +8,7 @@ import (
 	cryptorand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"io"
-	"main/daymap"
-	"main/gclass"
 	"math/rand"
 	"net/url"
 	"os"
@@ -23,6 +20,10 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
+
+	"main/daymap"
+	"main/errors"
+	"main/gclass"
 )
 
 func tsvEscapeString(s string) string {
@@ -40,7 +41,7 @@ func tsvUnescapeString(s string) string {
 }
 
 func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
-	//log.Printf("db path: %+v\n", dbPath)
+	//logger.Debug("db path: %+v\n", dbPath)
 	ecrFile, err := os.ReadFile(dbPath)
 
 	if err != nil {
@@ -105,11 +106,11 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 	creds := tcUser{}
 	var token string
 
-	//log.Printf("Cookies: %+v\n", cookies)
 	start := strings.Index(cookies, "token=")
 
 	if start == -1 {
 		//log.Println("ERROR 1")
+
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -131,7 +132,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 
 	if db == nil {
 		//log.Println("ERROR 3")
-		return tcUser{}, errInvalidAuth
+		return tcUser{}, errors.ErrInvalidAuth
 	}
 
 	var ln []string
@@ -141,7 +142,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 
 		if err != nil {
 			//log.Println("ERROR 4")
-			return tcUser{}, errInvalidAuth
+			return tcUser{}, errors.ErrInvalidAuth
 		}
 
 		ln = strings.Split(line, "\t")
@@ -169,7 +170,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 		}
 	} else {
 		//log.Println("ERROR 6")
-		return tcUser{}, errInvalidAuth
+		return tcUser{}, errors.ErrInvalidAuth
 	}
 
 	return creds, nil
@@ -183,7 +184,7 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 	}
 
 	if db == nil {
-		return false, errInvalidAuth
+		return false, errors.ErrInvalidAuth
 	}
 
 	var ln []string
@@ -193,7 +194,7 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 		line, err := db.ReadString('\n')
 
 		if err != nil {
-			return false, errInvalidAuth
+			return false, errors.ErrInvalidAuth
 		}
 
 		ln = strings.Split(line, "\t")
@@ -292,7 +293,7 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 	}
 
 	if db == nil {
-		return "", errInvalidAuth
+		return "", errors.ErrInvalidAuth
 	}
 
 	var ln []string
@@ -316,7 +317,7 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 	}
 
 	if len(ln) != 6 {
-		return "", errIncompleteCreds
+		return "", errors.ErrIncompleteCreds
 	}
 
 	return gTok, nil
@@ -327,7 +328,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	school := query.Get("school")
 
 	if school != "gihs" {
-		return "", errAuthFailed
+		return "", errors.ErrAuthFailed
 	}
 
 	usr := query.Get("usr")
@@ -335,7 +336,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 
 	gTok, err := getGTok(dbPath, dbPwd, usr, pwd)
 
-	if !errors.Is(err, errInvalidAuth) && err != nil {
+	if !errors.Is(err, errors.ErrInvalidAuth) && err != nil {
 		return "", err
 	}
 
@@ -359,7 +360,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 		}
 
 		if !userExists {
-			return "", errAuthFailed
+			return "", errors.ErrAuthFailed
 		}
 	}
 
@@ -380,7 +381,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
-	gAuthStatus := errNeedsGAuth
+	gAuthStatus := errors.ErrNeedsGAuth
 
 	if gTok != "" {
 		err = <-gTestErr

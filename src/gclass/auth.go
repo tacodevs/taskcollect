@@ -2,7 +2,6 @@ package gclass
 
 import (
 	"context"
-	"errors"
 	"encoding/json"
 	"strings"
 	"time"
@@ -11,9 +10,11 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
 	"google.golang.org/api/option"
+
+	"main/errors"
 )
 
-var errInvalidTaskID = errors.New("gclass: invalid task ID")
+var errInvalidTaskID = errors.NewError("gclass", nil, "invalid task ID")
 
 type User struct {
 	ClientID []byte

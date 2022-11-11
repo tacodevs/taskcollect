@@ -24,8 +24,8 @@ Setup
 
 Build dependencies:
   * Git
-  * Go
-  * Python (for the build script)
+  * Go 1.18+
+  * Python 3.8+ (for the build script)
 
 TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `python3 build.py`:
 
