@@ -32,9 +32,9 @@ var (
 
 // Custom error wrapper
 type ErrorWrapper struct {
-	Pkg  string
-	Err  error
-	Text string
+	Origin string
+	Text   string
+	Err    error
 }
 
 // Alias for func (ErrorWrapper).Error()
@@ -50,7 +50,11 @@ func (err ErrorWrapper) Error() string {
 	//	return err.Err.Error()
 	//}
 
-	return fmt.Errorf("%v: %v: %w", err.Pkg, err.Text, err.Err).Error()
+	if err.Err == nil {
+		return fmt.Errorf("%v: %v", err.Origin, err.Text).Error()
+	}
+
+	return fmt.Errorf("%v: %v: %w", err.Origin, err.Text, err.Err).Error()
 }
 
 func (err *ErrorWrapper) SetError(e error) {
@@ -59,19 +63,19 @@ func (err *ErrorWrapper) SetError(e error) {
 
 func (err ErrorWrapper) AsError() error {
 	return ErrorWrapper{
-		Pkg:  err.Pkg,
-		Err:  err.Err,
-		Text: err.Text,
+		Origin: err.Origin,
+		Text:   err.Text,
+		Err:    err.Err,
 	}
 }
 
-// NewError returns an ErrorWrapper which contains information on which package the error originated,
-// the error itself, and the error text/message.
-func NewError(pkg string, err error, text string) ErrorWrapper { // TODO: custom error type?
+// NewError returns an ErrorWrapper which contains information on which package and/or function
+// the error originated, the error text/message, and the error itself
+func NewError(origin string, text string, err error) ErrorWrapper {
 	return ErrorWrapper{
-		Pkg:  pkg,
-		Err:  err,
-		Text: text,
+		Origin: origin,
+		Text:   text,
+		Err:    err,
 	}
 }
 
