@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,6 +18,9 @@ import (
 	"golang.org/x/image/font/gofont/gobold"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/math/fixed"
+
+	"main/errors"
+	"main/logger"
 )
 
 var colors = []color.RGBA{
@@ -268,7 +270,7 @@ func genDay(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, co
 func genTimetable(creds tcUser, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		w.WriteHeader(500)
 		return
 	}
@@ -494,7 +496,7 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 		}
 	}
 
-	//log.Printf("%+v\n", data.Body.TaskData.ResLinks)
+	//logger.Info("%+v\n", data.Body.TaskData.ResLinks)
 
 	if assignment.Upload {
 		data.Body.TaskData.HasUpload = true
@@ -541,7 +543,7 @@ func genPage(w http.ResponseWriter, templates *template.Template, data pageData)
 	//fmt.Printf("%+v\n", data)
 	err := templates.ExecuteTemplate(w, "page", data)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 	}
 
 	// TESTING CODE:
@@ -557,7 +559,7 @@ func genPage(w http.ResponseWriter, templates *template.Template, data pageData)
 	//a.Flush()
 	//if err != nil {
 	//	fmt.Println("Errors:")
-	//	log.Println(err)
+	//	logger.Error(err)
 	//}
 }
 
@@ -651,7 +653,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 		}
 
 	} else {
-		return data, errNotFound
+		return data, errors.ErrNotFound
 	}
 
 	return data, nil
