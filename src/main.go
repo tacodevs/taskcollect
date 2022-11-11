@@ -4,35 +4,27 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"html"
+	"html/template"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"mime"
 	"net/http"
 	"os"
 	"os/user"
+	fp "path/filepath"
 	"strings"
 	"sync"
 	"time"
 	_ "time/tzdata"
 )
 
-var (
-	errAuthFailed = errors.New("main: authentication failed")
-	errCorruptMIME = errors.New("main: corrupt MIME request")
-	errIncompleteCreds = errors.New("main: user has incomplete credentials")
-	errInvalidAuth = errors.New("main: invalid session token")
-	errNoPlatform = errors.New("main: unsupported platform")
-	errNotFound = errors.New("main: cannot find resource")
-	needsGAuth = errors.New("main: Google auth required")
-)
-
 type authDb struct {
-	lock  *sync.Mutex
-	path  string
-	pwd   []byte
-	gAuth []byte
+	lock      *sync.Mutex
+	path      string
+	pwd       []byte
+	gAuth     []byte
+	templates *template.Template
 }
 
 type postReader struct {
@@ -139,10 +131,12 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	return filename, pr, nil
 }
 
-func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, []byte, [][2]string) {
+// Handle things like submission and file uploads
+func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, pageData, [][2]string) {
+	data := pageData{}
+
 	res := r.URL.EscapedPath()
 	statusCode := 200
-	var webpage []byte
 	var headers [][2]string
 
 	if cmd == "submit" {
@@ -150,7 +144,7 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, []byte, [][2
 
 		if err != nil {
 			log.Println(err)
-			webpage = []byte(serverErrorPage)
+			data = statusServerErrorData
 			statusCode = 500
 		} else {
 			index := strings.Index(res, "/submit")
@@ -161,13 +155,13 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, []byte, [][2
 		filename, reader, err := fileFromReq(r)
 		if err != nil {
 			log.Println(err)
-			return 500, []byte(serverErrorPage), nil
+			return 500, statusServerErrorData, nil
 		}
 
 		err = uploadWork(c, p, id, filename, &reader)
 		if err != nil {
 			log.Println(err)
-			webpage = []byte(serverErrorPage)
+			data = statusServerErrorData
 			statusCode = 500
 		} else {
 			index := strings.Index(res, "/upload")
@@ -183,11 +177,11 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, []byte, [][2
 
 		err := removeWork(c, p, id, filenames)
 		if err == errNoPlatform {
-			webpage = []byte(notFoundPage)
+			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
 			log.Println(err)
-			webpage = []byte(serverErrorPage)
+			data = statusServerErrorData
 			statusCode = 500
 		} else {
 			index := strings.Index(res, "/remove")
@@ -195,25 +189,28 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, []byte, [][2
 			statusCode = 302
 		}
 	} else {
-		webpage = []byte(notFoundPage)
+		data = statusNotFoundData
 		statusCode = 404
 	}
 
-	return statusCode, webpage, headers
+	return statusCode, data, headers
 }
 
-func handleTaskReq(r *http.Request, creds tcUser) (int, []byte, [][2]string) {
+func handleTaskReq(tmpls *template.Template, r *http.Request, creds tcUser) (int, pageData, [][2]string) {
 	res := r.URL.EscapedPath()
+	log.Printf("%v\n", res)
+
 	statusCode := 200
-	var webpage []byte
+	var data pageData
 	var headers [][2]string
 
 	platform := res[7:]
 	index := strings.Index(platform, "/")
 
 	if index == -1 {
-		webpage = []byte(notFoundPage)
+		data = statusNotFoundData
 		statusCode = 404
+		return statusCode, data, headers
 	}
 
 	taskId := platform[index+1:]
@@ -222,22 +219,19 @@ func handleTaskReq(r *http.Request, creds tcUser) (int, []byte, [][2]string) {
 
 	if index == -1 {
 		assignment, err := getTask(platform, taskId, creds)
-
 		if err != nil {
 			log.Println(err)
-			webpage = []byte(serverErrorPage)
+			data = statusServerErrorData
 			statusCode = 500
+			return statusCode, data, headers
 		}
 
-		title := html.EscapeString(assignment.Name)
-		htmlBody := genHtmlTask(assignment, creds)
-		taskHtml := genPage(title, htmlBody)
-		webpage = []byte(taskHtml)
+		data = genTaskPage(assignment, creds)
 	} else {
 		taskCmd := taskId[index+1:]
 		taskId = taskId[:index]
 
-		statusCode, webpage, headers = handleTask(
+		statusCode, data, headers = handleTask(
 			r,
 			creds,
 			platform,
@@ -246,25 +240,31 @@ func handleTaskReq(r *http.Request, creds tcUser) (int, []byte, [][2]string) {
 		)
 	}
 
-	return statusCode, webpage, headers
+	return statusCode, data, headers
 }
 
+// The main handler function
 func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	res := r.URL.EscapedPath()
 	validAuth := true
 	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd)
+	if err != nil {
+		log.Println(err)
+	}
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		log.Println(err)
-		w.Write([]byte(serverErrorPage))
+		genPage(w, db.templates, statusServerErrorData)
 		return
 	}
 
 	creds.GAuthID = db.gAuth
 	resIsLogin := false
 	invalidRes := false
+
+	// TODO: Have separate functions for handling validAuth and !validAuth outcomes
 
 	if res == "/login" || res == "/auth" {
 		resIsLogin = true
@@ -276,15 +276,14 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		cssFile, err := os.Open(db.path + "styles.css")
 
+		cssFile, err := os.Open(fp.Join(db.path, "styles.css"))
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
 		}
 
 		_, err = io.Copy(w, cssFile)
-
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
@@ -293,15 +292,14 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		cssFile.Close()
 	} else if res == "/mainfont.ttf" {
 		w.Header().Set("Content-Type", `font/ttf`)
-		fontFile, err := os.Open(db.path + "mainfont.ttf")
 
+		fontFile, err := os.Open(fp.Join(db.path, "mainfont.ttf"))
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
 		}
 
 		_, err = io.Copy(w, fontFile)
-
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
@@ -310,15 +308,14 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		fontFile.Close()
 	} else if res == "/navfont.ttf" {
 		w.Header().Set("Content-Type", `font/ttf`)
-		fontFile, err := os.Open(db.path + "navfont.ttf")
 
+		fontFile, err := os.Open(fp.Join(db.path, "navfont.ttf"))
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
 		}
 
 		_, err = io.Copy(w, fontFile)
-
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
@@ -327,8 +324,8 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		fontFile.Close()
 	} else if !validAuth && res == "/auth" {
 		var cookie string
-		err = r.ParseForm()
 
+		err = r.ParseForm()
 		if err == nil {
 			cookie, err = auth(
 				r.PostForm,
@@ -344,7 +341,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 			return
-		} else if !errors.Is(err, needsGAuth) {
+		} else if !errors.Is(err, errNeedsGAuth) {
 			log.Println(err)
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
@@ -352,7 +349,6 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		gAuthLoc, err := genGAuthLoc(db.path)
-
 		if err != nil {
 			log.Println(err)
 		} else {
@@ -364,13 +360,26 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	} else if !validAuth && res == "/login" {
 		if r.URL.Query().Get("auth") == "failed" {
 			w.WriteHeader(401)
-			w.Write([]byte(loginFailed))
+			data := pageData{
+				PageType: "login",
+				Head: headData{
+					Title: "Login",
+				},
+				Body: bodyData{
+					LoginData: loginData{
+						Failed: true,
+					},
+				},
+			}
+			genPage(w, db.templates, data)
 		} else {
-			w.Write([]byte(loginPage))
+			genPage(w, db.templates, loginPageData)
 		}
+
 	} else if !validAuth && !resIsLogin {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(302)
+
 	} else if validAuth && res == "/gauth" {
 		err = gAuth(creds, r.URL.Query(), db.lock, db.path, db.pwd)
 		if err != nil {
@@ -387,64 +396,146 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Println(err)
 			w.WriteHeader(500)
-			w.Write([]byte(serverErrorPage))
+			genPage(w, db.templates, statusServerErrorData)
 		}
+
+		// Timetable image
+		// NOTE: Perhaps still keep the png generation even though the main timetable will
+		// be replaced by a table, rather than image
 	} else if validAuth && res == "/timetable.png" {
 		genTimetable(creds, w)
+
+		// View a single task
 	} else if validAuth && strings.HasPrefix(res, "/tasks/") {
-		statusCode, respBody, respHeaders := handleTaskReq(r, creds)
+		statusCode, respBody, respHeaders := handleTaskReq(db.templates, r, creds)
 
 		for _, respHeader := range respHeaders {
 			w.Header().Set(respHeader[0], respHeader[1])
 		}
 
 		w.WriteHeader(statusCode)
-		w.Write(respBody)
+		genPage(w, db.templates, respBody)
+
+		// Invalid URL while logged in redirects to /timetable
 	} else if validAuth && invalidRes {
+		//log.Println("invalidRes -- redirect")
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
+
+		// Logged in, and the requested URL is valid
 	} else if validAuth && !invalidRes {
-		webpage, err := genRes(res, creds)
+		webpageData, err := genRes(db.path, res, creds)
 
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)
-			w.Write([]byte(notFoundPage))
+			genPage(w, db.templates, statusNotFoundData)
 		} else if err != nil {
 			log.Println(err)
 			w.WriteHeader(500)
-			w.Write([]byte(serverErrorPage))
+			genPage(w, db.templates, statusServerErrorData)
 		} else {
-			w.Write(webpage)
+			genPage(w, db.templates, webpageData)
 		}
 	}
 }
 
+// Create and manage necessary HTML files from template files
+func initTemplates(resPath string) *template.Template {
+	// Create "./templates/" dir if it does not exist
+	tmplPath := fp.Join(resPath, "templates")
+	err := os.MkdirAll(tmplPath, os.ModePerm)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	tmplResPath := tmplPath
+
+	var files []string
+	err = fp.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
+		if err != nil {
+			log.Fatalln(err)
+		}
+		// Skip the directory name itself from being appended, although its children won't be affected
+		// Excluding via info.IsDir() will exclude files that are under a subdirectory so it cannot be used
+		if info.Name() == "components" {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		log.Fatalln("main: Error walking the template/ directory")
+		log.Fatalln(err)
+	}
+
+	files = remove(files, tmplResPath)
+
+	var requiredFiles []string
+	rf := []string{
+		"page", "head", "error", "login", "footer",
+		"main", "res", "task", "tasks", "timetable",
+		"components/nav",
+	}
+	for _, f := range rf {
+		requiredFiles = append(requiredFiles, fp.Join(tmplResPath, f+".tmpl"))
+	}
+
+	filesMissing := false
+	var missingFiles []string
+	for _, f := range requiredFiles {
+		if !contains(files, f) {
+			filesMissing = true
+			missingFiles = append(missingFiles, f)
+		}
+	}
+	if filesMissing {
+		//fmt.Printf("%+v\n", files)
+		log.Fatalf("main: The following template files are missing:\n%+v\n", missingFiles)
+	}
+
+	// Find page.tmpl and put it at the front; NOTE: (only needed when not using ExecuteTemplate)
+	//var sortedFiles []string
+	//pageTmpl := fp.Join(tmplResPath, "page.tmpl")
+	//for _, f := range files {
+	//	if f == pageTmpl {
+	//		sortedFiles = append([]string{f}, sortedFiles...)
+	//	} else {
+	//		sortedFiles = append(sortedFiles, f)
+	//	}
+	//}
+	sortedFiles := files
+
+	templates := template.Must(template.ParseFiles(sortedFiles...))
+	//fmt.Printf("%+v\n", sortedFiles)
+	return templates
+}
+
 func main() {
 	tlsConns := true
-	errStr := "taskcollect: Invalid invocation.\n"
 
 	if len(os.Args) > 2 || len(os.Args) == 2 && os.Args[1] != "-w" {
+		errStr := "taskcollect: Invalid invocation.\n"
 		os.Stderr.WriteString(errStr)
 		os.Exit(1)
 	}
 
-	if len(os.Args) == 2 {
+	if contains(os.Args, "-w") {
 		tlsConns = false
 	}
 
 	curUser, err := user.Current()
-
 	if err != nil {
-		errStr = "taskcollect: Can't determine current user's home folder."
+		errStr := "taskcollect: Cannot determine current user's home folder."
 		os.Stderr.WriteString(errStr + "\n")
 		os.Exit(1)
 	}
 
 	home := curUser.HomeDir
-	resPath := home + "/res/taskcollect/"
-	certFile := resPath + "cert.pem"
-	keyFile := resPath + "key.pem"
+	resPath := fp.Join(home, "res/taskcollect")
+	certFile := fp.Join(resPath, "cert.pem")
+	keyFile := fp.Join(resPath, "key.pem")
 
+	// TODO: Hide password input
 	var dbPwdInput string
 	fmt.Print("Passphrase to user credentials file: ")
 	fmt.Scanln(&dbPwdInput)
@@ -456,41 +547,46 @@ func main() {
 	} else if len(pwdBytes) > 32 {
 		dbPwd = pwdBytes[:32]
 	} else {
-		zerolen := 32 - len(pwdBytes)
+		zeroLen := 32 - len(pwdBytes)
 		dbPwd = pwdBytes
 
-		for i := 0; i < zerolen; i++ {
+		for i := 0; i < zeroLen; i++ {
 			dbPwd = append(dbPwd, 0x00)
 		}
 	}
 
 	dbMutex := new(sync.Mutex)
 
-	gcid, err := ioutil.ReadFile(resPath + "gauth.json")
+	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
-		strErr := "taskcollect: Can't read Google client ID file."
+		strErr := "taskcollect: Cannot read Google client ID file."
 		os.Stderr.WriteString(strErr + "\n")
 		os.Exit(1)
 	}
 
+	templates := initTemplates(resPath)
+	log.Println("main: Successfully initalised HTML templates")
+
 	db := authDb{
-		lock:  dbMutex,
-		path:  resPath,
-		pwd:   dbPwd,
-		gAuth: gcid,
+		lock:      dbMutex,
+		path:      resPath,
+		pwd:       dbPwd,
+		gAuth:     gcid,
+		templates: templates,
 	}
 
 	// TODO: Use http.NewServeMux
-
 	http.HandleFunc("/", db.handler)
 
 	if tlsConns {
+		log.Println("Running on port 443")
 		err = http.ListenAndServeTLS(":443", certFile, keyFile, nil)
 	} else {
+		log.Println("Running on port 8080 (without TLS). DO NOT use this in production")
 		err = http.ListenAndServe(":8080", nil)
 	}
 
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 }

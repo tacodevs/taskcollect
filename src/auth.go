@@ -10,11 +10,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"main/daymap"
 	"main/gclass"
 	"math/rand"
 	"net/url"
+	"os"
+	fp "path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -39,9 +40,11 @@ func tsvUnescapeString(s string) string {
 }
 
 func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
-	ecrFile, err := ioutil.ReadFile(dbPath)
+	//log.Printf("db path: %+v\n", dbPath)
+	ecrFile, err := os.ReadFile(dbPath)
 
 	if err != nil {
+		//log.Println("decryptDb ERR 1")
 		return nil, err
 	}
 
@@ -63,18 +66,21 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	aesCipher, err := aes.NewCipher(key)
 
 	if err != nil {
+		//log.Println("decryptDb ERR 2")
 		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(aesCipher)
 
 	if err != nil {
+		//log.Println("decryptDb ERR 3")
 		return nil, err
 	}
 
 	nonceSize := gcm.NonceSize()
 
 	if len(ecrFile) < nonceSize {
+		//log.Println("decryptDb ERR 4")
 		return nil, err
 	}
 
@@ -82,6 +88,7 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	dcrFile, err := gcm.Open(nil, nonce, ecrFile, nil)
 
 	if err != nil {
+		//log.Println("decryptDb ERR 5")
 		return nil, err
 	}
 
@@ -92,12 +99,17 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 }
 
 func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
-	dbPath := resPath + "creds"
+	// TODO: Error handling needs to be improved
+
+	dbPath := fp.Join(resPath, "creds")
 	creds := tcUser{}
 	var token string
+
+	//log.Printf("Cookies: %+v\n", cookies)
 	start := strings.Index(cookies, "token=")
 
 	if start == -1 {
+		//log.Println("ERROR 1")
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -113,10 +125,12 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 	db, err := decryptDb(dbPath, pwd)
 
 	if err != nil {
+		//log.Println("ERROR 2")
 		return tcUser{}, err
 	}
 
 	if db == nil {
+		//log.Println("ERROR 3")
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -126,6 +140,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 		line, err := db.ReadString('\n')
 
 		if err != nil {
+			//log.Println("ERROR 4")
 			return tcUser{}, errInvalidAuth
 		}
 
@@ -144,6 +159,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 
 		if err != nil {
+			//log.Println("ERROR 5")
 			return tcUser{}, err
 		}
 
@@ -152,6 +168,7 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 			"gclass": tsvUnescapeString(ln[5]),
 		}
 	} else {
+		//log.Println("ERROR 6")
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -193,7 +210,7 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 }
 
 func genGAuthLoc(resPath string) (string, error) {
-	gcid, err := ioutil.ReadFile(resPath + "gauth.json")
+	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 
 	if err != nil {
 		panic(err)
@@ -221,10 +238,10 @@ func genGAuthLoc(resPath string) (string, error) {
 }
 
 func gAuth(creds tcUser, query url.Values, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
-	dbPath := resPath + "creds"
+	dbPath := fp.Join(resPath, "creds")
 	authCode := query.Get("code")
 
-	clientId, err := ioutil.ReadFile(resPath + "gauth.json")
+	clientId, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 
 	if err != nil {
 		return nil
@@ -306,7 +323,7 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 }
 
 func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []byte) (string, error) {
-	dbPath := resPath + "creds"
+	dbPath := fp.Join(resPath, "creds")
 	school := query.Get("school")
 
 	if school != "gihs" {
@@ -363,7 +380,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
-	gAuthStatus := needsGAuth
+	gAuthStatus := errNeedsGAuth
 
 	if gTok != "" {
 		err = <-gTestErr
@@ -393,7 +410,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 }
 
 func logout(creds tcUser, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
-	dbPath := resPath + "creds"
+	dbPath := fp.Join(resPath, "creds")
 	creds.Token = ""
 
 	for k, _ := range creds.SiteTokens {
@@ -428,8 +445,8 @@ func genCredLine(creds tcUser) string {
 	return line
 }
 
-func writeCreds(creds tcUser, dbpath string, pwd []byte) error {
-	db, err := decryptDb(dbpath, pwd)
+func writeCreds(creds tcUser, dbPath string, pwd []byte) error {
+	db, err := decryptDb(dbPath, pwd)
 
 	if err != nil {
 		return err
@@ -486,8 +503,8 @@ func writeCreds(creds tcUser, dbpath string, pwd []byte) error {
 		return err
 	}
 
-	newfile := gcm.Seal(nonce, nonce, []byte(new), nil)
-	err = ioutil.WriteFile(dbpath, newfile, 0640)
+	newFile := gcm.Seal(nonce, nonce, []byte(new), nil)
+	err = os.WriteFile(dbPath, newFile, 0640)
 
 	if err != nil {
 		return err
