@@ -43,10 +43,9 @@ func tsvUnescapeString(s string) string {
 func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	//logger.Debug("db path: %+v\n", dbPath)
 	ecrFile, err := os.ReadFile(dbPath)
-
 	if err != nil {
-		//log.Println("decryptDb ERR 1")
-		return nil, err
+		newErr := errors.NewError("main: decryptDb", errors.ErrFileRead.Error(), err)
+		return nil, newErr
 	}
 
 	var key []byte
@@ -65,32 +64,28 @@ func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
 	}
 
 	aesCipher, err := aes.NewCipher(key)
-
 	if err != nil {
-		//log.Println("decryptDb ERR 2")
-		return nil, err
+		newErr := errors.NewError("main: decryptDb", "failed to generate AES cipher", err)
+		return nil, newErr
 	}
 
 	gcm, err := cipher.NewGCM(aesCipher)
-
 	if err != nil {
-		//log.Println("decryptDb ERR 3")
-		return nil, err
+		newErr := errors.NewError("main: decryptDb", "failed to generate GCM cipher", err)
+		return nil, newErr
 	}
 
 	nonceSize := gcm.NonceSize()
-
 	if len(ecrFile) < nonceSize {
-		//log.Println("decryptDb ERR 4")
+		//newErr := errors.NewError("main: decryptDb", "ecrFile length less than nonce size", nil)
 		return nil, err
 	}
 
 	nonce, ecrFile := ecrFile[:nonceSize], ecrFile[nonceSize:]
 	dcrFile, err := gcm.Open(nil, nonce, ecrFile, nil)
-
 	if err != nil {
-		//log.Println("decryptDb ERR 5")
-		return nil, err
+		newErr := errors.NewError("main: decryptDb", "could not decrypt file", err)
+		return nil, newErr
 	}
 
 	s := string(dcrFile)
@@ -107,10 +102,8 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 	var token string
 
 	start := strings.Index(cookies, "token=")
-
 	if start == -1 {
-		//log.Println("ERROR 1")
-
+		//logger.Error(errors.NewError("main: getCreds", "cookie was not found", nil))
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -126,23 +119,21 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 	db, err := decryptDb(dbPath, pwd)
 
 	if err != nil {
-		//log.Println("ERROR 2")
 		return tcUser{}, err
 	}
 
 	if db == nil {
-		//log.Println("ERROR 3")
-		return tcUser{}, errors.ErrInvalidAuth
+		//err := errors.NewError("main: getCreds", errInvalidAuth.AsString(), errors.New("database is nil"))
+		return tcUser{}, errInvalidAuth
 	}
 
 	var ln []string
 
 	for {
 		line, err := db.ReadString('\n')
-
 		if err != nil {
-			//log.Println("ERROR 4")
-			return tcUser{}, errors.ErrInvalidAuth
+			//newErr := errors.NewError("main: getCreds", errInvalidAuth.AsString(), err)
+			return tcUser{}, errInvalidAuth
 		}
 
 		ln = strings.Split(line, "\t")
@@ -158,10 +149,9 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 
 	if creds.School == "gihs" {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
-
 		if err != nil {
-			//log.Println("ERROR 5")
-			return tcUser{}, err
+			newErr := errors.NewError("main: getCreds", "could not load timezone location data", err)
+			return tcUser{}, newErr
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -169,8 +159,8 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 			"gclass": tsvUnescapeString(ln[5]),
 		}
 	} else {
-		//log.Println("ERROR 6")
-		return tcUser{}, errors.ErrInvalidAuth
+		//newErr := errors.NewError("main: getCreds", "invalid school", errInvalidAuth.AsError())
+		return tcUser{}, errInvalidAuth
 	}
 
 	return creds, nil
@@ -184,7 +174,7 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 	}
 
 	if db == nil {
-		return false, errors.ErrInvalidAuth
+		return false, errInvalidAuth
 	}
 
 	var ln []string
@@ -194,7 +184,7 @@ func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
 		line, err := db.ReadString('\n')
 
 		if err != nil {
-			return false, errors.ErrInvalidAuth
+			return false, errInvalidAuth
 		}
 
 		ln = strings.Split(line, "\t")
@@ -255,19 +245,16 @@ func gAuth(creds tcUser, query url.Values, authDb *sync.Mutex, resPath string, d
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
 	)
-
 	if err != nil {
 		return err
 	}
 
 	gTok, err := gAuthConfig.Exchange(context.TODO(), authCode)
-
 	if err != nil {
 		return err
 	}
 
 	token, err := json.Marshal(gTok)
-
 	if err != nil {
 		return err
 	}
@@ -287,13 +274,12 @@ func gAuth(creds tcUser, query url.Values, authDb *sync.Mutex, resPath string, d
 
 func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 	db, err := decryptDb(dbPath, dbPwd)
-
 	if err != nil {
 		return "", err
 	}
 
 	if db == nil {
-		return "", errors.ErrInvalidAuth
+		return "", errInvalidAuth.AsError()
 	}
 
 	var ln []string
@@ -317,7 +303,7 @@ func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
 	}
 
 	if len(ln) != 6 {
-		return "", errors.ErrIncompleteCreds
+		return "", errIncompleteCreds.AsError()
 	}
 
 	return gTok, nil
@@ -328,7 +314,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	school := query.Get("school")
 
 	if school != "gihs" {
-		return "", errors.ErrAuthFailed
+		return "", errAuthFailed
 	}
 
 	usr := query.Get("usr")
@@ -336,7 +322,7 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 
 	gTok, err := getGTok(dbPath, dbPwd, usr, pwd)
 
-	if !errors.Is(err, errors.ErrInvalidAuth) && err != nil {
+	if !errors.Is(err, errInvalidAuth) && err != nil {
 		return "", err
 	}
 
@@ -354,13 +340,12 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 
 	if err != nil {
 		userExists, err := findUser(dbPath, dbPwd, usr, pwd)
-
 		if err != nil {
 			return "", err
 		}
 
 		if !userExists {
-			return "", errors.ErrAuthFailed
+			return "", errAuthFailed
 		}
 	}
 
@@ -381,7 +366,9 @@ func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []by
 	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
-	gAuthStatus := errors.ErrNeedsGAuth
+	// Convert to error type since a ErrorWrapper struct cannot be nil
+	// TODO: Use pointers for ErrorWrapper?
+	gAuthStatus := errNeedsGAuth.AsError()
 
 	if gTok != "" {
 		err = <-gTestErr

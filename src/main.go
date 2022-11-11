@@ -21,13 +21,13 @@ import (
 )
 
 var (
-	errAuthFailed      = errors.NewError("main", nil, errors.ErrAuthFailed.Error())
-	errCorruptMIME     = errors.NewError("main", nil, errors.ErrCorruptMIME.Error())
-	errIncompleteCreds = errors.NewError("main", nil, errors.ErrIncompleteCreds.Error())
-	errInvalidAuth     = errors.NewError("main", nil, errors.ErrInvalidAuth.Error())
-	errNoPlatform      = errors.NewError("main", nil, errors.ErrNoPlatform.Error())
-	errNotFound        = errors.NewError("main", nil, errors.ErrNotFound.Error())
-	errNeedsGAuth      = errors.NewError("main", nil, errors.ErrNeedsGAuth.Error())
+	errAuthFailed      = errors.NewError("main", errors.ErrAuthFailed.Error(), nil)
+	errCorruptMIME     = errors.NewError("main", errors.ErrCorruptMIME.Error(), nil)
+	errIncompleteCreds = errors.NewError("main", errors.ErrIncompleteCreds.Error(), nil)
+	errInvalidAuth     = errors.NewError("main", errors.ErrInvalidAuth.Error(), nil)
+	errNoPlatform      = errors.NewError("main", errors.ErrNoPlatform.Error(), nil)
+	errNotFound        = errors.NewError("main", errors.ErrNotFound.Error(), nil)
+	errNeedsGAuth      = errors.NewError("main", errors.ErrNeedsGAuth.Error(), nil)
 )
 
 type authDb struct {
@@ -259,14 +259,11 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 	res := r.URL.EscapedPath()
 	validAuth := true
 	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd)
-	if err != nil {
-		logger.Error(err)
-	}
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(err)
+		logger.Debug(err)
 		genPage(w, db.templates, statusServerErrorData)
 		return
 	}
@@ -475,7 +472,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 		return nil
 	})
 	if err != nil {
-		logger.Fatal(errors.NewError("main", err, "error walking the template/ directory"))
+		logger.Fatal(errors.NewError("main", "error walking the template/ directory", err))
 	}
 
 	files = remove(files, tmplResPath)
@@ -500,7 +497,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	}
 	if filesMissing {
 		errStr := fmt.Errorf("%v:\n%+v", errors.ErrMissingFiles.Error(), missingFiles)
-		logger.Fatal(errors.NewError("main", nil, errStr.Error()))
+		logger.Fatal(errors.NewError("main", errStr.Error(), nil))
 	}
 
 	// Find page.tmpl and put it at the front; NOTE: (only needed when not using ExecuteTemplate)
@@ -582,14 +579,14 @@ func main() {
 
 	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
-		strErr := errors.NewError("main", err, "Google client ID "+errors.ErrFileRead.Error())
+		strErr := errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err)
 		//strErr := fmt.Errorf("taskcollect: Cannot read Google client ID file: %w", err)
 		logger.Fatal(strErr.Error())
 	}
 
 	templates, err := initTemplates(resPath)
 	if err != nil {
-		strErr := errors.NewError("main", err, errors.ErrInitFailed.Error()+" for HTML templates")
+		strErr := errors.NewError("main", errors.ErrInitFailed.Error()+" for HTML templates", err)
 		logger.Fatal(strErr)
 	}
 	logger.Info("Successfully initialized HTML templates")

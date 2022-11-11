@@ -14,7 +14,7 @@ var useLogFile = false
 
 var buf bytes.Buffer
 
-var errInvalidInterfaceType = errors.NewError("logger", nil, errors.ErrInvalidInterfaceType.Error())
+var errInvalidInterfaceType = errors.NewError("logger", errors.ErrInvalidInterfaceType.Error(), nil)
 
 var (
 	infoLogger  = log.New(&buf, "INFO: ", log.Ldate|log.Ltime)

@@ -14,7 +14,7 @@ import (
 	"main/errors"
 )
 
-var errInvalidTaskID = errors.NewError("gclass", nil, "invalid task ID")
+var errInvalidTaskID = errors.NewError("gclass", "invalid task ID", nil)
 
 type User struct {
 	ClientID []byte
