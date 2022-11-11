@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html"
 	"html/template"
 	"image"
 	"image/color"
@@ -481,8 +482,10 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 
 	if assignment.Desc != "" {
 		taskDesc := assignment.Desc
+		// Escape strings since it will be converted to safe HTML after
+		taskDesc = html.EscapeString(taskDesc)
 		taskDesc = strings.ReplaceAll(taskDesc, "\n", "<br>")
-		data.Body.TaskData.Desc = taskDesc
+		data.Body.TaskData.Desc = template.HTML(taskDesc)
 	}
 
 	if assignment.ResLinks != nil {
@@ -515,8 +518,10 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 
 	if assignment.Comment != "" {
 		taskCmt := assignment.Comment
+		// Escape strings since it will be converted to safe HTML after
+		taskCmt = html.EscapeString(taskCmt)
 		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
-		data.Body.TaskData.Comment = taskCmt
+		data.Body.TaskData.Comment = template.HTML(taskCmt)
 	}
 
 	return data

@@ -1,5 +1,7 @@
 package main
 
+import "html/template"
+
 // Error Page
 
 type errData struct {
@@ -69,14 +71,14 @@ type taskData struct {
 	IsDue        bool
 	DueDate      string
 	Submitted    bool
-	Desc         string
+	Desc         template.HTML
 	HasResLinks  bool
 	ResLinks     map[string]string
 	HasWorkLinks bool
 	WorkLinks    map[string]string
 	HasUpload    bool
 	Grade        string
-	Comment      string
+	Comment      template.HTML
 }
 
 // Primary (page, head, body)
