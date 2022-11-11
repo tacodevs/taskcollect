@@ -42,7 +42,6 @@ func Info(format any, v ...any) {
 	case string:
 		infoLogger.Printf(a, v...)
 	case error:
-		log.Println("error case")
 		err := fmt.Errorf("%w", a)
 		infoLogger.Printf(err.Error(), v...)
 	//case errors.ErrorWrapper:
