@@ -580,7 +580,7 @@ func main() {
 	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
 		strErr := errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err)
-		//strErr := fmt.Errorf("taskcollect: Cannot read Google client ID file: %w", err)
+		//strErr := fmt.Errorf("taskcollect: Cannot read Google client ID file: %v", err)
 		logger.Fatal(strErr.Error())
 	}
 
@@ -611,6 +611,6 @@ func main() {
 	}
 
 	if err != nil {
-		logger.Fatal("%w", err)
+		logger.Fatal("%v", err)
 	}
 }

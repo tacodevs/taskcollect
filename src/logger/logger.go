@@ -42,7 +42,7 @@ func Info(format any, v ...any) {
 	case string:
 		infoLogger.Printf(a, v...)
 	case error:
-		err := fmt.Errorf("%w", a)
+		err := fmt.Errorf("%v", a)
 		infoLogger.Printf(err.Error(), v...)
 	//case errors.ErrorWrapper:
 	//	err := a.AsString()
@@ -60,7 +60,7 @@ func Debug(format any, v ...any) {
 	case string:
 		debugLogger.Printf(a, v...)
 	case error:
-		err := fmt.Errorf("%w", a)
+		err := fmt.Errorf("%v", a)
 		debugLogger.Printf(err.Error(), v...)
 	//case errors.ErrorWrapper:
 	//	err := a.AsString()
@@ -77,7 +77,7 @@ func Warn(format any, v ...any) {
 	case string:
 		warnLogger.Printf(a, v...)
 	case error:
-		err := fmt.Errorf("%w", a)
+		err := fmt.Errorf("%v", a)
 		warnLogger.Printf(err.Error(), v...)
 	//case errors.ErrorWrapper:
 	//	err := a.AsString()
@@ -94,7 +94,7 @@ func Error(format any, v ...any) {
 	case string:
 		errorLogger.Printf(a, v...)
 	case error:
-		err := fmt.Errorf("%w", a)
+		err := fmt.Errorf("%v", a)
 		errorLogger.Printf(err.Error(), v...)
 	//case errors.ErrorWrapper:
 	//	err := a.AsString()
@@ -115,7 +115,7 @@ func Fatal(format any, v ...any) {
 		err := a.AsString()
 		fatalLogger.Printf(err, v...)
 	case error:
-		err := fmt.Errorf("%w", a)
+		err := fmt.Errorf("%v", a)
 		fatalLogger.Printf(err.Error(), v...)
 
 	default:
