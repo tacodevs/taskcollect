@@ -1,0 +1,23 @@
+{{define "page" -}}
+<!DOCTYPE html>
+<html>
+{{- template "head" . -}}
+<body>
+{{- if eq .PageType "login"}}
+    {{- template "login" . -}}
+{{else if eq .PageType "error"}}
+    {{- template "error" . -}}
+{{else if eq .PageType "res"}}
+    {{- template "res" . -}}
+{{else if eq .PageType "tasks"}}
+    {{- template "tasks" . -}}
+{{else if eq .PageType "task"}}
+    {{- template "task" . -}}
+{{else if eq .PageType "timetable"}}
+    {{- template "timetable" . -}}
+{{else if eq .PageType "main"}}
+    {{- template "main" . -}}
+{{end -}}
+</body>
+</html>
+{{end}}

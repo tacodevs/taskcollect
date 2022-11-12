@@ -56,7 +56,46 @@ def run(argv: list[str]):
             i = i.split("/")
             build(i[0], i[1])
 
+
+def update_res_files():
+    from distutils.dir_util import copy_tree
+    import glob
+    from pathlib import Path
+    import shutil
+
+    res_src = Path.cwd().joinpath("..", "res")
+    res_src = Path.resolve(res_src)
+    tmpl_src = res_src.joinpath("./templates/")
+
+    res_dst = Path.home().joinpath("./res/taskcollect/")
+    tmpl_dst = res_dst.joinpath("./templates/")
+
+    # Copy over template files
+    src = tmpl_src
+    rel_path = Path.relative_to(src, tmpl_src)
+    dst = tmpl_dst.joinpath(rel_path)
+    copy_tree(str(src), str(dst))
+    print(f"Copied {src} -> {dst}")
+
+    # Copy CSS stylesheet
+    src = res_src.joinpath("styles.css")
+    dst = res_dst.joinpath("styles.css")
+    shutil.copy(src, dst)
+    print(f"Copied {src} -> {dst}")
+
+
+
 def main(argc: int, argv: list[str]):
+    if "-u" in argv:
+        update_res_files()
+        print("Files have been copied.")
+        argv.remove("-u")
+        argc -= 1
+    elif "-U" in argv:
+        update_res_files()
+        print("Files have been copied. Not building due to no-build option")
+        sys.exit(0)
+
     if argc == 1:
         os_name = platform.system().lower()
         arch = platform.machine().lower()
@@ -78,6 +117,10 @@ def main(argc: int, argv: list[str]):
             "\n"
             "USAGE:\n"
             "    [<<OS>/<ARCH>> ...]\n" # - Provide a valid combination of OS and architecture. Several can be built at once
+            "\n"
+            "OPTIONS:\n"
+            "    -u - Build while also copying across resource files\n"
+            "    -U - Only copy resource files, do not build\n"
             "\n"
             "COMMANDS:\n"
             "    all - Build for all platforms (this may take a while)\n"

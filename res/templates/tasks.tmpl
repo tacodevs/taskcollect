@@ -1,0 +1,36 @@
+{{define "tasks"}}
+{{template "nav" -}}
+<h1>{{.Body.TasksData.Heading}}</h1>
+
+{{range $index, $taskType := .Body.TasksData.TaskTypes}}
+<details>
+    <summary>
+        {{$taskType.Name}}
+    </summary>
+    <table>
+        <thead>
+            <tr>
+                {{if eq $taskType.HasDueDate true}}
+                <th class="due">Due date</th>
+                {{end}}
+                <th class="subject">Subject</th>
+                <th class="task">Task</th>
+                <th class="link">Source platform link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range $index, $task := $taskType.Tasks}}
+                <tr>
+                    {{if eq $taskType.HasDueDate true}}
+                    <td>{{$task.DueDate}}</td>
+                    {{end}}
+                    <td>{{$task.Class}}</td>
+                    <td><a href="/tasks/{{$task.Platform}}/{{$task.Id}}">{{$task.Name}}</a></td>
+                    <td><a href="{{$task.URL}}">{{$task.URL}}</a></td>
+                </tr>
+            {{end}}
+        </tbody>
+    </table>
+</details>
+{{end}}
+{{end}}

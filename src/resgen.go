@@ -2,11 +2,11 @@ package main
 
 import (
 	"html"
+	"html/template"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,6 +19,9 @@ import (
 	"golang.org/x/image/font/gofont/gobold"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/math/fixed"
+
+	"main/errors"
+	"main/logger"
 )
 
 var colors = []color.RGBA{
@@ -34,14 +37,17 @@ var colors = []color.RGBA{
 	{0x60, 0x60, 0x60, 0xff}, // Grey
 }
 
-func contains(strSlice []string, str string) bool {
-	for i := 0; i < len(strSlice); i++ {
-		if strSlice[i] == str {
-			return true
-		}
-	}
-
-	return false
+var _colors = map[string]color.RGBA{
+	"Dark Blue":  {0x00, 0x28, 0x70, 0xff},
+	"Green":      {0x00, 0x70, 0x00, 0xff},
+	"Purple":     {0x58, 0x09, 0x7e, 0xff},
+	"Fuchsia":    {0xab, 0x31, 0x7b, 0xff},
+	"Dark Red":   {0xaa, 0x00, 0x00, 0xff},
+	"Tan":        {0xab, 0x63, 0x00, 0xff},
+	"Brown":      {0x70, 0x26, 0x00, 0xff},
+	"Dark Azure": {0x00, 0x58, 0x70, 0xff},
+	"Teal":       {0x1b, 0x86, 0x69, 0xff},
+	"Grey":       {0x60, 0x60, 0x60, 0xff},
 }
 
 func genDueStr(due time.Time, creds tcUser) string {
@@ -264,12 +270,15 @@ func genDay(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, co
 
 func genTimetable(creds tcUser, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
-
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 		w.WriteHeader(500)
 		return
 	}
+
+	// TODO: Use named colors instead of plain RGBA values
+	// Using c = color.RGBA{...} doesn't tell you what color you're using (at a glance)
+	// Refer to _colors variable for future implementation
 
 	const width = 1135
 	const height = 800
@@ -360,7 +369,6 @@ func genTimetable(creds tcUser, w http.ResponseWriter) {
 	}
 
 	boldFont, err := freetype.ParseFont(gobold.TTF)
-
 	if err != nil {
 		w.WriteHeader(500)
 		return
@@ -422,209 +430,236 @@ func genTimetable(creds tcUser, w http.ResponseWriter) {
 	}
 }
 
-func genHtmlTasks(assignment task, noDue bool, creds tcUser) string {
+// Generate a single task and format it in HTML (for the list of tasks)
+func genTask(assignment task, hasDueDate bool, creds tcUser) taskItem {
+	task := taskItem{
+		Id:       assignment.Id,
+		Name:     assignment.Name,
+		Platform: assignment.Platform,
+		Class:    assignment.Class,
+		URL:      assignment.Link,
+	}
+
 	dueDate := genDueStr(assignment.Due, creds)
-	h := "<tr>\n"
-
-	if !noDue {
-		h += "<td>" + html.EscapeString(dueDate)
-		h += "</td>\n"
+	if hasDueDate {
+		task.DueDate = dueDate
 	}
 
-	// TODO: use HTML templates as this is messy.
-	h += "<td>" + html.EscapeString(assignment.Class)
-	h += "</td>\n<td>" + `<a href="/tasks/`
-	h += html.EscapeString(assignment.Platform) + "/"
-	h += html.EscapeString(assignment.Id) + `">`
-	h += html.EscapeString(assignment.Name)
-	h += "</a></td>\n" + `<td><a href="`
-	h += html.EscapeString(assignment.Link) + `">`
-	h += html.EscapeString(assignment.Link)
-	h += "</a></td>\n</tr>\n"
-
-	return h
+	return task
 }
 
-func genHtmlResLinks(class string, res [][2]string) string {
-	h := "<details>\n<summary>" + html.EscapeString(class)
-	h += "</summary>\n"
-
-	for i := 0; i < len(res); i++ {
-		h += "<div>\n<p>" + `<a href="`
-		h += html.EscapeString(res[i][0]) + `">`
-		h += html.EscapeString(res[i][1])
-		h += "</a></p>\n<h5>" + `<a href="`
-		h += html.EscapeString(res[i][0]) + `">`
-		h += "Open in source platform</a></h5>\n</div>\n"
-	}
-
-	h += "</ul>\n</details>"
-	return h
-}
-
-func genHtmlTask(assignment task, creds tcUser) string {
-	h := "<h1>" + html.EscapeString(assignment.Name) + "</h1>\n<h3>"
-	h += html.EscapeString(assignment.Class) + "</h3>\n" + `<a href="`
-	h += html.EscapeString(assignment.Link)
-	h += `">View task in source platform</a>` + "\n"
-
-	if !assignment.Due.IsZero() || !assignment.Submitted {
-		h += "<hr>\n"
+// Generate the HTML page for viewing a single task
+func genTaskPage(assignment task, creds tcUser) pageData {
+	data := pageData{
+		PageType: "task",
+		Head: headData{
+			Title: assignment.Name,
+		},
+		Body: bodyData{
+			TaskData: taskData{
+				Id:          assignment.Id,
+				Name:        assignment.Name,
+				Platform:    assignment.Platform,
+				Class:       assignment.Class,
+				URL:         assignment.Link,
+				IsDue:       false,
+				Desc:        "",
+				ResLinks:    nil,
+				WorkLinks:   nil,
+				HasResLinks: false,
+			},
+		},
 	}
 
 	if !assignment.Due.IsZero() {
-		h += "<h4>Due "
-		h += html.EscapeString(genDueStr(assignment.Due, creds))
-		h += "</h4>\n"
+		data.Body.TaskData.IsDue = true
+		data.Body.TaskData.DueDate = genDueStr(assignment.Due, creds)
 	}
 
 	if !assignment.Submitted {
-		h += `<a href="/tasks/`
-		h += html.EscapeString(assignment.Platform) + "/"
-		h += html.EscapeString(assignment.Id)
-		h += "/submit\">Submit work</a>\n"
+		data.Body.TaskData.Submitted = false
 	}
 
 	if assignment.Desc != "" {
-		taskDesc := html.EscapeString(assignment.Desc)
+		taskDesc := assignment.Desc
+		// Escape strings since it will be converted to safe HTML after
+		taskDesc = html.EscapeString(taskDesc)
 		taskDesc = strings.ReplaceAll(taskDesc, "\n", "<br>")
-		h += "<hr>\n<h4>Task description</h4>\n<p>"
-		h += taskDesc + "</p>\n"
+		data.Body.TaskData.Desc = template.HTML(taskDesc)
 	}
 
 	if assignment.ResLinks != nil {
-		h += "<hr>\n<h4>Linked resources</h4>\n<ul>\n"
+		data.Body.TaskData.HasResLinks = true
+
+		data.Body.TaskData.ResLinks = make(map[string]string)
 		for i := 0; i < len(assignment.ResLinks); i++ {
-			h += "<li><a href=\""
-			h += html.EscapeString(assignment.ResLinks[i][0])
-			h += "\">"
-			h += html.EscapeString(assignment.ResLinks[i][1])
-			h += "</a></li>\n"
+			url := assignment.ResLinks[i][0]
+			name := assignment.ResLinks[i][1]
+			data.Body.TaskData.ResLinks[name] = url
 		}
-		h += "</ul>\n"
 	}
 
-	if assignment.Upload == true {
-		h += "<hr>\n<h4>Upload file</h4>\n" + `<form method="POST" `
-		h += `enctype="multipart/form-data" action="/tasks/`
-		h += html.EscapeString(assignment.Platform) + "/"
-		h += html.EscapeString(assignment.Id) + uploadHtml
-		h += html.EscapeString(assignment.Platform) + "/"
-		h += html.EscapeString(assignment.Id) + "/remove\">\n"
+	//logger.Info("%+v\n", data.Body.TaskData.ResLinks)
 
+	if assignment.Upload {
+		data.Body.TaskData.HasUpload = true
+
+		data.Body.TaskData.WorkLinks = make(map[string]string)
 		for i := 0; i < len(assignment.WorkLinks); i++ {
-			h += `<input type="checkbox" name="`
-			h += html.EscapeString(assignment.WorkLinks[i][1])
-			h += `">` + "\n" + `<label for="`
-			h += html.EscapeString(assignment.WorkLinks[i][1])
-			h += `"><a href="`
-			h += html.EscapeString(assignment.WorkLinks[i][0])
-			h += `">`
-			h += html.EscapeString(assignment.WorkLinks[i][1])
-			h += "</a></label><br>\n"
+			url := assignment.WorkLinks[i][0]
+			name := assignment.WorkLinks[i][1]
+			data.Body.TaskData.WorkLinks[name] = url
 		}
-
-		h += `<input type="submit" value="Remove file">` + "\n</form>\n"
-	}
-
-	if assignment.Grade != "" || assignment.Comment != "" {
-		h += "<hr>\n"
 	}
 
 	if assignment.Grade != "" {
-		h += "<h3>Grade: "
-		h += html.EscapeString(assignment.Grade) + "</h3>\n"
+		data.Body.TaskData.Grade = assignment.Grade
 	}
 
 	if assignment.Comment != "" {
-		taskCmt := html.EscapeString(assignment.Comment)
+		taskCmt := assignment.Comment
+		// Escape strings since it will be converted to safe HTML after
+		taskCmt = html.EscapeString(taskCmt)
 		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
-		h += "<h4>Teacher comment:</h4>\n<p>"
-		h += taskCmt + "</p>\n"
+		data.Body.TaskData.Comment = template.HTML(taskCmt)
 	}
 
-	return h
+	return data
 }
 
-func genPage(title, htmlBody string) string {
-	webpage := htmlHead + html.EscapeString(title) + htmlNav + htmlBody
-	return webpage + htmlEnd
+// Generate a resource link
+func genHtmlResLink(className string, res [][2]string) resClass {
+	class := resClass{
+		Name: className,
+	}
+
+	for i := 0; i < len(res); i++ {
+		class.ResItems = append(class.ResItems, resItem{
+			Name: res[i][1],
+			URL:  res[i][0],
+		})
+	}
+
+	return class
 }
 
-func genRes(resource string, creds tcUser) ([]byte, error) {
-	var title string
-	var htmlBody string
+// Generate the HTML page (and write that data to http.ResponseWriter)
+func genPage(w http.ResponseWriter, templates *template.Template, data pageData) {
+	//fmt.Printf("%+v\n", data)
+	err := templates.ExecuteTemplate(w, "page", data)
+	if err != nil {
+		logger.Error(err)
+	}
 
-	if resource == "/timetable" {
-		title = "Timetable"
-		htmlBody = `<img id="timetable" src="/timetable.png" alt="timetable.png">`
-		htmlBody += "\n"
-	} else if resource == "/tasks" {
-		title = "Tasks"
-		htmlBody = tasksHeader
+	// TESTING CODE:
+	// NOTE: It seems that when fetching data (res or tasks) it fetches the data and writes to
+	// the file but that gets overridden by a 404 page instead.
+
+	//var processed bytes.Buffer
+	//err := templates.ExecuteTemplate(&processed, "page", data)
+	//outputPath := "./result.txt"
+	//f, _ := os.Create(outputPath)
+	//a := bufio.NewWriter(f)
+	//a.WriteString(processed.String())
+	//a.Flush()
+	//if err != nil {
+	//	fmt.Println("Errors:")
+	//	logger.Error(err)
+	//}
+}
+
+// Generate resources and components for the webpage
+func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
+	var data pageData
+
+	if resURL == "/timetable" {
+		data.PageType = "timetable"
+		data.Head.Title = "Timetable"
+
+	} else if resURL == "/tasks" {
+		data.PageType = "tasks"
+		data.Head.Title = "Tasks"
+		data.Body.TasksData.Heading = "Tasks"
+
 		tasks, err := getTasks(creds)
-
 		if err != nil {
-			return []byte{}, err
+			return data, err
 		}
 
+		activeTasks := taskType{
+			Name:       "Active tasks",
+			HasDueDate: true,
+		}
 		for i := 0; i < len(tasks["active"]); i++ {
-			htmlBody += genHtmlTasks(
+			activeTasks.Tasks = append(activeTasks.Tasks, genTask(
 				tasks["active"][i],
+				true,
+				creds,
+			))
+		}
+		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, activeTasks)
+
+		notDueTasks := taskType{
+			Name:       "No due date",
+			HasDueDate: false,
+		}
+		for i := 0; i < len(tasks["notDue"]); i++ {
+			notDueTasks.Tasks = append(notDueTasks.Tasks, genTask(
+				tasks["notDue"][i],
 				false,
 				creds,
-			)
+			))
 		}
+		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, notDueTasks)
 
-		htmlBody += notDueHeader
-
-		for i := 0; i < len(tasks["notDue"]); i++ {
-			htmlBody += genHtmlTasks(
-				tasks["notDue"][i],
-				true,
-				creds,
-			)
+		overdueTasks := taskType{
+			Name:       "Overdue tasks",
+			HasDueDate: false,
 		}
-
-		htmlBody += overdueHeader
-
 		for i := 0; i < len(tasks["overdue"]); i++ {
-			htmlBody += genHtmlTasks(
+			overdueTasks.Tasks = append(overdueTasks.Tasks, genTask(
 				tasks["overdue"][i],
-				true,
+				false,
 				creds,
-			)
+			))
 		}
+		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, overdueTasks)
 
-		htmlBody += submittedHeader
-
+		submittedTasks := taskType{
+			Name:       "Submitted tasks",
+			HasDueDate: false,
+		}
 		for i := 0; i < len(tasks["submitted"]); i++ {
-			htmlBody += genHtmlTasks(
+			submittedTasks.Tasks = append(submittedTasks.Tasks, genTask(
 				tasks["submitted"][i],
-				true,
+				false,
 				creds,
-			)
+			))
 		}
+		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, submittedTasks)
 
-		htmlBody += "</table>\n</details>\n"
-	} else if resource == "/res" {
-		title = "Resources"
-		htmlBody = "<h1>Resources</h1>\n"
+		return data, nil
+
+	} else if resURL == "/res" {
+		data.PageType = "res"
+		data.Head.Title = "Resources"
+		data.Body.ResData.Heading = "Resources"
 
 		classes, resLinks, err := getResLinks(creds)
 		if err != nil {
-			return []byte{}, err
+			return data, err
 		}
 
 		for i := 0; i < len(classes); i++ {
-			htmlBody += genHtmlResLinks(
+			data.Body.ResData.Classes = append(data.Body.ResData.Classes, genHtmlResLink(
 				classes[i],
 				resLinks[classes[i]],
-			)
+			))
 		}
+
 	} else {
-		return []byte{}, errNotFound
+		return data, errors.ErrNotFound
 	}
 
-	return []byte(genPage(title, htmlBody)), nil
+	return data, nil
 }

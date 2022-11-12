@@ -1,0 +1,18 @@
+{{define "res"}}
+{{template "nav" -}}
+<h1>{{.Body.ResData.Heading}}</h1>
+
+{{range $index, $class := .Body.ResData.Classes}}
+    <details>
+        <summary>
+            {{$class.Name}}
+        </summary>
+        {{range $index, $resItem := $class.ResItems}}
+            <div>
+                <p><a href="{{$resItem.URL}}">{{$resItem.Name}}</a></p>
+                <h5><a href="{{$resItem.URL}}">Open in source platform</a></h5>
+            </div>
+        {{end}}
+    </details>
+{{end}}
+{{end}}

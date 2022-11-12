@@ -40,6 +40,7 @@ OPTIONS
           and personal use only; not for production.
 
 FILES
+    $home/res/taskcollect/templates/      HTML templates
     $home/res/taskcollect/cert.pem        TLS certificate
     $home/res/taskcollect/creds           User credentials database
     $home/res/taskcollect/gauth.json      Google OAuth 2.0 client ID
