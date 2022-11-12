@@ -2,11 +2,12 @@ package main
 
 import (
 	"io"
-	"log"
-	"main/daymap"
-	"main/gclass"
 	"sort"
 	"time"
+
+	"main/daymap"
+	"main/gclass"
+	"main/logger"
 )
 
 type task struct {
@@ -95,13 +96,13 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 	gcTasks, err := <-gcChan, <-gcErr
 
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 	}
 
 	dmTasks, err := <-dmChan, <-dmErr
 
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 	}
 
 	for c, taskList := range gcTasks {
@@ -177,13 +178,13 @@ func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
 	gcResLinks, err := <-gResChan, <-gErrChan
 
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 	}
 
 	dmResLinks, err := <-dmResChan, <-dmErrChan
 
 	if err != nil {
-		log.Println(err)
+		logger.Error(err)
 	}
 
 	for c, resList := range gcResLinks {
@@ -237,7 +238,7 @@ func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
 
 func getTask(platform, taskId string, creds tcUser) (task, error) {
 	assignment := task{}
-	err := errNoPlatform
+	err := errNoPlatform.AsError()
 
 	switch platform {
 	case "gclass":
@@ -263,7 +264,7 @@ func getTask(platform, taskId string, creds tcUser) (task, error) {
 }
 
 func submitTask(creds tcUser, platform, taskId string) error {
-	err := errNoPlatform
+	err := errNoPlatform.AsError()
 
 	switch platform {
 	case "gclass":
@@ -279,7 +280,7 @@ func submitTask(creds tcUser, platform, taskId string) error {
 }
 
 func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error {
-	err := errNoPlatform
+	err := errNoPlatform.AsError()
 
 	switch platform {
 	case "gclass":
@@ -301,7 +302,7 @@ func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error
 }
 
 func removeWork(creds tcUser, platform, taskId string, filenames []string) error {
-	err := errNoPlatform
+	err := errNoPlatform.AsError()
 
 	switch platform {
 	case "gclass":

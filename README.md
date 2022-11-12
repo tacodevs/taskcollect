@@ -6,7 +6,7 @@ A web server that multiplexes functionality from educational web platforms for s
 Description
 -----------
 
-There is a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to a number of different factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to wade their way through all the platforms in use by their school to retrieve their homework and available educational resources.
+There is a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to several different factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to wade their way through all the platforms in use by their school to retrieve their homework and available educational resources.
 
 The solution to this is TaskCollect: a web server that multiplexes functionality from educational web platforms, providing a clean, simple, intuitive web interface for students.
 
@@ -24,8 +24,8 @@ Setup
 
 Build dependencies:
   * Git
-  * Go
-  * Python (for the build script)
+  * Go 1.18+
+  * Python 3.8+ (for the build script)
 
 TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `python3 build.py`:
 
@@ -61,7 +61,7 @@ It should be noted that the issue tracker is for issues and feature requests *on
 Future directions
 -----------------
 
-Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 are rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
+Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 is rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
 
 Support for:
 

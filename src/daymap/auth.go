@@ -1,7 +1,7 @@
 package daymap
 
 import (
-	"errors"
+	//"errors"
 	"html"
 	"io/ioutil"
 	"net/http"
@@ -9,17 +9,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-)
-
-var (
-	ErrAuthFailed = errors.New("daymap: authentication failed")
-	errInvalidDmJson = errors.New("daymap: invalid lessons JSON")
-	errInvalidHtmlForm = errors.New("daymap: invalid HTML form")
-	errInvalidResp = errors.New("daymap: invalid HTML response")
-	errInvalidTaskResp = errors.New("daymap: invalid task HTML response")
-	errNoActionAttrib = errors.New(`daymap: canot find "action=" in SAML form`)
-	errNoClientRequestID = errors.New("daymap: could not find client request ID")
-	errUnterminatedClientRequestID = errors.New("daymap: client request ID has no end")
 )
 
 type User struct {
@@ -135,7 +124,7 @@ func get(webUrl, username, password string) (string, string, error) {
 		s3index = strings.Index(s3search, `value="`)
 
 		if s3index == -1 {
-			err := ErrAuthFailed
+			err := errAuthFailed
 			return "", "", err
 		}
 
