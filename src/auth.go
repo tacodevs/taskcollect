@@ -1,20 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	cryptorand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"io"
 	"math/rand"
 	"net/url"
 	"os"
 	fp "path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -24,86 +18,16 @@ import (
 	"main/daymap"
 	"main/errors"
 	"main/gclass"
+	"main/logger"
 )
 
-func tsvEscapeString(s string) string {
-	s = strings.ReplaceAll(s, "\\", `\\`)
-	s = strings.ReplaceAll(s, "\t", `\t`)
-	s = strings.ReplaceAll(s, "\n", `\n`)
-	return s
-}
-
-func tsvUnescapeString(s string) string {
-	s = strings.ReplaceAll(s, `\n`, "\n")
-	s = strings.ReplaceAll(s, `\t`, "\t")
-	s = strings.ReplaceAll(s, `\\`, "\\")
-	return s
-}
-
-func decryptDb(dbPath string, pwd []byte) (*bufio.Reader, error) {
-	//logger.Debug("db path: %+v\n", dbPath)
-	ecrFile, err := os.ReadFile(dbPath)
-	if err != nil {
-		newErr := errors.NewError("main: decryptDb", errors.ErrFileRead.Error(), err)
-		return nil, newErr
-	}
-
-	var key []byte
-
-	if len(pwd) == 32 {
-		key = pwd
-	} else if len(pwd) > 32 {
-		key = pwd[:32]
-	} else {
-		zeroLen := 32 - len(pwd)
-		key = pwd
-
-		for i := 0; i != zeroLen; i++ {
-			key = append(key, 0x00)
-		}
-	}
-
-	aesCipher, err := aes.NewCipher(key)
-	if err != nil {
-		newErr := errors.NewError("main: decryptDb", "failed to generate AES cipher", err)
-		return nil, newErr
-	}
-
-	gcm, err := cipher.NewGCM(aesCipher)
-	if err != nil {
-		newErr := errors.NewError("main: decryptDb", "failed to generate GCM cipher", err)
-		return nil, newErr
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(ecrFile) < nonceSize {
-		//newErr := errors.NewError("main: decryptDb", "ecrFile length less than nonce size", nil)
-		return nil, err
-	}
-
-	nonce, ecrFile := ecrFile[:nonceSize], ecrFile[nonceSize:]
-	dcrFile, err := gcm.Open(nil, nonce, ecrFile, nil)
-	if err != nil {
-		newErr := errors.NewError("main: decryptDb", "could not decrypt file", err)
-		return nil, newErr
-	}
-
-	s := string(dcrFile)
-	sr := strings.NewReader(s)
-	db := bufio.NewReader(sr)
-	return db, nil
-}
-
-func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
-	// TODO: Error handling needs to be improved
-
-	dbPath := fp.Join(resPath, "creds")
+// Attempt to get pre-existing user credentials
+func (db *authDB) getCreds(cookies string) (tcUser, error) {
 	creds := tcUser{}
 	var token string
 
 	start := strings.Index(cookies, "token=")
 	if start == -1 {
-		//logger.Error(errors.NewError("main: getCreds", "cookie was not found", nil))
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -116,47 +40,63 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 		token = cookies[start:end]
 	}
 
-	db, err := decryptDb(dbPath, pwd)
+	ctx := context.Background()
 
+	userToken := "studentToken:" + token
+	tokenExists := db.client.Exists(ctx, userToken)
+	if tokenExists.Err() != nil {
+		err := errors.NewError("main: getCreds", "failed to get student data via token", tokenExists.Err())
+		return creds, err.AsError()
+	}
+	exists, err := tokenExists.Result()
 	if err != nil {
-		return tcUser{}, err
+		return creds, errInvalidAuth
+	}
+	if exists != 1 {
+		return creds, errInvalidAuth
 	}
 
-	if db == nil {
-		//err := errors.NewError("main: getCreds", errInvalidAuth.AsString(), errors.New("database is nil"))
-		return tcUser{}, errInvalidAuth
+	studentID := db.client.HGetAll(ctx, userToken)
+	if studentID.Err() != nil {
+		//err := errors.NewError("main: getCreds", "a token does not exist for current user", studentID.Err())
+		//return creds, err.AsError()
+		return creds, errInvalidAuth
+	}
+	res, err := studentID.Result()
+	if err != nil {
+		logger.Debug("studentID result ERROR: %v", studentID.Err().Error())
+		//newErr := errors.NewError("main: getCreds", "resulting data could not be read", err)
+		//return creds, newErr.AsError()
+		return creds, errInvalidAuth
 	}
 
-	var ln []string
-
-	for {
-		line, err := db.ReadString('\n')
-		if err != nil {
-			//newErr := errors.NewError("main: getCreds", errInvalidAuth.AsString(), err)
-			return tcUser{}, errInvalidAuth
-		}
-
-		ln = strings.Split(line, "\t")
-
-		if token == tsvUnescapeString(ln[0]) {
-			creds.Token = tsvUnescapeString(ln[0])
-			creds.School = tsvUnescapeString(ln[1])
-			creds.Username = tsvUnescapeString(ln[2])
-			creds.Password = tsvUnescapeString(ln[3])
-			break
-		}
+	key := "school:" + res["school"] + ":studentID:" + res["studentID"]
+	studentData := db.client.HGetAll(ctx, key)
+	if studentData.Err() != nil {
+		err := errors.NewError("main: getCreds", "failed to get student data", studentData.Err())
+		return creds, err.AsError()
 	}
+	result, err := studentData.Result()
+	if err != nil {
+		newErr := errors.NewError("main: getCreds", "resulting data could not be read", err)
+		return creds, newErr.AsError()
+	}
+
+	creds.Token = token // equivalent to result["token"]
+	creds.School = result["school"]
+	creds.Username = result["username"] // i.e. the student ID
+	creds.Password = result["password"]
 
 	if creds.School == "gihs" {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
 			newErr := errors.NewError("main: getCreds", "could not load timezone location data", err)
-			return tcUser{}, newErr
+			return tcUser{}, newErr.AsError()
 		}
 
 		creds.SiteTokens = map[string]string{
-			"daymap": tsvUnescapeString(ln[4]),
-			"gclass": tsvUnescapeString(ln[5]),
+			"daymap": result["daymap"],
+			"gclass": result["gclass"],
 		}
 	} else {
 		//newErr := errors.NewError("main: getCreds", "invalid school", errInvalidAuth.AsError())
@@ -166,45 +106,207 @@ func getCreds(cookies string, resPath string, pwd []byte) (tcUser, error) {
 	return creds, nil
 }
 
-func findUser(dbPath string, dbPwd []byte, usr, pwd string) (bool, error) {
-	db, err := decryptDb(dbPath, dbPwd)
+// Get Google auth token. If a "gclass" token field is found, even if it is blank, it will be returned
+// as an empty string.
+func (db *authDB) getGTok(school, user, pwd string) (string, error) {
+	ctx := context.Background()
 
+	key := "school:" + school + ":studentID:" + user
+	data := db.client.HGetAll(ctx, key)
+	if data.Err() != nil {
+		err := errors.NewError("main: getGTok", "could not fetch password for user", data.Err())
+		return "", err.AsError()
+	}
+
+	result, err := data.Result()
 	if err != nil {
-		return false, err
+		newErr := errors.NewError("main: getGTok", "resulting data could not be read", err)
+		return "", newErr.AsError()
 	}
 
-	if db == nil {
-		return false, errInvalidAuth
+	res := db.client.HExists(ctx, key, "gclass")
+	exists, err := res.Result()
+	if err != nil {
+		newErr := errors.NewError("main: getGTok", "could not fetch user's gclass data", err)
+		return "", newErr.AsError()
+	}
+	if !exists {
+		return "", nil
 	}
 
-	var ln []string
+	if result["password"] == pwd {
+		return result["gclass"], nil
+	}
+
+	return "", nil
+}
+
+// See if user exists in the database
+func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 	exists := false
+	ctx := context.Background()
 
-	for {
-		line, err := db.ReadString('\n')
+	key := "school:" + school + ":studentID:" + user
+	data := db.client.HGetAll(ctx, key)
+	if data.Err() != nil {
+		err := errors.NewError("main: findUser", "could not fetch data for user", data.Err())
+		return exists, err.AsError()
+	}
 
-		if err != nil {
-			return false, errInvalidAuth
-		}
+	result, err := data.Result()
+	if err != nil {
+		newErr := errors.NewError("main: findUser", "resulting data could not be read", err)
+		return exists, newErr.AsError()
+	}
 
-		ln = strings.Split(line, "\t")
-		tsvUsr := tsvUnescapeString(ln[2])
-		tsvPwd := tsvUnescapeString(ln[3])
-
-		if usr == tsvUsr && pwd == tsvPwd {
-			exists = true
-			break
-		}
+	if result["password"] == pwd {
+		exists = true
 	}
 
 	return exists, nil
 }
 
-func genGAuthLoc(resPath string) (string, error) {
-	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
+// Create new user or update pre-existing user in the database
+func (db *authDB) writeCreds(creds tcUser) error {
+	// NOTE: creds.Username is the student ID
+	// TODO: rename username to student ID?
 
+	ctx := context.Background()
+
+	studentIDKey := "school:" + creds.School + ":studentID:" + creds.Username
+	platGihs := []string{"daymap", "gclass"}
+	hashMap := map[string]string{
+		"token":    creds.Token,
+		"school":   creds.School,
+		"username": creds.Username,
+		"password": creds.Password,
+	}
+	for _, plat := range platGihs {
+		hashMap[plat] = creds.SiteTokens[plat]
+	}
+
+	db.client.HSet(ctx, studentIDKey, hashMap) // returns # of fields added, not req at the moment
+
+	// Add to list of students
+	student := "school:" + creds.School + ":studentList"
+	db.client.SAdd(ctx, student, creds.Username)
+
+	// Add to token list
+	key := "studentToken:" + creds.Token
+	var duration time.Duration
+
+	// TODO: need to handle index error before this can be used
+	//expiration := strings.Split(creds.Token, "; Expires=")[1]
+	//t, err := time.ParseDuration(expiration)
+	//if err != nil {
+	//	newErr := errors.NewError("main: writeCreds", "could not parse token expiration", err)
+	//	logger.Error(newErr)
+	//	duration = time.Duration(604800000000000) // equal to 7 days
+	//} else {
+	//	duration = t
+	//}
+
+	duration = time.Duration(604800000000000) // equal to 7 days
+
+	info := map[string]string{
+		"studentID": creds.Username,
+		"school":    creds.School,
+	}
+
+	db.client.HSet(ctx, key, info)
+	db.client.Expire(ctx, key, duration)
+
+	return nil
+}
+
+func (db *authDB) auth(query url.Values) (string, error) {
+	school := query.Get("school")
+
+	// NOTE: Options for other schools could be added in the future
+	if school != "gihs" {
+		err := errors.NewError("main: auth", "school was not GIHS", errAuthFailed)
+		return "", err.AsError()
+	}
+
+	user := query.Get("usr")
+	pwd := query.Get("pwd")
+
+	gTok, err := db.getGTok(school, user, pwd)
 	if err != nil {
-		panic(err)
+		return "", err
+	}
+
+	gTestErr := make(chan error)
+
+	if gTok != "" {
+		go gclass.Test(db.gAuth, gTok, gTestErr)
+	}
+
+	if !strings.HasPrefix(user, `CURRIC\`) {
+		user = `CURRIC\` + user
+	}
+
+	dmCreds, err := daymap.Auth(school, user, pwd)
+	if err != nil {
+		userExists, err := db.findUser(school, user, pwd)
+		if err != nil {
+			return "", err
+		}
+		if !userExists {
+			return "", errAuthFailed
+		}
+	}
+
+	siteTokens := map[string]string{
+		"daymap": dmCreds.Token,
+		"gclass": "",
+	}
+
+	b := make([]byte, 32)
+	rand.Seed(time.Now().UnixNano())
+
+	for i := range b {
+		b[i] = byte(rand.Intn(255))
+	}
+
+	token := base64.StdEncoding.EncodeToString(b)
+	cookie := "token=" + token + "; Expires="
+	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
+	timezone := dmCreds.Timezone
+
+	gAuthStatus := errNeedsGAuth.AsError()
+
+	if gTok != "" {
+		err = <-gTestErr
+		if err == nil {
+			siteTokens["gclass"] = gTok
+			gAuthStatus = nil
+		}
+	}
+
+	creds := tcUser{
+		Timezone:   timezone,
+		School:     school,
+		Username:   user,
+		Password:   pwd,
+		Token:      token,
+		SiteTokens: siteTokens,
+	}
+
+	err = db.writeCreds(creds)
+	if err != nil {
+		// TODO: improve error handling
+		return "", err
+	}
+
+	return cookie, gAuthStatus
+}
+
+func (db *authDB) genGAuthLoc() (string, error) {
+	gcid, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
+	if err != nil {
+		newErr := errors.NewError("main: genGAuthLoc", "failed to read gauth.json", err)
+		return "", newErr.AsError()
 	}
 
 	gAuthConfig, err := google.ConfigFromJSON(
@@ -214,9 +316,9 @@ func genGAuthLoc(resPath string) (string, error) {
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
 	)
-
 	if err != nil {
-		return "", err
+		newErr := errors.NewError("main: genGAuthLoc", "creation of config failed", err)
+		return "", newErr.AsError()
 	}
 
 	gAuthLoc := gAuthConfig.AuthCodeURL(
@@ -228,14 +330,14 @@ func genGAuthLoc(resPath string) (string, error) {
 	return gAuthLoc, nil
 }
 
-func gAuth(creds tcUser, query url.Values, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
-	dbPath := fp.Join(resPath, "creds")
+// Run Google authentication
+func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 	authCode := query.Get("code")
 
-	clientId, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
-
+	clientId, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
 	if err != nil {
-		return nil
+		newErr := errors.NewError("main: runGAuth", errors.ErrFileRead.Error(), err)
+		return newErr.AsError()
 	}
 
 	gAuthConfig, err := google.ConfigFromJSON(
@@ -260,243 +362,34 @@ func gAuth(creds tcUser, query url.Values, authDb *sync.Mutex, resPath string, d
 	}
 
 	creds.SiteTokens["gclass"] = string(token)
-
-	authDb.Lock()
-	err = writeCreds(creds, dbPath, dbPwd)
-
+	err = db.writeCreds(creds)
 	if err != nil {
 		return err
 	}
 
-	authDb.Unlock()
 	return nil
 }
 
-func getGTok(dbPath string, dbPwd []byte, usr, pwd string) (string, error) {
-	db, err := decryptDb(dbPath, dbPwd)
-	if err != nil {
-		return "", err
-	}
+func (db *authDB) logout(creds tcUser) error {
+	token := creds.Token
 
-	if db == nil {
-		return "", errInvalidAuth.AsError()
-	}
-
-	var ln []string
-	var gTok string
-
-	for {
-		line, err := db.ReadString('\n')
-
-		if err != nil {
-			return "", nil
-		}
-
-		ln = strings.Split(line, "\t")
-		tsvUsr := tsvUnescapeString(ln[2])
-		tsvPwd := tsvUnescapeString(ln[3])
-
-		if usr == tsvUsr && pwd == tsvPwd {
-			gTok = tsvUnescapeString(ln[5])
-			break
-		}
-	}
-
-	if len(ln) != 6 {
-		return "", errIncompleteCreds.AsError()
-	}
-
-	return gTok, nil
-}
-
-func auth(query url.Values, authDb *sync.Mutex, resPath string, dbPwd, gcid []byte) (string, error) {
-	dbPath := fp.Join(resPath, "creds")
-	school := query.Get("school")
-
-	if school != "gihs" {
-		return "", errAuthFailed
-	}
-
-	usr := query.Get("usr")
-	pwd := query.Get("pwd")
-
-	gTok, err := getGTok(dbPath, dbPwd, usr, pwd)
-
-	if !errors.Is(err, errInvalidAuth) && err != nil {
-		return "", err
-	}
-
-	gTestErr := make(chan error)
-
-	if gTok != "" {
-		go gclass.Test(gcid, gTok, gTestErr)
-	}
-
-	if !strings.HasPrefix(usr, `CURRIC\`) {
-		usr = `CURRIC\` + usr
-	}
-
-	dmCreds, err := daymap.Auth(school, usr, pwd)
-
-	if err != nil {
-		userExists, err := findUser(dbPath, dbPwd, usr, pwd)
-		if err != nil {
-			return "", err
-		}
-
-		if !userExists {
-			return "", errAuthFailed
-		}
-	}
-
-	siteTokens := map[string]string{
-		"daymap": dmCreds.Token,
-		"gclass": "",
-	}
-
-	b := make([]byte, 32)
-	rand.Seed(time.Now().UnixNano())
-
-	for i := range b {
-		b[i] = byte(rand.Intn(255))
-	}
-
-	token := base64.StdEncoding.EncodeToString(b)
-	cookie := "token=" + token + "; Expires="
-	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
-	timezone := dmCreds.Timezone
-
-	// Convert to error type since a ErrorWrapper struct cannot be nil
-	// TODO: Use pointers for ErrorWrapper?
-	gAuthStatus := errNeedsGAuth.AsError()
-
-	if gTok != "" {
-		err = <-gTestErr
-		if err == nil {
-			siteTokens["gclass"] = gTok
-			gAuthStatus = nil
-		}
-	}
-
-	creds := tcUser{
-		Timezone:   timezone,
-		School:     school,
-		Username:   usr,
-		Password:   pwd,
-		Token:      token,
-		SiteTokens: siteTokens,
-	}
-
-	authDb.Lock()
-	err = writeCreds(creds, dbPath, dbPwd)
-	if err != nil {
-		return "", err
-	}
-
-	authDb.Unlock()
-	return cookie, gAuthStatus
-}
-
-func logout(creds tcUser, authDb *sync.Mutex, resPath string, dbPwd []byte) error {
-	dbPath := fp.Join(resPath, "creds")
+	// Clear tokens
 	creds.Token = ""
-
 	for k, _ := range creds.SiteTokens {
 		creds.SiteTokens[k] = ""
 	}
 
-	authDb.Lock()
-	err := writeCreds(creds, dbPath, dbPwd)
+	err := db.writeCreds(creds)
 	if err != nil {
-		return err
+		newErr := errors.NewError("main: logout", "could not write to database", err)
+		return newErr.AsError()
 	}
 
-	authDb.Unlock()
-	return nil
-}
-
-func genCredLine(creds tcUser) string {
-	line := tsvEscapeString(creds.Token) + "\t"
-	line += tsvEscapeString(creds.School) + "\t"
-	line += tsvEscapeString(creds.Username) + "\t"
-	line += tsvEscapeString(creds.Password) + "\t"
-
-	platGihs := []string{"daymap", "gclass"}
-
-	for _, plat := range platGihs {
-		line += tsvEscapeString(creds.SiteTokens[plat]) + "\t"
-	}
-
-	buf := []rune(line)
-	buf[len(buf)-1] = '\n'
-	line = string(buf)
-	return line
-}
-
-func writeCreds(creds tcUser, dbPath string, pwd []byte) error {
-	db, err := decryptDb(dbPath, pwd)
-
-	if err != nil {
-		return err
-	}
-
-	var new string
-	exists := false
-
-	if db != nil {
-		for {
-			line, err := db.ReadString('\n')
-
-			if errors.Is(err, io.EOF) && new != "" {
-				break
-			} else if err != nil {
-				return err
-			}
-
-			ln := strings.Split(line, "\t")
-			tsvSchool := tsvUnescapeString(ln[1])
-			tsvUsr := tsvUnescapeString(ln[2])
-
-			if creds.School == tsvSchool && creds.Username == tsvUsr {
-				line = genCredLine(creds)
-				exists = true
-				new += line
-				break
-			}
-
-			new += line
-		}
-	}
-
-	if !exists {
-		line := genCredLine(creds)
-		new += line
-	}
-
-	aesCipher, err := aes.NewCipher(pwd)
-
-	if err != nil {
-		return err
-	}
-
-	gcm, err := cipher.NewGCM(aesCipher)
-	if err != nil {
-		return err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	_, err = io.ReadFull(cryptorand.Reader, nonce)
-
-	if err != nil {
-		return err
-	}
-
-	newFile := gcm.Seal(nonce, nonce, []byte(new), nil)
-	err = os.WriteFile(dbPath, newFile, 0640)
-
-	if err != nil {
-		return err
-	}
+	// NOTE: The student token needs to be deleted from the token list on logout
+	// NOTE: This MUST be done after writeCreds() since that creates the studentToken entry
+	ctx := context.Background()
+	key := "studentToken:" + token
+	db.client.Del(ctx, key)
 
 	return nil
 }
