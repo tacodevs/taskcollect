@@ -1,10 +1,9 @@
-taskcollect
-===========
+# taskcollect
+
 
 A web server that multiplexes functionality from educational web platforms for students.
 
-Description
------------
+## Description
 
 There is a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to several different factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to wade their way through all the platforms in use by their school to retrieve their homework and available educational resources.
 
@@ -16,15 +15,15 @@ At the moment, TaskCollect acts as a multiplexed interface for the following pla
 
 Unfortunately, some of the platforms in use by schools (e.g. DayMap) are school-dependent. To counter this, TaskCollect ensures each user is associated with a particular school.
 
-TaskCollect supports users from the following schools:
+TaskCollect currently supports users from the following schools:
   * Glenunga International High School
 
-Setup
------
+## Setup
 
 Build dependencies:
   * Git
   * Go 1.18+
+  * Redis 7
   * Python 3.8+ (for the build script)
 
 TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `python3 build.py`:
@@ -45,12 +44,12 @@ From here, deployment is simple:
 
   3. Run the program for your OS and CPU, and the web server will start, asking you for a passphrase at first.
 
-  4. If running for the first time, specify a passphrase with which the credentials database will be encrypted. If this is not the first time running TaskCollect or if the credentials database has been imported from another TaskCollect session, the passphrase to the existing database must be provided. TaskCollect will populate the credentials database automatically so there is no need to worry about manually creating one.
+  4. If running for the first time, you will also need to set up a Redis server. If it is not the first time running TaskCollect or the credentials database has been imported from another TaskCollect session, then set up the Redis server as you normally would, then run TaskCollect.
+
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
 
-Contribute
-----------
+## Contribute
 
 TaskCollect, in its current state, is much like a newborn child and still needs to grow and develop into a secure, robust program. For that we need people testing TaskCollect, finding bugs/issues, and providing fixes and suggestions. If you have the time, please consider contributing, however small, to TaskCollect development.
 
@@ -58,8 +57,7 @@ Issues can be reported on the Codeberg issue tracker. If you need to discuss som
 
 It should be noted that the issue tracker is for issues and feature requests *only*, and the Matrix room is also not a place for general discourse.
 
-Future directions
------------------
+## Future directions
 
 Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 is rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
 

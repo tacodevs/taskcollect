@@ -12,14 +12,13 @@ DESCRIPTION
     essential for student interaction with teacher-assigned resources, tasks,
     etc., communicating with users' schools' web platforms as necessary.
 
-    In order to write to the encrypted user credentials database, TaskCollect
-    requests for the passphrase to the database before attempting to start the
-    web server. If the credentials database is empty, TaskCollect will ask for
-    a passphrase with which it will encrypt the database. TaskCollect will
-    populate the database automatically so there is no need to manually create
-    one, although an existing database can be imported. If TaskCollect is re-
-    run with the same database or if a database is imported, TaskCollect must
-    be provided with the correct passphrase to the credentials database.
+    TaskCollect uses Redis 7 as its user credentials database and will not
+    operate without it. To get started, install Redis 7 and set up the Redis
+    server with a password. While a password is not necessarily required, it
+    is heavily recommended. When setting up the Redis database, no further 
+    information needs to be provided, as TaskCollect populates it automatically.
+    Upon running TaskCollect, it will prompt you for the password to the Redis 
+    database and will attempt to connect to the Redis server.
 
     TaskCollect requires a Google OAuth 2.0 client ID file in order to
     authenticate to the Google Classroom API. An OAuth 2 client ID may be
@@ -42,7 +41,6 @@ OPTIONS
 FILES
     $home/res/taskcollect/templates/      HTML templates
     $home/res/taskcollect/cert.pem        TLS certificate
-    $home/res/taskcollect/creds           User credentials database
     $home/res/taskcollect/gauth.json      Google OAuth 2.0 client ID
     $home/res/taskcollect/key.pem         TLS private key
     $home/res/taskcollect/mainfont.ttf    Main web interface font (Lato)
