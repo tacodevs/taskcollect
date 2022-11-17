@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"html/template"
 	"io"
@@ -12,9 +13,10 @@ import (
 	"os/user"
 	fp "path/filepath"
 	"strings"
-	"sync"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/go-redis/redis/v9"
 
 	"main/errors"
 	"main/logger"
@@ -30,10 +32,9 @@ var (
 	errNeedsGAuth      = errors.NewError("main", errors.ErrNeedsGAuth.Error(), nil)
 )
 
-type authDb struct {
-	lock      *sync.Mutex
+type authDB struct {
 	path      string
-	pwd       []byte
+	client    *redis.Client
 	gAuth     []byte
 	templates *template.Template
 }
@@ -255,10 +256,10 @@ func handleTaskReq(tmpls *template.Template, r *http.Request, creds tcUser) (int
 }
 
 // The main handler function
-func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
+func (db *authDB) handler(w http.ResponseWriter, r *http.Request) {
 	res := r.URL.EscapedPath()
 	validAuth := true
-	creds, err := getCreds(r.Header.Get("Cookie"), db.path, db.pwd)
+	creds, err := db.getCreds(r.Header.Get("Cookie"))
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
@@ -335,15 +336,8 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 
 		err = r.ParseForm()
 		if err == nil {
-			cookie, err = auth(
-				r.PostForm,
-				db.lock,
-				db.path,
-				db.pwd,
-				db.gAuth,
-			)
+			cookie, err = db.auth(r.PostForm)
 		}
-
 		if err == nil {
 			w.Header().Set("Location", "/timetable")
 			w.Header().Set("Set-Cookie", cookie)
@@ -356,7 +350,7 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		gAuthLoc, err := genGAuthLoc(db.path)
+		gAuthLoc, err := db.genGAuthLoc()
 		if err != nil {
 			logger.Error(err)
 		} else {
@@ -389,15 +383,15 @@ func (db *authDb) handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(302)
 
 	} else if validAuth && res == "/gauth" {
-		err = gAuth(creds, r.URL.Query(), db.lock, db.path, db.pwd)
+		err = db.runGAuth(creds, r.URL.Query())
 		if err != nil {
 			logger.Error(err)
 		}
-
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
+
 	} else if validAuth && res == "/logout" {
-		err = logout(creds, db.lock, db.path, db.pwd)
+		err = db.logout(creds)
 		if err == nil {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
@@ -517,6 +511,25 @@ func initTemplates(resPath string) (*template.Template, error) {
 	return templates, nil
 }
 
+// Initializes the database and returns the created instance
+func initDB(addr string, pwd string, idx int) *redis.Client {
+	// TODO: check that idx is between 0-15 inclusive
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: pwd,
+		DB:       idx,
+	})
+
+	ctx := context.Background()
+	res := redisDB.Ping(ctx)
+	if res.Err() != nil {
+		newErr := errors.NewError("redis", "incorrect password", res.Err())
+		logger.Fatal(newErr)
+	}
+
+	return redisDB
+}
+
 func readConfig() {
 
 }
@@ -557,30 +570,12 @@ func main() {
 
 	// TODO: Hide password input
 	var dbPwdInput string
-	fmt.Print("Passphrase to user credentials file: ")
+	fmt.Print("Password to Redis database: ")
 	fmt.Scanln(&dbPwdInput)
-	pwdBytes := []byte(dbPwdInput)
-	var dbPwd []byte
-
-	if len(pwdBytes) == 32 {
-		dbPwd = pwdBytes
-	} else if len(pwdBytes) > 32 {
-		dbPwd = pwdBytes[:32]
-	} else {
-		zeroLen := 32 - len(pwdBytes)
-		dbPwd = pwdBytes
-
-		for i := 0; i < zeroLen; i++ {
-			dbPwd = append(dbPwd, 0x00)
-		}
-	}
-
-	dbMutex := new(sync.Mutex)
 
 	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
 		strErr := errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err)
-		//strErr := fmt.Errorf("taskcollect: Cannot read Google client ID file: %v", err)
 		logger.Fatal(strErr.Error())
 	}
 
@@ -591,10 +586,12 @@ func main() {
 	}
 	logger.Info("Successfully initialized HTML templates")
 
-	db := authDb{
-		lock:      dbMutex,
+	// initialize database
+	newRedisDB := initDB("localhost:6379", dbPwdInput, 0) // TODO: allow user to specify which db index to use
+
+	db := authDB{
 		path:      resPath,
-		pwd:       dbPwd,
+		client:    newRedisDB,
 		gAuth:     gcid,
 		templates: templates,
 	}
