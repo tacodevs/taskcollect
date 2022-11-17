@@ -1,0 +1,4 @@
+# taskcollect: Implementation Documentation
+
+---
+
