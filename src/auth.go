@@ -375,7 +375,7 @@ func (db *authDB) logout(creds tcUser) error {
 
 	// Clear tokens
 	creds.Token = ""
-	for k, _ := range creds.SiteTokens {
+	for k := range creds.SiteTokens {
 		creds.SiteTokens[k] = ""
 	}
 

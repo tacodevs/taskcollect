@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -17,6 +18,7 @@ import (
 	_ "time/tzdata"
 
 	"github.com/go-redis/redis/v9"
+	"golang.org/x/term"
 
 	"main/errors"
 	"main/logger"
@@ -530,8 +532,79 @@ func initDB(addr string, pwd string, idx int) *redis.Client {
 	return redisDB
 }
 
-func readConfig() {
+type config struct {
+	Logging  loggingConfig  `json:"logging"`
+	Database databaseConfig `json:"database"`
+}
 
+type loggingConfig struct {
+	UseLogFile bool `json:"useLogFile"`
+	//LogFileOptions logFileOptions `json:"logFileOptions"`
+}
+
+// NOTE: Not implemented
+//type logFileOptions struct {
+//	LogInfo bool `json:"logInfo"`
+//}
+
+type databaseConfig struct {
+	Address string `json:"address"`
+	Index   int    `json:"index"`
+}
+
+func getConfig(cfgPath string) (config, error) {
+	// Default config
+	result := config{
+		loggingConfig{
+			UseLogFile: false,
+		},
+		databaseConfig{
+			Address: "localhost:6379",
+			Index:   0,
+		},
+	}
+
+	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return result, err
+	}
+
+	b, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return result, err
+	}
+
+	err = jsonFile.Close()
+	if err != nil {
+		return result, err
+	}
+
+	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
+	if err != nil {
+		return result, err
+	}
+	defer jsonFile.Close()
+
+	if len(b) > 0 {
+		err = json.Unmarshal(b, &result)
+		if err != nil {
+			return result, err
+		}
+	} else {
+		logger.Info("Using default configuration settings. These can be edited in the config.json file")
+	}
+
+	rawJson, err := json.MarshalIndent(result, "", "    ")
+	if err != nil {
+		return config{}, err
+	}
+
+	_, err = jsonFile.Write(rawJson)
+	if err != nil {
+		return result, nil
+	}
+
+	return result, nil
 }
 
 func main() {
@@ -553,25 +626,44 @@ func main() {
 	}
 
 	home := curUser.HomeDir
-	configFile := fp.Join(home, "config.json")
 	resPath := fp.Join(home, "res/taskcollect")
+	configFile := fp.Join(resPath, "config.json")
 	certFile := fp.Join(resPath, "cert.pem")
 	keyFile := fp.Join(resPath, "key.pem")
 
-	//readConfig()
-
-	// TODO: check the error type and then set different levels e.g. WARN, ERROR, etc.
-	err = logger.UseConfig(configFile)
+	result, err := getConfig(configFile)
 	if err != nil {
-		logger.Error("Logging configurations were not initialized")
-	} else {
-		logger.Info("Logging configurations were initialized successfully")
+		newErr := errors.NewError("main", "unable to read", err)
+		logger.Error(newErr)
+		logger.Warn("Resorting to default configuration settings")
 	}
 
-	// TODO: Hide password input
-	var dbPwdInput string
+	// TODO: Implement logging to file with further options
+	if result.Logging.UseLogFile {
+		logPath := fp.Join(resPath, "logs")
+		err = logger.UseConfigFile(logPath)
+		if err != nil {
+			newErr := errors.NewError("main", "Log file was not set up successfully", err)
+			logger.Error(newErr)
+		} else {
+			logger.Info("Log file set up successfully")
+		}
+	}
+
+	var password string
 	fmt.Print("Password to Redis database: ")
-	fmt.Scanln(&dbPwdInput)
+	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		newErr := errors.NewError("main", "could not get password input", err)
+		logger.Fatal(newErr)
+	}
+	fmt.Println()
+
+	dbAddr := result.Database.Address
+	dbIdx := result.Database.Index
+	password = string(dbPwdInput)
+	newRedisDB := initDB(dbAddr, password, dbIdx)
+	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)
 
 	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
@@ -585,9 +677,6 @@ func main() {
 		logger.Fatal(strErr)
 	}
 	logger.Info("Successfully initialized HTML templates")
-
-	// initialize database
-	newRedisDB := initDB("localhost:6379", dbPwdInput, 0) // TODO: allow user to specify which db index to use
 
 	db := authDB{
 		path:      resPath,
@@ -603,7 +692,7 @@ func main() {
 		logger.Info("Running on port 443")
 		err = http.ListenAndServeTLS(":443", certFile, keyFile, nil)
 	} else {
-		logger.Info("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
+		logger.Warn("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
 		err = http.ListenAndServe(":8080", nil)
 	}
 
