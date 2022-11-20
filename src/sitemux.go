@@ -216,7 +216,7 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 		}
 
 		sort.SliceStable(resIndexes, func(i, j int) bool {
-			return times[resIndexes[i]] < times[resIndexes[j]]
+			return times[resIndexes[i]] > times[resIndexes[j]]
 		})
 
 		for _, x := range resIndexes {
