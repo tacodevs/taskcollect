@@ -10,21 +10,17 @@ import (
 )
 
 type Resource struct {
-	Name	string
-	Class	string
-	Link	string
-	Desc	string
-	Posted	time.Time
-	ResLinks	[][2]string
-	Platform	string
-	Id	string
+	Name     string
+	Class    string
+	Link     string
+	Desc     string
+	Posted   time.Time
+	ResLinks [][2]string
+	Platform string
+	Id       string
 }
 
-/*
-ISSUE: For some reason, updating *r from classRes does not seem to affect res in
-ResLinks.
-*/
-
+// Get a list of resources for a DayMap class.
 func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
@@ -75,7 +71,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 			return
 		}
 
-		postStr := dates[len(dates) - 1]
+		postStr := dates[len(dates)-1]
 		posted, err := time.Parse("2/01/2006", postStr)
 
 		if err != nil {
@@ -117,6 +113,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 	}
 }
 
+// Public function to get a list of resources from DayMap for a user.
 func ListRes(creds User, r chan []Resource, e chan error) {
 	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	client := &http.Client{}

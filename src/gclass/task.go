@@ -33,7 +33,8 @@ type Task struct {
 	Id        string
 }
 
-func getDirectGoogleDriveLink(inputUrl string) (string, error) {
+// Create a direct download link to a Google Drive file from a web view link.
+func getDirectDriveLink(inputUrl string) (string, error) {
 	urlResult, err := url.Parse(inputUrl)
 	if err != nil {
 		return "", err
@@ -47,6 +48,7 @@ func getDirectGoogleDriveLink(inputUrl string) (string, error) {
 	return finalUrl, nil
 }
 
+// Fetch the name of the class a task belongs to from Google Classroom.
 func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan error) {
 	course, err := svc.Courses.Get(courseId).Fields("name").Do()
 
@@ -60,6 +62,7 @@ func getClass(svc *classroom.Service, courseId string, classChan chan string, cl
 	classErrChan <- nil
 }
 
+// Fetch task information (excluding the class name) from Google Classroom for a user.
 func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan classroom.CourseWork, taskErrChan chan error) {
 	task, err := svc.Courses.CourseWork.Get(courseId, workId).Fields(
 		"title",
@@ -87,6 +90,7 @@ ISSUE(#6): The Google Classroom API does not seem to have any mechanism to reque
 teacher comments for a task, so task.Comment is always empty.
 */
 
+// Public function to get a task from Google Classroom for a user.
 func GetTask(creds User, id string) (Task, error) {
 	cid := strings.SplitN(id, "-", 3)
 
@@ -172,7 +176,7 @@ func GetTask(creds User, id string) (Task, error) {
 			if w.DriveFile != nil {
 				link = w.DriveFile.AlternateLink
 				if strings.Contains(link, "://drive.google.com/") {
-					link, err = getDirectGoogleDriveLink(w.DriveFile.AlternateLink)
+					link, err = getDirectDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
 						return Task{}, err
 					}
@@ -206,7 +210,7 @@ func GetTask(creds User, id string) (Task, error) {
 		if m.DriveFile != nil {
 			link = m.DriveFile.DriveFile.AlternateLink
 			if strings.Contains(link, "://drive.google.com/") {
-				link, err = getDirectGoogleDriveLink(m.DriveFile.DriveFile.AlternateLink)
+				link, err = getDirectDriveLink(m.DriveFile.DriveFile.AlternateLink)
 				if err != nil {
 					return Task{}, err
 				}
@@ -289,6 +293,7 @@ How this issue should be managed is open to discussion:
 https://codeberg.org/kvo/taskcollect/issues/3
 */
 
+// Public function to submit a Google Classroom task on behalf of a user.
 func SubmitTask(creds User, id string) error {
 	/*
 		cid := strings.SplitN(id, "-", 3)
@@ -343,12 +348,14 @@ func SubmitTask(creds User, id string) error {
 	return nil
 }
 
+// Public function to upload a file as a user's work for a Google Classroom task.
 func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 	// Upload a file as a submission.
 	_, err := io.Copy(os.Stdout, *f)
 	return err
 }
 
+// Public function to remove a file (a user's work) from a Google Classroom task.
 func RemoveWork(creds User, id string, filenames []string) error {
 	// Remove file submission.
 	return nil

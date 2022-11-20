@@ -22,6 +22,7 @@ type User struct {
 	Token    string
 }
 
+// Test if the provided Google credentials are valid.
 func Test(gcid []byte, gTok string, e chan error) {
 	ctx := context.Background()
 

@@ -14,16 +14,17 @@ import (
 )
 
 type Resource struct {
-	Name	string
-	Class	string
-	Link	string
-	Desc	string
-	Posted	time.Time
-	ResLinks	[][2]string
-	Platform	string
-	Id	string
+	Name     string
+	Class    string
+	Link     string
+	Desc     string
+	Posted   time.Time
+	ResLinks [][2]string
+	Platform string
+	Id       string
 }
 
+// Get a list of resources for a Google Classroom class.
 func getClassRes(course *classroom.Course, svc *classroom.Service, res *[]Resource, resWG *sync.WaitGroup, gErrChan chan error) {
 	defer resWG.Done()
 
@@ -60,6 +61,7 @@ func getClassRes(course *classroom.Course, svc *classroom.Service, res *[]Resour
 	}
 }
 
+// Public function to get a list of resources from Google Classroom for a user.
 func ListRes(creds User, r chan []Resource, e chan error) {
 	ctx := context.Background()
 
