@@ -36,14 +36,15 @@ type lesson struct {
 	Notice  string
 }
 
-func resListContains(resList [][2]string, resLink [2]string) bool {
-	for i := 0; i < len(resList); i++ {
-		if resList[i] == resLink {
-			return true
-		}
-	}
-
-	return false
+type resource struct {
+	Name	string
+	Class	string
+	Link	string
+	Desc	string
+	Posted	time.Time
+	ResLinks	[][2]string
+	Platform	string
+	Id	string
 }
 
 func getLessons(creds tcUser) ([][]lesson, error) {
@@ -152,8 +153,8 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 	return tasks, err
 }
 
-func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
-	gResChan := make(chan map[string][][2]string)
+func getResources(creds tcUser) ([]string, map[string][]resource, error) {
+	gResChan := make(chan []gclass.Resource)
 	gErrChan := make(chan error)
 
 	gcCreds := gclass.User{
@@ -162,9 +163,9 @@ func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
 		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ResLinks(gcCreds, gResChan, gErrChan)
+	go gclass.ListRes(gcCreds, gResChan, gErrChan)
 
-	dmResChan := make(chan map[string][][2]string)
+	dmResChan := make(chan []daymap.Resource)
 	dmErrChan := make(chan error)
 
 	dmCreds := daymap.User{
@@ -172,9 +173,9 @@ func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
 		Token:    creds.SiteTokens["daymap"],
 	}
 
-	go daymap.ResLinks(dmCreds, dmResChan, dmErrChan)
+	go daymap.ListRes(dmCreds, dmResChan, dmErrChan)
 
-	r := map[string][][2]string{}
+	unordered := map[string][]resource{}
 	gcResLinks, err := <-gResChan, <-gErrChan
 
 	if err != nil {
@@ -187,53 +188,43 @@ func getResLinks(creds tcUser) ([]string, map[string][][2]string, error) {
 		logger.Error(err)
 	}
 
-	for c, resList := range gcResLinks {
-		for i := 0; i < len(resList); i++ {
-			if !resListContains(r[c], resList[i]) {
-				r[c] = append(r[c], resList[i])
-			}
-		}
+	for _, r := range gcResLinks {
+		unordered[r.Class] = append(unordered[r.Class], resource(r))
 	}
 
-	for c, resList := range dmResLinks {
-		for i := 0; i < len(resList); i++ {
-			if !resListContains(r[c], resList[i]) {
-				r[c] = append(r[c], resList[i])
-			}
-		}
+	for _, r := range dmResLinks {
+		unordered[r.Class] = append(unordered[r.Class], resource(r))
 	}
 
-	resLinks := map[string][][2]string{}
+	resources := map[string][]resource{}
 	classes := []string{}
 
-	for c := range r {
+	for c := range unordered {
 		classes = append(classes, c)
 	}
 
 	sort.Strings(classes)
 
-	for c, rls := range r {
-		res := []string{}
-		resIdx := map[string]int{}
+	for c, resList := range unordered {
+		times := map[int]int{}
+		resIndexes := []int{}
 
-		for i := 0; i < len(rls); i++ {
-			res = append(res, rls[i][1])
-			resIdx[rls[i][1]] = i
+		for i, r := range resList {
+			posted := int(r.Posted.UTC().Unix())
+			times[i] = posted
+			resIndexes = append(resIndexes, i)
 		}
 
-		sort.Strings(res)
+		sort.SliceStable(resIndexes, func(i, j int) bool {
+			return times[resIndexes[i]] < times[resIndexes[j]]
+		})
 
-		for i := 0; i < len(res); i++ {
-			linkIdx := resIdx[res[i]]
-
-			resLinks[c] = append(
-				resLinks[c],
-				[2]string{rls[linkIdx][0], res[i]},
-			)
+		for _, x := range resIndexes {
+			resources[c] = append(resources[c], resList[x])
 		}
 	}
 
-	return classes, resLinks, err
+	return classes, resources, err
 }
 
 func getTask(platform, taskId string, creds tcUser) (task, error) {
