@@ -535,10 +535,10 @@ func genHtmlResLink(className string, res []resource) resClass {
 
 	for _, r := range res {
 		class.ResItems = append(class.ResItems, resItem{
-			Id:	r.Id,
-			Name:	r.Name,
-			Platform:	r.Platform,
-			URL:	r.Link,
+			Id:       r.Id,
+			Name:     r.Name,
+			Platform: r.Platform,
+			URL:      r.Link,
 		})
 	}
 
@@ -558,17 +558,17 @@ func genPage(w http.ResponseWriter, templates *template.Template, data pageData)
 	// the file but that gets overridden by a 404 page instead.
 
 	/*
-	var processed bytes.Buffer
-	err := templates.ExecuteTemplate(&processed, "page", data)
-	outputPath := "./result.txt"
-	f, _ := os.Create(outputPath)
-	a := bufio.NewWriter(f)
-	a.WriteString(processed.String())
-	a.Flush()
-	if err != nil {
-		fmt.Println("Errors:")
-		logger.Error(err)
-	}
+		var processed bytes.Buffer
+		err := templates.ExecuteTemplate(&processed, "page", data)
+		outputPath := "./result.txt"
+		f, _ := os.Create(outputPath)
+		a := bufio.NewWriter(f)
+		a.WriteString(processed.String())
+		a.Flush()
+		if err != nil {
+			fmt.Println("Errors:")
+			logger.Error(err)
+		}
 	*/
 }
 

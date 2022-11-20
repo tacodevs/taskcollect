@@ -37,14 +37,14 @@ type lesson struct {
 }
 
 type resource struct {
-	Name	string
-	Class	string
-	Link	string
-	Desc	string
-	Posted	time.Time
-	ResLinks	[][2]string
-	Platform	string
-	Id	string
+	Name     string
+	Class    string
+	Link     string
+	Desc     string
+	Posted   time.Time
+	ResLinks [][2]string
+	Platform string
+	Id       string
 }
 
 func getLessons(creds tcUser) ([][]lesson, error) {

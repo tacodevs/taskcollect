@@ -24,10 +24,10 @@ type timetableData struct {
 // Resources (/res page)
 
 type resItem struct {
-	Id	string
-	Name string
-	Platform	string //e.g. daymap, gclass
-	URL  string
+	Id       string
+	Name     string
+	Platform string //e.g. daymap, gclass
+	URL      string
 }
 
 type resClass struct {
@@ -43,14 +43,14 @@ type resData struct {
 // Resource (single resource)
 
 type resourceData struct {
-	Name	string
-	Class	string
-	Link	string
-	Desc	template.HTML
-	Posted	string
-	ResLinks	map[string]string
-	Platform	string
-	Id	string
+	Name     string
+	Class    string
+	Link     string
+	Desc     template.HTML
+	Posted   string
+	ResLinks map[string]string
+	Platform string
+	Id       string
 }
 
 // Tasks
