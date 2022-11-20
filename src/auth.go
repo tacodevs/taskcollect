@@ -21,7 +21,7 @@ import (
 	"main/logger"
 )
 
-// Attempt to get pre-existing user credentials
+// Attempt to get pre-existing user credentials.
 func (db *authDB) getCreds(cookies string) (tcUser, error) {
 	creds := tcUser{}
 	var token string
@@ -141,7 +141,7 @@ func (db *authDB) getGTok(school, user, pwd string) (string, error) {
 	return "", nil
 }
 
-// See if user exists in the database
+// Check if user exists in the database.
 func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 	exists := false
 	ctx := context.Background()
@@ -166,7 +166,7 @@ func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 	return exists, nil
 }
 
-// Create new user or update pre-existing user in the database
+// Create new user or update pre-existing user in the database.
 func (db *authDB) writeCreds(creds tcUser) error {
 	// NOTE: creds.Username is the student ID
 	// TODO: rename username to student ID?
@@ -219,6 +219,7 @@ func (db *authDB) writeCreds(creds tcUser) error {
 	return nil
 }
 
+// Authenticate a user to TaskCollect.
 func (db *authDB) auth(query url.Values) (string, error) {
 	school := query.Get("school")
 
@@ -231,6 +232,10 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	user := query.Get("usr")
 	pwd := query.Get("pwd")
 
+	if school == "gihs" && !strings.HasPrefix(user, `CURRIC\`) {
+		user = `CURRIC\` + user
+	}
+
 	gTok, err := db.getGTok(school, user, pwd)
 	if err != nil {
 		return "", err
@@ -240,10 +245,6 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	if gTok != "" {
 		go gclass.Test(db.gAuth, gTok, gTestErr)
-	}
-
-	if !strings.HasPrefix(user, `CURRIC\`) {
-		user = `CURRIC\` + user
 	}
 
 	dmCreds, err := daymap.Auth(school, user, pwd)
@@ -302,6 +303,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	return cookie, gAuthStatus
 }
 
+// Retrieve the Google Cloud project credentials file.
 func (db *authDB) genGAuthLoc() (string, error) {
 	gcid, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
 	if err != nil {
@@ -330,7 +332,7 @@ func (db *authDB) genGAuthLoc() (string, error) {
 	return gAuthLoc, nil
 }
 
-// Run Google authentication
+// Run the Google authentication flow for a user.
 func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 	authCode := query.Get("code")
 
@@ -370,6 +372,7 @@ func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 	return nil
 }
 
+// Logout a user from TaskCollect.
 func (db *authDB) logout(creds tcUser) error {
 	token := creds.Token
 
