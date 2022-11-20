@@ -24,7 +24,9 @@ type timetableData struct {
 // Resources (/res page)
 
 type resItem struct {
+	Id	string
 	Name string
+	Platform	string //e.g. daymap, gclass
 	URL  string
 }
 
@@ -38,12 +40,25 @@ type resData struct {
 	Classes []resClass
 }
 
+// Resource (single resource)
+
+type resourceData struct {
+	Name	string
+	Class	string
+	Link	string
+	Desc	template.HTML
+	Posted	string
+	ResLinks	map[string]string
+	Platform	string
+	Id	string
+}
+
 // Tasks
 
 type taskItem struct {
 	Id       string
 	Name     string
-	Platform string // e.g. DayMap, Google Classroom
+	Platform string
 	Class    string
 	DueDate  string
 	URL      string

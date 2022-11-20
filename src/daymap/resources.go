@@ -3,16 +3,29 @@ package daymap
 import (
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
+
+type Resource struct {
+	Name	string
+	Class	string
+	Link	string
+	Desc	string
+	Posted	time.Time
+	ResLinks	[][2]string
+	Platform	string
+	Id	string
+}
 
 /*
 ISSUE: For some reason, updating *r from classRes does not seem to affect res in
 ResLinks.
 */
 
-func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan error) {
+func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
 	client := &http.Client{}
@@ -41,9 +54,44 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 	i := strings.Index(b, div)
 
 	for i != -1 {
+		resource := Resource{}
+		resource.Class = class
+		resource.Platform = "daymap"
+
+		dateRegion := b[:i]
 		b = b[i:]
+
+		re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
+
+		if err != nil {
+			e <- err
+			return
+		}
+
+		dates := re.FindAllString(dateRegion, -1)
+
+		if dates == nil {
+			e <- errNoDateFound
+			return
+		}
+
+		postStr := dates[len(dates) - 1]
+		posted, err := time.Parse("2/01/2006", postStr)
+
+		if err != nil {
+			e <- err
+			return
+		}
+
 		i = len(div)
 		b = b[i:]
+
+		resource.Posted = time.Date(
+			posted.Year(), posted.Month(), posted.Day(),
+			0, 0, 0, 0,
+			creds.Timezone,
+		)
+
 		i = strings.Index(b, ");")
 
 		if i == -1 {
@@ -51,7 +99,7 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 			return
 		}
 
-		resId := b[:i]
+		resource.Id = b[:i]
 		b = b[i+4:]
 		i = strings.Index(b, "</a>")
 
@@ -60,19 +108,17 @@ func classRes(creds User, id string, r *[][2]string, wg *sync.WaitGroup, e chan 
 			return
 		}
 
-		name := b[:i]
+		resource.Name = b[:i]
 		b = b[i:]
-		link := "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resId
-		*r = append(*r, [2]string{link, name})
+		resource.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resource.Id
+		*res = append(*res, resource)
 		b = b[i:]
 		i = strings.Index(b, div)
 	}
 }
 
-func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
+func ListRes(creds User, r chan []Resource, e chan error) {
 	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	resLinks := map[string][][2]string{}
-
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", homeUrl, nil)
@@ -130,21 +176,14 @@ func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
 		i = strings.Index(b, "plans/class.aspx?id=")
 	}
 
-	res := make([][][2]string, len(classes))
+	unordered := make([][]Resource, len(classes))
 	errChan := make(chan error)
 	var wg sync.WaitGroup
 	x := 0
 
-	for _, id := range classes {
+	for class, id := range classes {
 		wg.Add(1)
-		go classRes(creds, id, &res[x], &wg, errChan)
-		x++
-	}
-
-	x = 0
-
-	for class := range classes {
-		resLinks[class] = res[x]
+		go getClassRes(creds, class, id, &unordered[x], &wg, errChan)
 		x++
 	}
 
@@ -159,6 +198,14 @@ func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
 		break
 	}
 
-	r <- resLinks
+	resources := []Resource{}
+
+	for _, resList := range unordered {
+		for _, r := range resList {
+			resources = append(resources, r)
+		}
+	}
+
+	r <- resources
 	e <- err
 }

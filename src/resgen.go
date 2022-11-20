@@ -528,15 +528,17 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 }
 
 // Generate a resource link
-func genHtmlResLink(className string, res [][2]string) resClass {
+func genHtmlResLink(className string, res []resource) resClass {
 	class := resClass{
 		Name: className,
 	}
 
-	for i := 0; i < len(res); i++ {
+	for _, r := range res {
 		class.ResItems = append(class.ResItems, resItem{
-			Name: res[i][1],
-			URL:  res[i][0],
+			Id:	r.Id,
+			Name:	r.Name,
+			Platform:	r.Platform,
+			URL:	r.Link,
 		})
 	}
 
@@ -555,17 +557,19 @@ func genPage(w http.ResponseWriter, templates *template.Template, data pageData)
 	// NOTE: It seems that when fetching data (res or tasks) it fetches the data and writes to
 	// the file but that gets overridden by a 404 page instead.
 
-	//var processed bytes.Buffer
-	//err := templates.ExecuteTemplate(&processed, "page", data)
-	//outputPath := "./result.txt"
-	//f, _ := os.Create(outputPath)
-	//a := bufio.NewWriter(f)
-	//a.WriteString(processed.String())
-	//a.Flush()
-	//if err != nil {
-	//	fmt.Println("Errors:")
-	//	logger.Error(err)
-	//}
+	/*
+	var processed bytes.Buffer
+	err := templates.ExecuteTemplate(&processed, "page", data)
+	outputPath := "./result.txt"
+	f, _ := os.Create(outputPath)
+	a := bufio.NewWriter(f)
+	a.WriteString(processed.String())
+	a.Flush()
+	if err != nil {
+		fmt.Println("Errors:")
+		logger.Error(err)
+	}
+	*/
 }
 
 // Generate resources and components for the webpage
@@ -645,15 +649,15 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 		data.Head.Title = "Resources"
 		data.Body.ResData.Heading = "Resources"
 
-		classes, resLinks, err := getResLinks(creds)
+		classes, resources, err := getResources(creds)
 		if err != nil {
 			return data, err
 		}
 
-		for i := 0; i < len(classes); i++ {
+		for _, class := range classes {
 			data.Body.ResData.Classes = append(data.Body.ResData.Classes, genHtmlResLink(
-				classes[i],
-				resLinks[classes[i]],
+				class,
+				resources[class],
 			))
 		}
 

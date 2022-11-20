@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -12,12 +13,25 @@ import (
 	"google.golang.org/api/option"
 )
 
-func getResources(course *classroom.Course, svc *classroom.Service, links *map[string][][2]string, resWG *sync.WaitGroup, gErrChan chan error) {
+type Resource struct {
+	Name	string
+	Class	string
+	Link	string
+	Desc	string
+	Posted	time.Time
+	ResLinks	[][2]string
+	Platform	string
+	Id	string
+}
+
+func getClassRes(course *classroom.Course, svc *classroom.Service, res *[]Resource, resWG *sync.WaitGroup, gErrChan chan error) {
 	defer resWG.Done()
 
 	resources, err := svc.Courses.CourseWorkMaterials.List(course.Id).Fields(
 		"courseWorkMaterial/title",
 		"courseWorkMaterial/alternateLink",
+		"courseWorkMaterial/creationTime",
+		"courseWorkMaterial/id",
 	).Do()
 
 	if err != nil {
@@ -25,15 +39,28 @@ func getResources(course *classroom.Course, svc *classroom.Service, links *map[s
 		return
 	}
 
-	for _, res := range resources.CourseWorkMaterial {
-		(*links)[course.Name] = append(
-			(*links)[course.Name],
-			[2]string{res.AlternateLink, res.Title},
-		)
+	for _, r := range resources.CourseWorkMaterial {
+		resource := Resource{}
+
+		resource.Id = course.Id + "-" + r.Id
+		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
+
+		if err != nil {
+			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+		} else {
+			resource.Posted = posted
+		}
+
+		resource.Name = r.Title
+		resource.Class = course.Name
+		resource.Link = r.AlternateLink
+		resource.Platform = "gclass"
+
+		*res = append(*res, resource)
 	}
 }
 
-func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
+func ListRes(creds User, r chan []Resource, e chan error) {
 	ctx := context.Background()
 
 	gAuthConfig, err := google.ConfigFromJSON(
@@ -90,29 +117,36 @@ func ResLinks(creds User, r chan map[string][][2]string, e chan error) {
 		return
 	}
 
-	resLinks := map[string][][2]string{}
+	unordered := make([][]Resource, len(resp.Courses))
 	gErrChan := make(chan error)
 	var resWG sync.WaitGroup // TODO: Rename variable
 	i := 0
 
 	for _, course := range resp.Courses {
-		resLinks[course.Name] = [][2]string{}
 		resWG.Add(1)
-		go getResources(course, svc, &resLinks, &resWG, gErrChan)
+		go getClassRes(course, svc, &unordered[i], &resWG, gErrChan)
 		i++
 	}
 
 	resWG.Wait()
 
 	select {
-	case gcErr := <-gErrChan:
+	case err = <-gErrChan:
 		r <- nil
-		e <- gcErr
+		e <- err
 		return
 	default:
 		break
 	}
 
-	r <- resLinks
-	e <- nil
+	resources := []Resource{}
+
+	for _, resList := range unordered {
+		for _, r := range resList {
+			resources = append(resources, r)
+		}
+	}
+
+	r <- resources
+	e <- err
 }
