@@ -16,6 +16,8 @@ type User struct {
 	Token    string
 }
 
+// Function to get a webpage from DayMap using a username and password.
+// Useful for authentication to DayMap.
 func get(webUrl, username, password string) (string, string, error) {
 	// Stage 1 - Get a DayMap redirect to SAML.
 
@@ -257,6 +259,7 @@ func get(webUrl, username, password string) (string, string, error) {
 	return s4page, authToken, nil
 }
 
+// Authenticate to DayMap and retrieve a session token (an HTTP cookie).
 func Auth(school, usr, pwd string) (User, error) {
 	timezone, err := time.LoadLocation("Australia/Adelaide")
 	if err != nil {

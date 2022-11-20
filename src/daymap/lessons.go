@@ -26,6 +26,7 @@ type dmJsonEntry struct {
 	Title  string
 }
 
+// Public function to get a list of lessons for the week from DayMap for a user.
 func GetLessons(creds User) ([][]Lesson, error) {
 	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)

@@ -91,6 +91,7 @@ func contains(a []string, s string) bool {
 	return false
 }
 
+// Public function to retrieve information about a DayMap task by its ID.
 func GetTask(creds User, id string) (Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 

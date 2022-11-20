@@ -13,6 +13,7 @@ import (
 	"google.golang.org/api/option"
 )
 
+// Retrieve Google Classroom task information using a workload submission point ID.
 func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class string, task *Task, taskWG *sync.WaitGroup, gErrChan chan error) {
 	defer taskWG.Done()
 
@@ -68,6 +69,7 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 	task.Platform = "gclass"
 }
 
+// Get a list of work submission points for a Google Classroom class.
 func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, swg *sync.WaitGroup, gErrChan chan error) {
 	defer swg.Done()
 	resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
@@ -98,6 +100,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 	*tasks = submissions
 }
 
+// Public function to retrieve a list of tasks from Google Classroom for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	ctx := context.Background()
 
@@ -178,7 +181,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	}
 
 	gcTasks := map[string][]Task{
-		"active":     {},
+		"active":    {},
 		"notDue":    {},
 		"overdue":   {},
 		"submitted": {},
