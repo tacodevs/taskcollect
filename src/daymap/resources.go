@@ -2,6 +2,7 @@ package daymap
 
 import (
 	"io/ioutil"
+	"main/errors"
 	"net/http"
 	"regexp"
 	"strings"
@@ -58,9 +59,9 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 		b = b[i:]
 
 		re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
-
 		if err != nil {
-			e <- err
+			newErr := errors.NewError("daymap: getClassRes", "failed to compile regex", err)
+			e <- newErr
 			return
 		}
 
@@ -73,7 +74,6 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 		postStr := dates[len(dates)-1]
 		posted, err := time.Parse("2/01/2006", postStr)
-
 		if err != nil {
 			e <- err
 			return
@@ -98,7 +98,6 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 		resource.Id = b[:i]
 		b = b[i+4:]
 		i = strings.Index(b, "</a>")
-
 		if i == -1 {
 			e <- errInvalidResp
 			return
@@ -198,9 +197,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	resources := []Resource{}
 
 	for _, resList := range unordered {
-		for _, r := range resList {
-			resources = append(resources, r)
-		}
+		resources = append(resources, resList...)
 	}
 
 	r <- resources

@@ -61,7 +61,7 @@ func getClassRes(course *classroom.Course, svc *classroom.Service, res *[]Resour
 	}
 }
 
-// Public function to get a list of resources from Google Classroom for a user.
+// Get a list of resources from Google Classroom for a user.
 func ListRes(creds User, r chan []Resource, e chan error) {
 	ctx := context.Background()
 
@@ -144,9 +144,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	resources := []Resource{}
 
 	for _, resList := range unordered {
-		for _, r := range resList {
-			resources = append(resources, r)
-		}
+		resources = append(resources, resList...)
 	}
 
 	r <- resources

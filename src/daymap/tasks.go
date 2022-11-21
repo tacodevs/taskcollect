@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Public function to retrieve a list of tasks from DayMap for a user.
+// Retrieve a list of tasks from DayMap for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
@@ -293,7 +293,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 		i = strings.Index(taskLine, `Your work has been received`)
 
-		if i != -1 && task.Submitted == false {
+		if i != -1 && !task.Submitted {
 			task.Submitted = true
 		}
 
