@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -17,7 +16,6 @@ import (
 	"time"
 	_ "time/tzdata"
 
-	"github.com/go-redis/redis/v9"
 	"golang.org/x/term"
 
 	"main/errors"
@@ -25,26 +23,14 @@ import (
 )
 
 var (
-	errAuthFailed      = errors.NewError("main", errors.ErrAuthFailed.Error(), nil)
-	errCorruptMIME     = errors.NewError("main", errors.ErrCorruptMIME.Error(), nil)
-	errIncompleteCreds = errors.NewError("main", errors.ErrIncompleteCreds.Error(), nil)
-	errInvalidAuth     = errors.NewError("main", errors.ErrInvalidAuth.Error(), nil)
-	errNoPlatform      = errors.NewError("main", errors.ErrNoPlatform.Error(), nil)
-	errNotFound        = errors.NewError("main", errors.ErrNotFound.Error(), nil)
-	errNeedsGAuth      = errors.NewError("main", errors.ErrNeedsGAuth.Error(), nil)
+	errAuthFailed  = errors.NewError("main", errors.ErrAuthFailed.Error(), nil)
+	errCorruptMIME = errors.NewError("main", errors.ErrCorruptMIME.Error(), nil)
+	//errIncompleteCreds = errors.NewError("main", errors.ErrIncompleteCreds.Error(), nil)
+	errInvalidAuth = errors.NewError("main", errors.ErrInvalidAuth.Error(), nil)
+	errNoPlatform  = errors.NewError("main", errors.ErrNoPlatform.Error(), nil)
+	errNotFound    = errors.NewError("main", errors.ErrNotFound.Error(), nil)
+	errNeedsGAuth  = errors.NewError("main", errors.ErrNeedsGAuth.Error(), nil)
 )
-
-type authDB struct {
-	path      string
-	client    *redis.Client
-	gAuth     []byte
-	templates *template.Template
-}
-
-type postReader struct {
-	div    []byte
-	reader io.Reader
-}
 
 type tcUser struct {
 	Timezone   *time.Location
@@ -54,6 +40,11 @@ type tcUser struct {
 	Token      string
 	SiteTokens map[string]string
 	GAuthID    []byte
+}
+
+type postReader struct {
+	div    []byte
+	reader io.Reader
 }
 
 func (pr postReader) Read(p []byte) (int, error) {
@@ -212,7 +203,6 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, pageData, []
 
 func handleTaskReq(tmpls *template.Template, r *http.Request, creds tcUser) (int, pageData, [][2]string) {
 	res := r.URL.EscapedPath()
-	//logger.Info("%v\n", res)
 
 	statusCode := 200
 	var data pageData
@@ -257,193 +247,7 @@ func handleTaskReq(tmpls *template.Template, r *http.Request, creds tcUser) (int
 	return statusCode, data, headers
 }
 
-// The main handler function
-func (db *authDB) handler(w http.ResponseWriter, r *http.Request) {
-	res := r.URL.EscapedPath()
-	validAuth := true
-	creds, err := db.getCreds(r.Header.Get("Cookie"))
-
-	if errors.Is(err, errInvalidAuth) {
-		validAuth = false
-	} else if err != nil {
-		logger.Error(err)
-		genPage(w, db.templates, statusServerErrorData)
-		return
-	}
-
-	creds.GAuthID = db.gAuth
-	resIsLogin := false
-	invalidRes := false
-
-	// TODO: Have separate functions for handling validAuth and !validAuth outcomes
-
-	if res == "/login" || res == "/auth" {
-		resIsLogin = true
-	}
-
-	if resIsLogin || res == "/" {
-		invalidRes = true
-	}
-
-	if res == "/css" {
-		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-
-		cssFile, err := os.Open(fp.Join(db.path, "styles.css"))
-		if err != nil {
-			logger.Error(err)
-			w.WriteHeader(500)
-		}
-
-		_, err = io.Copy(w, cssFile)
-		if err != nil {
-			logger.Error(err)
-			w.WriteHeader(500)
-		}
-
-		cssFile.Close()
-	} else if res == "/mainfont.ttf" {
-		w.Header().Set("Content-Type", `font/ttf`)
-
-		fontFile, err := os.Open(fp.Join(db.path, "mainfont.ttf"))
-		if err != nil {
-			logger.Error(err)
-			w.WriteHeader(500)
-		}
-
-		_, err = io.Copy(w, fontFile)
-		if err != nil {
-			logger.Error(err)
-			w.WriteHeader(500)
-		}
-
-		fontFile.Close()
-	} else if res == "/navfont.ttf" {
-		w.Header().Set("Content-Type", `font/ttf`)
-
-		fontFile, err := os.Open(fp.Join(db.path, "navfont.ttf"))
-		if err != nil {
-			logger.Error(err)
-			w.WriteHeader(500)
-		}
-
-		_, err = io.Copy(w, fontFile)
-		if err != nil {
-			logger.Error(err)
-			w.WriteHeader(500)
-		}
-
-		fontFile.Close()
-	} else if !validAuth && res == "/auth" {
-		var cookie string
-
-		err = r.ParseForm()
-		if err == nil {
-			cookie, err = db.auth(r.PostForm)
-		}
-		if err == nil {
-			w.Header().Set("Location", "/timetable")
-			w.Header().Set("Set-Cookie", cookie)
-			w.WriteHeader(302)
-			return
-		} else if !errors.Is(err, errNeedsGAuth) {
-			logger.Error(err)
-			w.Header().Set("Location", "/login?auth=failed")
-			w.WriteHeader(302)
-			return
-		}
-
-		gAuthLoc, err := db.genGAuthLoc()
-		if err != nil {
-			logger.Error(err)
-		} else {
-			w.Header().Set("Location", gAuthLoc)
-			w.Header().Set("Set-Cookie", cookie)
-			w.WriteHeader(302)
-		}
-
-	} else if !validAuth && res == "/login" {
-		if r.URL.Query().Get("auth") == "failed" {
-			w.WriteHeader(401)
-			data := pageData{
-				PageType: "login",
-				Head: headData{
-					Title: "Login",
-				},
-				Body: bodyData{
-					LoginData: loginData{
-						Failed: true,
-					},
-				},
-			}
-			genPage(w, db.templates, data)
-		} else {
-			genPage(w, db.templates, loginPageData)
-		}
-
-	} else if !validAuth && !resIsLogin {
-		w.Header().Set("Location", "/login")
-		w.WriteHeader(302)
-
-	} else if validAuth && res == "/gauth" {
-		err = db.runGAuth(creds, r.URL.Query())
-		if err != nil {
-			logger.Error(err)
-		}
-		w.Header().Set("Location", "/timetable")
-		w.WriteHeader(302)
-
-	} else if validAuth && res == "/logout" {
-		err = db.logout(creds)
-		if err == nil {
-			w.Header().Set("Location", "/login")
-			w.WriteHeader(302)
-		} else {
-			logger.Error(err)
-			w.WriteHeader(500)
-			genPage(w, db.templates, statusServerErrorData)
-		}
-
-		// Timetable image
-		// NOTE: Perhaps still keep the png generation even though the main timetable will
-		// be replaced by a table, rather than image
-	} else if validAuth && res == "/timetable.png" {
-		genTimetable(creds, w)
-
-		// View a single task
-	} else if validAuth && strings.HasPrefix(res, "/tasks/") {
-		statusCode, respBody, respHeaders := handleTaskReq(db.templates, r, creds)
-
-		for _, respHeader := range respHeaders {
-			w.Header().Set(respHeader[0], respHeader[1])
-		}
-
-		w.WriteHeader(statusCode)
-		genPage(w, db.templates, respBody)
-
-		// Invalid URL while logged in redirects to /timetable
-	} else if validAuth && invalidRes {
-		//logger.Info("invalidRes -- redirect")
-		w.Header().Set("Location", "/timetable")
-		w.WriteHeader(302)
-
-		// Logged in, and the requested URL is valid
-	} else if validAuth && !invalidRes {
-		webpageData, err := genRes(db.path, res, creds)
-
-		if errors.Is(err, errNotFound) {
-			w.WriteHeader(404)
-			genPage(w, db.templates, statusNotFoundData)
-		} else if err != nil {
-			logger.Error(err.Error())
-			w.WriteHeader(500)
-			genPage(w, db.templates, statusServerErrorData)
-		} else {
-			genPage(w, db.templates, webpageData)
-		}
-	}
-}
-
-// Create and manage necessary HTML files from template files
+// Create and manage necessary HTML files from template files.
 func initTemplates(resPath string) (*template.Template, error) {
 	// Create "./templates/" dir if it does not exist
 	tmplPath := fp.Join(resPath, "templates")
@@ -509,27 +313,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	sortedFiles := files
 
 	templates := template.Must(template.ParseFiles(sortedFiles...))
-	//fmt.Printf("%+v\n", sortedFiles)
 	return templates, nil
-}
-
-// Initializes the database and returns the created instance
-func initDB(addr string, pwd string, idx int) *redis.Client {
-	// TODO: check that idx is between 0-15 inclusive
-	redisDB := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: pwd,
-		DB:       idx,
-	})
-
-	ctx := context.Background()
-	res := redisDB.Ping(ctx)
-	if res.Err() != nil {
-		newErr := errors.NewError("redis", "incorrect password", res.Err())
-		logger.Fatal(newErr)
-	}
-
-	return redisDB
 }
 
 type config struct {
@@ -679,24 +463,34 @@ func main() {
 	logger.Info("Successfully initialized HTML templates")
 
 	db := authDB{
-		path:      resPath,
-		client:    newRedisDB,
-		gAuth:     gcid,
-		templates: templates,
+		path:   resPath,
+		client: newRedisDB,
+		gAuth:  gcid,
 	}
 
-	// TODO: Use http.NewServeMux
-	http.HandleFunc("/", db.handler)
+	h := handler{
+		templates: templates,
+		database:  &db,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/assets/", h.assetHandler)
+	mux.HandleFunc("/tasks", h.tasksHandler)
+	mux.HandleFunc("/tasks/", h.taskHandler)
+	mux.HandleFunc("/login", h.loginHandler)
+	mux.HandleFunc("/logout", h.logoutHandler)
+	mux.HandleFunc("/auth", h.authHandler)
+	mux.HandleFunc("/", h.rootHandler)
 
 	if tlsConn {
 		logger.Info("Running on port 443")
-		err = http.ListenAndServeTLS(":443", certFile, keyFile, nil)
+		err = http.ListenAndServeTLS(":443", certFile, keyFile, mux)
 	} else {
 		logger.Warn("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
-		err = http.ListenAndServe(":8080", nil)
+		err = http.ListenAndServe(":8080", mux)
 	}
 
 	if err != nil {
-		logger.Fatal("%v", err)
+		logger.Fatal(err)
 	}
 }
