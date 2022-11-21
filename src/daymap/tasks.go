@@ -1,11 +1,13 @@
 package daymap
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"main/errors"
 )
 
 // Retrieve a list of tasks from DayMap for a user.
@@ -15,23 +17,26 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 	req, err := http.NewRequest("GET", tasksUrl, nil)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListTasks", "GET request failed", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListTasks", "failed to get resp", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListTasks", "failed to read resp.Body", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -127,11 +132,12 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	taskForm.Set(`ctl00_ctl00_cp_cp_ScriptManager_TSM`, `;;System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35:en-AU:9ddf364d-d65d-4f01-a69e-8b015049e026:ea597d4b:b25378d2;Telerik.Web.UI, Version=2020.1.219.45, Culture=neutral, PublicKeyToken=121fae78165ba3d4:en-AU:bb184598-9004-47ca-9e82-5def416be84b:16e4e7cd:33715776:58366029:f7645509:24ee1bba:f46195d3:2003d0b8:c128760b:88144a7a:1e771326:aa288e2d:258f1c72`)
 
 	tdata := strings.NewReader(taskForm.Encode())
-	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
 
+	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListTasks", "POST request failed", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -139,18 +145,18 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	fullReq.Header.Set("Cookie", creds.Token)
 
 	full, err := client.Do(fullReq)
-
 	if err != nil {
+		newErr := errors.NewError("daymap: ListTasks", "failed to get full resp", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
-	fullBody, err := ioutil.ReadAll(full.Body)
-
+	fullBody, err := io.ReadAll(full.Body)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListTasks", "failed to real full.Body", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -227,11 +233,12 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		}
 
 		postedString := b[:i]
-		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 
+		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
+			newErr := errors.NewError("daymap: ListTasks", "failed to parse time (postedString)", err)
 			t <- nil
-			e <- err
+			e <- newErr
 			return
 		}
 
@@ -257,11 +264,12 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		}
 
 		dueString := b[:i]
-		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 
+		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
+			newErr := errors.NewError("daymap: ListTasks", "failed to parse time (dueString)", err)
 			t <- nil
-			e <- err
+			e <- newErr
 			return
 		}
 

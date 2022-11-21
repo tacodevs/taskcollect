@@ -1,13 +1,14 @@
 package daymap
 
 import (
-	"io/ioutil"
-	"main/errors"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"main/errors"
 )
 
 type Resource struct {
@@ -29,20 +30,23 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 	req, err := http.NewRequest("GET", classUrl, nil)
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("daymap: getClassRes", "GET request failed", err)
+		e <- newErr
 		return
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("daymap: getClassRes", "failed to get resp", err)
+		e <- newErr
 		return
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("daymap: getClassRes", "failed to read resp.Body", err)
+		e <- newErr
 		return
 	}
 
@@ -75,7 +79,8 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 		postStr := dates[len(dates)-1]
 		posted, err := time.Parse("2/01/2006", postStr)
 		if err != nil {
-			e <- err
+			newErr := errors.NewError("daymap: getClassRes", "failed to parse time", err)
+			e <- newErr
 			return
 		}
 
@@ -112,15 +117,16 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 	}
 }
 
-// Public function to get a list of resources from DayMap for a user.
+// Get a list of resources from DayMap for a user.
 func ListRes(creds User, r chan []Resource, e chan error) {
 	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", homeUrl, nil)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListRes", "GET request failed", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -128,15 +134,17 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListRes", "failed to get resp", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
+		newErr := errors.NewError("daymap: ListRes", "failed to read resp.Body", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
