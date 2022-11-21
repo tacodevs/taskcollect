@@ -17,6 +17,114 @@ type handler struct {
 	database  *authDB
 }
 
+// Handle things like submission and file uploads/removals.
+func (h *handler) handleTask(r *http.Request, creds tcUser, platform, id, cmd string) (int, pageData, [][2]string) {
+	data := pageData{}
+
+	res := r.URL.EscapedPath()
+	statusCode := 200
+	var headers [][2]string
+
+	if cmd == "submit" {
+		err := submitTask(creds, platform, id)
+		if err != nil {
+			newErr := errors.NewError("main: handleTask", "failed to submit task", err)
+			logger.Error(newErr)
+			data = statusServerErrorData
+			statusCode = 500
+		} else {
+			index := strings.Index(res, "/submit")
+			headers = [][2]string{{"Location", res[:index]}}
+			statusCode = 302
+		}
+	} else if cmd == "upload" {
+		err := uploadWork(creds, platform, id, r)
+		if err != nil {
+			newErr := errors.NewError("main: handleTask", "failed to upload work", err)
+			logger.Error(newErr)
+			data = statusServerErrorData
+			statusCode = 500
+		} else {
+			index := strings.Index(res, "/upload")
+			headers = [][2]string{{"Location", res[:index]}}
+			statusCode = 302
+		}
+	} else if cmd == "remove" {
+		filenames := []string{}
+
+		for name := range r.URL.Query() {
+			filenames = append(filenames, name)
+		}
+
+		err := removeWork(creds, platform, id, filenames)
+		if err == errNoPlatform {
+			data = statusNotFoundData
+			statusCode = 404
+		} else if err != nil {
+			newErr := errors.NewError("main: handleTask", "failed to remove work", err)
+			logger.Error(newErr)
+			data = statusServerErrorData
+			statusCode = 500
+		} else {
+			index := strings.Index(res, "/remove")
+			headers = [][2]string{{"Location", res[:index]}}
+			statusCode = 302
+		}
+	} else {
+		data = statusNotFoundData
+		statusCode = 404
+	}
+
+	return statusCode, data, headers
+}
+
+func (h *handler) handleTaskReq(r *http.Request, creds tcUser) (int, pageData, [][2]string) {
+	res := r.URL.EscapedPath()
+
+	statusCode := 200
+	var data pageData
+	var headers [][2]string
+
+	platform := res[7:]
+	index := strings.Index(platform, "/")
+
+	if index == -1 {
+		data = statusNotFoundData
+		statusCode = 404
+		return statusCode, data, headers
+	}
+
+	taskId := platform[index+1:]
+	platform = platform[:index]
+	index = strings.Index(taskId, "/")
+
+	if index == -1 {
+		assignment, err := getTask(platform, taskId, creds)
+		if err != nil {
+			newErr := errors.NewError("main: handleTaskReq", "failed to get task", err)
+			logger.Error(newErr)
+			data = statusServerErrorData
+			statusCode = 500
+			return statusCode, data, headers
+		}
+
+		data = genTaskPage(assignment, creds)
+	} else {
+		taskCmd := taskId[index+1:]
+		taskId = taskId[:index]
+
+		statusCode, data, headers = h.handleTask(
+			r,
+			creds,
+			platform,
+			taskId,
+			taskCmd,
+		)
+	}
+
+	return statusCode, data, headers
+}
+
 // Generate the HTML page (and write that data to http.ResponseWriter).
 func (h *handler) genPage(w http.ResponseWriter, data pageData) {
 	err := h.templates.ExecuteTemplate(w, "page", data)
@@ -242,7 +350,7 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 	creds.GAuthID = h.database.gAuth
 
 	if validAuth {
-		statusCode, respBody, respHeaders := handleTaskReq(h.templates, r, creds)
+		statusCode, respBody, respHeaders := h.handleTaskReq(r, creds)
 
 		for _, respHeader := range respHeaders {
 			w.Header().Set(respHeader[0], respHeader[1])

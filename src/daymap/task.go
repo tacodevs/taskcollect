@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -30,12 +29,6 @@ type Task struct {
 	Comment   string
 	Platform  string
 	Id        string
-}
-
-type fileUploader struct {
-	MimeDivider string
-	MimeHeader  string
-	FileReader  io.Reader
 }
 
 /*func (u fileUploader) Read(p []byte) (int, error) {
@@ -434,7 +427,6 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 
 		task.Desc = b[:i]
-		b = b[i:] // NOTE: this value of b is never used
 	}
 
 	task.Submitted = true
@@ -443,7 +435,7 @@ func GetTask(creds User, id string) (Task, error) {
 
 // TODO: Complete the below function.
 // https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID=78847
-func UploadWork(creds User, id string, filename string, f *io.Reader) error {
+func UploadWork(creds User, id string, r *http.Request) error {
 	/*
 		uploadUrl := "URL TO UPLOAD TO"
 
@@ -475,8 +467,7 @@ func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 		return err
 	*/
 
-	_, err := io.Copy(os.Stdout, *f)
-	return err
+	return nil
 }
 
 /*
