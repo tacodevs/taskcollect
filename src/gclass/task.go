@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -370,10 +369,9 @@ func SubmitTask(creds User, id string) error {
 }
 
 // Upload a file as a user's work for a Google Classroom task.
-func UploadWork(creds User, id string, filename string, f *io.Reader) error {
+func UploadWork(creds User, id string, r *http.Request) error {
 	// Upload a file as a submission.
-	_, err := io.Copy(os.Stdout, *f)
-	return err
+	return nil
 }
 
 // Remove a file (a user's work) from a Google Classroom task.
