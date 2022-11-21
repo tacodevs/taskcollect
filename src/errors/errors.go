@@ -61,6 +61,9 @@ func (err *ErrorWrapper) SetError(e error) {
 	err.Err = e
 }
 
+// Return ErrorWrapper as an explicit error type.
+// This is most useful when working with nil error values. Since ErrorWrapper is a struct,
+// it is incompatible with nil values.
 func (err ErrorWrapper) AsError() error {
 	return ErrorWrapper{
 		Origin: err.Origin,

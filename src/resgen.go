@@ -545,33 +545,6 @@ func genHtmlResLink(className string, res []resource) resClass {
 	return class
 }
 
-// Generate the HTML page (and write that data to http.ResponseWriter)
-func genPage(w http.ResponseWriter, templates *template.Template, data pageData) {
-	//fmt.Printf("%+v\n", data)
-	err := templates.ExecuteTemplate(w, "page", data)
-	if err != nil {
-		logger.Error(err)
-	}
-
-	// TESTING CODE:
-	// NOTE: It seems that when fetching data (res or tasks) it fetches the data and writes to
-	// the file but that gets overridden by a 404 page instead.
-
-	/*
-		var processed bytes.Buffer
-		err := templates.ExecuteTemplate(&processed, "page", data)
-		outputPath := "./result.txt"
-		f, _ := os.Create(outputPath)
-		a := bufio.NewWriter(f)
-		a.WriteString(processed.String())
-		a.Flush()
-		if err != nil {
-			fmt.Println("Errors:")
-			logger.Error(err)
-		}
-	*/
-}
-
 // Generate resources and components for the webpage
 func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 	var data pageData

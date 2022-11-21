@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis/v9"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
@@ -20,6 +21,31 @@ import (
 	"main/gclass"
 	"main/logger"
 )
+
+type authDB struct {
+	path   string
+	client *redis.Client
+	gAuth  []byte
+}
+
+// Initializes the database and returns the created instance.
+func initDB(addr string, pwd string, idx int) *redis.Client {
+	// TODO: check that idx is between 0-15 inclusive
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: pwd,
+		DB:       idx,
+	})
+
+	ctx := context.Background()
+	res := redisDB.Ping(ctx)
+	if res.Err() != nil {
+		newErr := errors.NewError("redis", "incorrect password", res.Err())
+		logger.Fatal(newErr)
+	}
+
+	return redisDB
+}
 
 // Attempt to get pre-existing user credentials.
 func (db *authDB) getCreds(cookies string) (tcUser, error) {
@@ -46,7 +72,7 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 	tokenExists := db.client.Exists(ctx, userToken)
 	if tokenExists.Err() != nil {
 		err := errors.NewError("main: getCreds", "failed to get student data via token", tokenExists.Err())
-		return creds, err.AsError()
+		return creds, err
 	}
 	exists, err := tokenExists.Result()
 	if err != nil {
@@ -59,14 +85,14 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 	studentID := db.client.HGetAll(ctx, userToken)
 	if studentID.Err() != nil {
 		//err := errors.NewError("main: getCreds", "a token does not exist for current user", studentID.Err())
-		//return creds, err.AsError()
+		//return creds, err
 		return creds, errInvalidAuth
 	}
 	res, err := studentID.Result()
 	if err != nil {
 		logger.Debug("studentID result ERROR: %v", studentID.Err().Error())
 		//newErr := errors.NewError("main: getCreds", "resulting data could not be read", err)
-		//return creds, newErr.AsError()
+		//return creds, newErr
 		return creds, errInvalidAuth
 	}
 
@@ -74,12 +100,12 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 	studentData := db.client.HGetAll(ctx, key)
 	if studentData.Err() != nil {
 		err := errors.NewError("main: getCreds", "failed to get student data", studentData.Err())
-		return creds, err.AsError()
+		return creds, err
 	}
 	result, err := studentData.Result()
 	if err != nil {
 		newErr := errors.NewError("main: getCreds", "resulting data could not be read", err)
-		return creds, newErr.AsError()
+		return creds, newErr
 	}
 
 	creds.Token = token // equivalent to result["token"]
@@ -91,7 +117,7 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
 			newErr := errors.NewError("main: getCreds", "could not load timezone location data", err)
-			return tcUser{}, newErr.AsError()
+			return tcUser{}, newErr
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -99,7 +125,7 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 			"gclass": result["gclass"],
 		}
 	} else {
-		//newErr := errors.NewError("main: getCreds", "invalid school", errInvalidAuth.AsError())
+		//newErr := errors.NewError("main: getCreds", "invalid school", errInvalidAuth)
 		return tcUser{}, errInvalidAuth
 	}
 
@@ -115,20 +141,20 @@ func (db *authDB) getGTok(school, user, pwd string) (string, error) {
 	data := db.client.HGetAll(ctx, key)
 	if data.Err() != nil {
 		err := errors.NewError("main: getGTok", "could not fetch password for user", data.Err())
-		return "", err.AsError()
+		return "", err
 	}
 
 	result, err := data.Result()
 	if err != nil {
 		newErr := errors.NewError("main: getGTok", "resulting data could not be read", err)
-		return "", newErr.AsError()
+		return "", newErr
 	}
 
 	res := db.client.HExists(ctx, key, "gclass")
 	exists, err := res.Result()
 	if err != nil {
 		newErr := errors.NewError("main: getGTok", "could not fetch user's gclass data", err)
-		return "", newErr.AsError()
+		return "", newErr
 	}
 	if !exists {
 		return "", nil
@@ -150,13 +176,13 @@ func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 	data := db.client.HGetAll(ctx, key)
 	if data.Err() != nil {
 		err := errors.NewError("main: findUser", "could not fetch data for user", data.Err())
-		return exists, err.AsError()
+		return exists, err
 	}
 
 	result, err := data.Result()
 	if err != nil {
 		newErr := errors.NewError("main: findUser", "resulting data could not be read", err)
-		return exists, newErr.AsError()
+		return exists, newErr
 	}
 
 	if result["password"] == pwd {
@@ -226,7 +252,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	// NOTE: Options for other schools could be added in the future
 	if school != "gihs" {
 		err := errors.NewError("main: auth", "school was not GIHS", errAuthFailed)
-		return "", err.AsError()
+		return "", err
 	}
 
 	user := query.Get("usr")
@@ -385,7 +411,7 @@ func (db *authDB) logout(creds tcUser) error {
 	err := db.writeCreds(creds)
 	if err != nil {
 		newErr := errors.NewError("main: logout", "could not write to database", err)
-		return newErr.AsError()
+		return newErr
 	}
 
 	// NOTE: The student token needs to be deleted from the token list on logout

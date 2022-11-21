@@ -80,9 +80,6 @@ func write() {
 	buf.Reset()
 }
 
-// NOTE: error case will always match before errors.ErrorWrapper since ErrorWrapper has its own
-// Error() method (which error also has)
-
 func Info(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
@@ -90,9 +87,6 @@ func Info(format any, v ...any) {
 	case error:
 		err := fmt.Errorf("%v", a)
 		infoLogger.Printf(err.Error(), v...)
-	//case errors.ErrorWrapper:
-	//	err := a.AsString()
-	//	infoLogger.Printf(err, v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -107,9 +101,6 @@ func Debug(format any, v ...any) {
 	case error:
 		err := fmt.Errorf("%v", a)
 		debugLogger.Printf(err.Error(), v...)
-	//case errors.ErrorWrapper:
-	//	err := a.AsString()
-	//	debugLogger.Printf(err, v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -123,9 +114,6 @@ func Warn(format any, v ...any) {
 	case error:
 		err := fmt.Errorf("%v", a)
 		warnLogger.Printf(err.Error(), v...)
-	//case errors.ErrorWrapper:
-	//	err := a.AsString()
-	//	warnLogger.Printf(err, v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -139,16 +127,13 @@ func Error(format any, v ...any) {
 	case error:
 		err := fmt.Errorf("%v", a)
 		errorLogger.Printf(err.Error(), v...)
-	//case errors.ErrorWrapper:
-	//	err := a.AsString()
-	//	errorLogger.Printf(err, v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
 	write()
 }
 
-// This will log the error, then call os.Exit(1)
+// This will log the error, then call os.Exit(1).
 func Fatal(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
