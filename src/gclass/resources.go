@@ -11,6 +11,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
 	"google.golang.org/api/option"
+
+	"main/errors"
 )
 
 type Resource struct {
@@ -36,7 +38,8 @@ func getClassRes(course *classroom.Course, svc *classroom.Service, res *[]Resour
 	).Do()
 
 	if err != nil {
-		gErrChan <- err
+		newErr := errors.NewError("gclass: getClassRes", "failed to get coursework materials", err)
+		gErrChan <- newErr
 		return
 	}
 
@@ -61,7 +64,7 @@ func getClassRes(course *classroom.Course, svc *classroom.Service, res *[]Resour
 	}
 }
 
-// Public function to get a list of resources from Google Classroom for a user.
+// Get a list of resources from Google Classroom for a user.
 func ListRes(creds User, r chan []Resource, e chan error) {
 	ctx := context.Background()
 
@@ -74,18 +77,20 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	)
 
 	if err != nil {
+		newErr := errors.NewError("gclass: ListRes", "failed to get config from JSON", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
 	reader := strings.NewReader(creds.Token)
 	oauthTok := &oauth2.Token{}
-	err = json.NewDecoder(reader).Decode(oauthTok)
 
+	err = json.NewDecoder(reader).Decode(oauthTok)
 	if err != nil {
+		newErr := errors.NewError("gclass: ListRes", "failed to decode JSON", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -97,8 +102,9 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	)
 
 	if err != nil {
+		newErr := errors.NewError("gclass: ListRes", "failed to create new service", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -108,8 +114,9 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	).Do()
 
 	if err != nil {
+		newErr := errors.NewError("gclass: ListRes", "failed to get response", err)
 		r <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -144,9 +151,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	resources := []Resource{}
 
 	for _, resList := range unordered {
-		for _, r := range resList {
-			resources = append(resources, r)
-		}
+		resources = append(resources, resList...)
 	}
 
 	r <- resources

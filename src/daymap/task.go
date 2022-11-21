@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"main/errors"
+	"main/logger"
 )
 
 type Task struct {
@@ -37,6 +39,8 @@ type fileUploader struct {
 }
 
 /*func (u fileUploader) Read(p []byte) (int, error) {
+	// TODO: Make sure the errors have contextual information
+
 	mimeDiv := strings.NewReader(u.MimeDivider)
 	mimeHead := strings.NewReader(u.MimeHeader)
 	mimeend := strings.NewReader(u.MimeDivider + "--")
@@ -82,6 +86,7 @@ type fileUploader struct {
 	return n, nil
 }*/
 
+// TODO: Could use the function from utils.go -> Make a local utils package
 func contains(a []string, s string) bool {
 	for _, c := range a {
 		if s == c {
@@ -105,24 +110,27 @@ func GetTask(creds User, id string) (Task, error) {
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("daymap: GetTask", "GET request failed", err)
+		return Task{}, newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("daymap: GetTask", "failed to get resp", err)
+		return Task{}, newErr
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("daymap: GetTask", "failed to read resp.Body", err)
+		return Task{}, newErr
 	}
 
 	b := string(respBody)
 
-	if strings.Index(b, "My&nbsp;Work") != -1 || strings.Index(b, "My Work</div>") != -1 {
+	if strings.Contains(b, "My&nbsp;Work") || strings.Contains(b, "My Work</div>") {
 		task.Upload = true
 	}
 
@@ -199,14 +207,15 @@ func GetTask(creds User, id string) (Task, error) {
 		b = b[i:]
 		var due time.Time
 
-		if strings.Index(dueStr, ":") == -1 {
+		if !strings.Contains(dueStr, ":") {
 			due, err = time.Parse("2/01/2006", dueStr)
 		} else {
 			due, err = time.Parse("2/01/2006 3:04 PM", dueStr)
 		}
 
 		if err != nil {
-			return Task{}, err
+			newErr := errors.NewError("daymap: GetTask", "failed to parse time", err)
+			return Task{}, newErr
 		}
 
 		task.Due = time.Date(
@@ -323,15 +332,15 @@ func GetTask(creds User, id string) (Task, error) {
 		sb := markStr[x+3:]
 
 		it, err := strconv.Atoi(st)
-
 		if err != nil {
-			return Task{}, err
+			newErr := errors.NewError("daymap: GetTask", "(1) string -> int conversion failed", err)
+			return Task{}, newErr
 		}
 
 		ib, err := strconv.Atoi(sb)
-
 		if err != nil {
-			return Task{}, err
+			newErr := errors.NewError("daymap: GetTask", "(2) string -> int conversion failed", err)
+			return Task{}, newErr
 		}
 
 		percent := float64(it) / float64(ib) * 100
@@ -425,7 +434,7 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 
 		task.Desc = b[:i]
-		b = b[i:]
+		b = b[i:] // NOTE: this value of b is never used
 	}
 
 	task.Submitted = true
@@ -452,6 +461,7 @@ func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 		req, err := http.NewRequest("POST", uploadUrl, uploader)
 
 		if err != nil {
+			// use errors.NewError()
 			return err
 		}
 
@@ -478,23 +488,25 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	removeUrl := "https://gihs.daymap.net/daymap/student/attachments.aspx?Type=1&LinkID="
 	removeUrl += id
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", removeUrl, nil)
 
+	req, err := http.NewRequest("GET", removeUrl, nil)
 	if err != nil {
-		return err
+		newErr := errors.NewError("daymap: RemoveWork", "GET request failed", err)
+		return newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
-	resp, err := client.Do(req)
 
+	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		newErr := errors.NewError("daymap: RemoveWork", "failed to get resp", err)
+		return newErr
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
-
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		newErr := errors.NewError("daymap: RemoveWork", "failed to read resp.Body", err)
+		return newErr
 	}
 
 	b := string(respBody)
@@ -628,7 +640,8 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	post, err := http.NewRequest("POST", rwfurl, rwData)
 	if err != nil {
-		return err
+		newErr := errors.NewError("daymap: RemoveWork", "POST request failed", err)
+		return newErr
 	}
 
 	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -636,9 +649,10 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	fail, err := client.Do(req)
 	if err != nil {
-		return err
+		newErr := errors.NewError("daymap: RemoveWork", "error returning response body", err)
+		return newErr
 	}
 
-	io.Copy(os.Stderr, fail.Body)
+	logger.Error("%v", fail.Body)
 	return nil
 }

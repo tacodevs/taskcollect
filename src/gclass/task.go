@@ -14,6 +14,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
 	"google.golang.org/api/option"
+
+	"main/errors"
 )
 
 type Task struct {
@@ -37,13 +39,19 @@ type Task struct {
 func getDirectDriveLink(inputUrl string) (string, error) {
 	urlResult, err := url.Parse(inputUrl)
 	if err != nil {
-		return "", err
+		newErr := errors.NewError("gclass: getDirectDriveLink", "URL parse error", err)
+		return "", newErr
 	}
 
-	// urlResult.Path contains a leading "/": "/file/d/1234567890/view"
+	// NOTE: urlResult.Path contains a leading "/": "/file/d/1234567890/view"
 	// so the split list will have an extra element at the start hence splitUrl[3] and not splitUrl[2]
 
 	splitUrl := strings.Split(urlResult.Path, "/")
+	if len(splitUrl) < 4 {
+		newErr := errors.NewError("gclass: getDirectDriveLink", "split URL does not contain enough elements", nil)
+		return "", newErr
+	}
+
 	finalUrl := "https://drive.google.com/uc?export=download&id=" + splitUrl[3]
 	return finalUrl, nil
 }
@@ -51,10 +59,10 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 // Fetch the name of the class a task belongs to from Google Classroom.
 func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan error) {
 	course, err := svc.Courses.Get(courseId).Fields("name").Do()
-
 	if err != nil {
+		newErr := errors.NewError("gclass: getClass", "failed to get class", err)
 		classChan <- ""
-		classErrChan <- err
+		classErrChan <- newErr
 		return
 	}
 
@@ -76,8 +84,9 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 	).Do()
 
 	if err != nil {
+		newErr := errors.NewError("gclass: getGCTask", "failed to get task information", err)
 		taskChan <- classroom.CourseWork{}
-		taskErrChan <- err
+		taskErrChan <- newErr
 		return
 	}
 
@@ -90,7 +99,7 @@ ISSUE(#6): The Google Classroom API does not seem to have any mechanism to reque
 teacher comments for a task, so task.Comment is always empty.
 */
 
-// Public function to get a task from Google Classroom for a user.
+// Get a task from Google Classroom for a user.
 func GetTask(creds User, id string) (Task, error) {
 	cid := strings.SplitN(id, "-", 3)
 
@@ -109,15 +118,17 @@ func GetTask(creds User, id string) (Task, error) {
 	)
 
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("gclass: GetTask", "failed to get config from JSON", err)
+		return Task{}, newErr
 	}
 
 	r := strings.NewReader(creds.Token)
 	oauthTok := &oauth2.Token{}
-	err = json.NewDecoder(r).Decode(oauthTok)
 
+	err = json.NewDecoder(r).Decode(oauthTok)
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("gclass: GetTask", "failed to decode JSON", err)
+		return Task{}, newErr
 	}
 
 	client := gAuthConfig.Client(context.Background(), oauthTok)
@@ -128,7 +139,8 @@ func GetTask(creds User, id string) (Task, error) {
 	)
 
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("gclass: GetTask", "failed to get new service", err)
+		return Task{}, newErr
 	}
 
 	classChan := make(chan string)
@@ -143,17 +155,20 @@ func GetTask(creds User, id string) (Task, error) {
 		cid[0], cid[1], cid[2],
 	).Fields("state", "assignedGrade", "assignmentSubmission").Do()
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("gclass: GetTask", "failed to get student submission", err)
+		return Task{}, newErr
 	}
 
 	gc, err := <-taskChan, <-taskErrChan
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("gclass: GetTask", "from taskErrChan", err)
+		return Task{}, newErr
 	}
-	class, err := <-classChan, <-classErrChan
 
+	class, err := <-classChan, <-classErrChan
 	if err != nil {
-		return Task{}, err
+		newErr := errors.NewError("gclass: GetTask", "from classErrChan", err)
+		return Task{}, newErr
 	}
 
 	task := Task{
@@ -178,7 +193,8 @@ func GetTask(creds User, id string) (Task, error) {
 				if strings.Contains(link, "://drive.google.com/") {
 					link, err = getDirectDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
-						return Task{}, err
+						newErr := errors.NewError("gclass: GetTask", "failed to get direct drive link", err)
+						return Task{}, newErr
 					}
 				}
 				name = w.DriveFile.Title
@@ -212,7 +228,8 @@ func GetTask(creds User, id string) (Task, error) {
 			if strings.Contains(link, "://drive.google.com/") {
 				link, err = getDirectDriveLink(m.DriveFile.DriveFile.AlternateLink)
 				if err != nil {
-					return Task{}, err
+					newErr := errors.NewError("gclass: GetTask", "failed to get direct drive link", err)
+					return Task{}, newErr
 				}
 			}
 			name = m.DriveFile.DriveFile.Title
@@ -293,7 +310,7 @@ How this issue should be managed is open to discussion:
 https://codeberg.org/kvo/taskcollect/issues/3
 */
 
-// Public function to submit a Google Classroom task on behalf of a user.
+// Submit a Google Classroom task on behalf of a user.
 func SubmitTask(creds User, id string) error {
 	/*
 		cid := strings.SplitN(id, "-", 3)
@@ -312,6 +329,7 @@ func SubmitTask(creds User, id string) error {
 			classroom.ClassroomCourseworkmaterialsReadonlyScope,
 		)
 
+		// TODO: use NewError
 		if err != nil {
 			return err
 		}
@@ -320,6 +338,7 @@ func SubmitTask(creds User, id string) error {
 		oauthTok := &oauth2.Token{}
 		err = json.NewDecoder(r).Decode(oauthTok)
 
+		// TODO: use NewError
 		if err != nil {
 			return err
 		}
@@ -331,6 +350,7 @@ func SubmitTask(creds User, id string) error {
 			option.WithHTTPClient(client),
 		)
 
+		// TODO: use NewError
 		if err != nil {
 			return err
 		}
@@ -340,6 +360,7 @@ func SubmitTask(creds User, id string) error {
 			&classroom.TurnInStudentSubmissionRequest{},
 		).Do()
 
+		// TODO: use NewError
 		if err != nil {
 			return err
 		}
@@ -348,14 +369,14 @@ func SubmitTask(creds User, id string) error {
 	return nil
 }
 
-// Public function to upload a file as a user's work for a Google Classroom task.
+// Upload a file as a user's work for a Google Classroom task.
 func UploadWork(creds User, id string, filename string, f *io.Reader) error {
 	// Upload a file as a submission.
 	_, err := io.Copy(os.Stdout, *f)
 	return err
 }
 
-// Public function to remove a file (a user's work) from a Google Classroom task.
+// Remove a file (a user's work) from a Google Classroom task.
 func RemoveWork(creds User, id string, filenames []string) error {
 	// Remove file submission.
 	return nil

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"main/daymap"
+	"main/errors"
 	"main/gclass"
 	"main/logger"
 )
@@ -94,16 +95,17 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 
 	t := map[string][]task{}
 	tasks := map[string][]task{}
-	gcTasks, err := <-gcChan, <-gcErr
 
+	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
-		logger.Error(err)
+		newErr := errors.NewError("main: getTasks", "failed to get list of tasks from gclass", err)
+		logger.Error(newErr)
 	}
 
 	dmTasks, err := <-dmChan, <-dmErr
-
 	if err != nil {
-		logger.Error(err)
+		newErr := errors.NewError("main: getTasks", "failed to get list of tasks from daymap", err)
+		logger.Error(newErr)
 	}
 
 	for c, taskList := range gcTasks {
@@ -176,16 +178,17 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 	go daymap.ListRes(dmCreds, dmResChan, dmErrChan)
 
 	unordered := map[string][]resource{}
-	gcResLinks, err := <-gResChan, <-gErrChan
 
+	gcResLinks, err := <-gResChan, <-gErrChan
 	if err != nil {
-		logger.Error(err)
+		newErr := errors.NewError("main: getResources", "failed to get list of resources from gclass", err)
+		logger.Error(newErr)
 	}
 
 	dmResLinks, err := <-dmResChan, <-dmErrChan
-
 	if err != nil {
-		logger.Error(err)
+		newErr := errors.NewError("main: getResources", "failed to get list of resources from daymap", err)
+		logger.Error(newErr)
 	}
 
 	for _, r := range gcResLinks {
@@ -227,6 +230,7 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 	return classes, resources, err
 }
 
+// Get a task from the given platform.
 func getTask(platform, taskId string, creds tcUser) (task, error) {
 	assignment := task{}
 	err := errNoPlatform.AsError()
@@ -254,6 +258,7 @@ func getTask(platform, taskId string, creds tcUser) (task, error) {
 	return assignment, err
 }
 
+// Submit task to a given platform.
 func submitTask(creds tcUser, platform, taskId string) error {
 	err := errNoPlatform.AsError()
 
@@ -270,6 +275,7 @@ func submitTask(creds tcUser, platform, taskId string) error {
 	return err
 }
 
+// Upload work to a given platform.
 func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error {
 	err := errNoPlatform.AsError()
 
@@ -292,6 +298,7 @@ func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error
 	return err
 }
 
+// Remove work from a given platform.
 func removeWork(creds tcUser, platform, taskId string, filenames []string) error {
 	err := errNoPlatform.AsError()
 
