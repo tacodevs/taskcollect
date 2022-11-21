@@ -35,7 +35,8 @@ func Test(gcid []byte, gTok string, e chan error) {
 	)
 
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("gclass: Test", "could not get JSON config", err)
+		e <- newErr
 		return
 	}
 
@@ -44,7 +45,8 @@ func Test(gcid []byte, gTok string, e chan error) {
 
 	err = json.NewDecoder(r).Decode(oauthTok)
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("gclass: Test", "failed to decode JSON", err)
+		e <- newErr
 		return
 	}
 
@@ -52,13 +54,15 @@ func Test(gcid []byte, gTok string, e chan error) {
 
 	svc, err := classroom.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("gclass: Test", "failed create new service", err)
+		e <- newErr
 		return
 	}
 
 	_, err = svc.Courses.List().PageSize(1).Do()
 	if err != nil {
-		e <- err
+		newErr := errors.NewError("gclass: Test", "failed to get response", err)
+		e <- newErr
 		return
 	}
 

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"main/errors"
 )
 
 type Lesson struct {
@@ -26,7 +28,7 @@ type dmJsonEntry struct {
 	Title  string
 }
 
-// Public function to get a list of lessons for the week from DayMap for a user.
+// Get a list of lessons for the week from DayMap for a user.
 func GetLessons(creds User) ([][]Lesson, error) {
 	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)
@@ -57,24 +59,27 @@ func GetLessons(creds User) ([][]Lesson, error) {
 	lessonsUrl += weekEnd.Format("2006-01-02")
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", lessonsUrl, nil)
 
+	req, err := http.NewRequest("GET", lessonsUrl, nil)
 	if err != nil {
-		return nil, err
+		newErr := errors.NewError("daymap: GetLessons", "GET request for lessonsUrl failed", err)
+		return nil, newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
-	resp, err := client.Do(req)
 
+	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		newErr := errors.NewError("daymap: GetLessons", "failed to get resp", err)
+		return nil, newErr
 	}
 
 	dmJson := []dmJsonEntry{}
-	err = json.NewDecoder(resp.Body).Decode(&dmJson)
 
+	err = json.NewDecoder(resp.Body).Decode(&dmJson)
 	if err != nil {
-		return nil, err
+		newErr := errors.NewError("daymap: GetLessons", "failed to decode JSON", err)
+		return nil, newErr
 	}
 
 	lessons := make([][]Lesson, 5)
@@ -93,9 +98,9 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 			startStr := l.Start[startIdx:endIdx]
 			startInt, err := strconv.Atoi(startStr)
-
 			if err != nil {
-				return nil, err
+				newErr := errors.NewError("daymap: GetLessons", "(1) string -> int conversion failed", err)
+				return nil, newErr
 			}
 
 			lesson.Start = time.Unix(int64(startInt), 0)
@@ -109,17 +114,17 @@ func GetLessons(creds User) ([][]Lesson, error) {
 
 			finishStr := l.Finish[startIdx:endIdx]
 			finishInt, err := strconv.Atoi(finishStr)
-
 			if err != nil {
-				return nil, err
+				newErr := errors.NewError("daymap: GetLessons", "(2) string -> int conversion failed", err)
+				return nil, newErr
 			}
 
 			lesson.End = time.Unix(int64(finishInt), 0)
 		} else {
 			lesson.End, err = time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
-
 			if err != nil {
-				return nil, err
+				newErr := errors.NewError("daymap: GetLessons", "failed to parse time", err)
+				return nil, newErr
 			}
 		}
 
@@ -130,9 +135,9 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		}
 
 		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
-
 		if err != nil {
-			return nil, err
+			newErr := errors.NewError("daymap: GetLessons", "failed to compile regex", err)
+			return nil, newErr
 		}
 
 		lesson.Room = re.FindString(class)
@@ -140,14 +145,14 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		lesson.Class = class[:roomIdx[0]-1]
 
 		if !strings.HasPrefix(l.Text, "<div") && len(l.Text) > 0 {
-			if strings.Index(l.Text, "<div") != -1 {
+			if strings.Contains(l.Text, "<div") {
 				lesson.Notice = l.Text[:strings.Index(l.Text, "<div")]
 			} else {
 				lesson.Notice = l.Text
 			}
 		}
 
-		if strings.Index(class, "Mentor") != -1 {
+		if strings.Contains(class, "Mentor") {
 			continue
 		}
 

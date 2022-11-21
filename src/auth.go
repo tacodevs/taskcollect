@@ -264,7 +264,8 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	gTok, err := db.getGTok(school, user, pwd)
 	if err != nil {
-		return "", err
+		newErr := errors.NewError("main: auth", "gclass token was not found", err)
+		return "", newErr
 	}
 
 	gTestErr := make(chan error)
@@ -277,10 +278,12 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	if err != nil {
 		userExists, err := db.findUser(school, user, pwd)
 		if err != nil {
-			return "", err
+			newErr := errors.NewError("main: auth", "could not determine if user exists", err)
+			return "", newErr
 		}
 		if !userExists {
-			return "", errAuthFailed
+			newErr := errors.NewError("main: auth", "user was not found", errAuthFailed)
+			return "", newErr
 		}
 	}
 
@@ -322,8 +325,8 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	err = db.writeCreds(creds)
 	if err != nil {
-		// TODO: improve error handling
-		return "", err
+		newErr := errors.NewError("main: auth", "error writing creds", err)
+		return "", newErr
 	}
 
 	return cookie, gAuthStatus
@@ -376,23 +379,27 @@ func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
 	)
 	if err != nil {
-		return err
+		newErr := errors.NewError("main: runGAuth", "failed to get config from JSON", err)
+		return newErr
 	}
 
 	gTok, err := gAuthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
-		return err
+		newErr := errors.NewError("main: runGAuth", "failed to convert auth code into token", err)
+		return newErr
 	}
 
 	token, err := json.Marshal(gTok)
 	if err != nil {
-		return err
+		newErr := errors.NewError("main: runGAuth", "failed to encode into JSON", err)
+		return newErr
 	}
 
 	creds.SiteTokens["gclass"] = string(token)
 	err = db.writeCreds(creds)
 	if err != nil {
-		return err
+		newErr := errors.NewError("main: runGAuth", "failed to write creds", err)
+		return newErr
 	}
 
 	return nil

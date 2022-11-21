@@ -54,7 +54,8 @@ func (pr postReader) Read(p []byte) (int, error) {
 	for n < len(p) {
 		b, err := reader.ReadByte()
 		if err != nil {
-			return n, err
+			newErr := errors.NewError("main: Read", "failed to read bytes", err)
+			return n, newErr
 		}
 
 		i := 0
@@ -62,7 +63,8 @@ func (pr postReader) Read(p []byte) (int, error) {
 		for i < len(pr.div) {
 			c, err := reader.Peek(i + 1)
 			if err != nil {
-				return n, err
+				newErr := errors.NewError("main: Read", "failed to peek bytes", err)
+				return n, newErr
 			}
 			if c[i] != pr.div[i] {
 				break
@@ -77,7 +79,8 @@ func (pr postReader) Read(p []byte) (int, error) {
 			for x := 0; x < i; x++ {
 				_, err := reader.ReadByte()
 				if err != nil {
-					return n, err
+					newErr := errors.NewError("main: Read", "failed to read bytes", err)
+					return n, newErr
 				}
 			}
 			return n, nil
@@ -91,7 +94,8 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	reader := bufio.NewReader(r.Body)
 	line, err := reader.ReadString('\n')
 	if err != nil {
-		return "", nil, err
+		newErr := errors.NewError("main: fileFromReq(1)", "failed to read string", err)
+		return "", nil, newErr
 	}
 
 	div := strings.ReplaceAll(line, "\n", "")
@@ -100,7 +104,8 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 	for line != "\n" {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			return "", nil, err
+			newErr := errors.NewError("main: fileFromReq(2)", "failed to read string", err)
+			return "", nil, newErr
 		}
 
 		if strings.HasPrefix(line, "Content-Disposition: form-data;") {
@@ -114,15 +119,16 @@ func fileFromReq(r *http.Request) (string, io.Reader, error) {
 
 	idx := strings.Index(line, "form-data;")
 	_, formVals, err := mime.ParseMediaType(line[idx:])
-
 	if err != nil {
-		return "", nil, err
+		newErr := errors.NewError("main: fileFromReq", "failed to parse MIME content", err)
+		return "", nil, newErr
 	}
 
 	for line != "\r\n" {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			return "", nil, err
+			newErr := errors.NewError("main: fileFromReq(3)", "failed to read string", err)
+			return "", nil, newErr
 		}
 	}
 
@@ -146,9 +152,9 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, pageData, []
 
 	if cmd == "submit" {
 		err := submitTask(c, p, id)
-
 		if err != nil {
-			logger.Error(err)
+			newErr := errors.NewError("main: handleTask", "failed to submit task", err)
+			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
 		} else {
@@ -159,13 +165,15 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, pageData, []
 	} else if cmd == "upload" {
 		filename, reader, err := fileFromReq(r)
 		if err != nil {
-			logger.Error(err)
+			newErr := errors.NewError("main: handleTask", "file read error", err)
+			logger.Error(newErr)
 			return 500, statusServerErrorData, nil
 		}
 
 		err = uploadWork(c, p, id, filename, &reader)
 		if err != nil {
-			logger.Error(err)
+			newErr := errors.NewError("main: handleTask", "failed to upload work", err)
+			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
 		} else {
@@ -185,7 +193,8 @@ func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, pageData, []
 			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
-			logger.Error(err)
+			newErr := errors.NewError("main: handleTask", "failed to remove work", err)
+			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
 		} else {
@@ -224,7 +233,8 @@ func handleTaskReq(tmpls *template.Template, r *http.Request, creds tcUser) (int
 	if index == -1 {
 		assignment, err := getTask(platform, taskId, creds)
 		if err != nil {
-			logger.Error(err)
+			newErr := errors.NewError("main: handleTaskReq", "failed to get task", err)
+			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
@@ -253,7 +263,8 @@ func initTemplates(resPath string) (*template.Template, error) {
 	tmplPath := fp.Join(resPath, "templates")
 	err := os.MkdirAll(tmplPath, os.ModePerm)
 	if err != nil {
-		return nil, err
+		newErr := errors.NewError("main: initTemplates", "could not make 'templates' directory", err)
+		return nil, newErr
 	}
 
 	tmplResPath := tmplPath
@@ -350,29 +361,34 @@ func getConfig(cfgPath string) (config, error) {
 
 	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
-		return result, err
+		newErr := errors.NewError("main: getConfig", "failed to open config.json", err)
+		return result, newErr
 	}
 
 	b, err := io.ReadAll(jsonFile)
 	if err != nil {
-		return result, err
+		newErr := errors.NewError("main: getConfig", "failed to read config.json", err)
+		return result, newErr
 	}
 
 	err = jsonFile.Close()
 	if err != nil {
-		return result, err
+		newErr := errors.NewError("main: getConfig", "failed to close config.json", err)
+		return result, newErr
 	}
 
 	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
 	if err != nil {
-		return result, err
+		newErr := errors.NewError("main: getConfig", "failed to open config.json", err)
+		return result, newErr
 	}
 	defer jsonFile.Close()
 
 	if len(b) > 0 {
 		err = json.Unmarshal(b, &result)
 		if err != nil {
-			return result, err
+			newErr := errors.NewError("main: getConfig", "failed to unmarshal config.json", err)
+			return result, newErr
 		}
 	} else {
 		logger.Info("Using default configuration settings. These can be edited in the config.json file")
@@ -380,12 +396,14 @@ func getConfig(cfgPath string) (config, error) {
 
 	rawJson, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
-		return config{}, err
+		newErr := errors.NewError("main: getConfig", "failed to marshal config.json", err)
+		return config{}, newErr
 	}
 
 	_, err = jsonFile.Write(rawJson)
 	if err != nil {
-		return result, nil
+		newErr := errors.NewError("main: getConfig", "failed to write to config.json", err)
+		return result, newErr
 	}
 
 	return result, nil
@@ -405,8 +423,7 @@ func main() {
 
 	curUser, err := user.Current()
 	if err != nil {
-		errStr := "taskcollect: Cannot determine current user's home folder"
-		logger.Fatal(errStr)
+		logger.Fatal("taskcollect: Cannot determine current user's home folder")
 	}
 
 	home := curUser.HomeDir
@@ -417,7 +434,7 @@ func main() {
 
 	result, err := getConfig(configFile)
 	if err != nil {
-		newErr := errors.NewError("main", "unable to read", err)
+		newErr := errors.NewError("main", "unable to read config file", err)
 		logger.Error(newErr)
 		logger.Warn("Resorting to default configuration settings")
 	}
@@ -451,14 +468,14 @@ func main() {
 
 	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
-		strErr := errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err)
-		logger.Fatal(strErr.Error())
+		newErr := errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err)
+		logger.Fatal(newErr)
 	}
 
 	templates, err := initTemplates(resPath)
 	if err != nil {
-		strErr := errors.NewError("main", errors.ErrInitFailed.Error()+" for HTML templates", err)
-		logger.Fatal(strErr)
+		newErr := errors.NewError("main", errors.ErrInitFailed.Error()+" for HTML templates", err)
+		logger.Fatal(newErr)
 	}
 	logger.Info("Successfully initialized HTML templates")
 

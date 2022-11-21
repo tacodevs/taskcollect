@@ -38,7 +38,8 @@ func UseConfigFile(logPath string) error {
 
 	err := os.MkdirAll(logPath, os.ModePerm)
 	if err != nil {
-		return err
+		newErr := errors.NewError("logger", "failed to create directory", err)
+		return newErr
 	}
 
 	logFileName = filepath.Join(logPath, time.Now().Format("2006-01-02_150405")+".log")
