@@ -4,6 +4,8 @@ import (
 	//"errors"
 	"html"
 	"io/ioutil"
+	"main/errors"
+	"main/logger"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -16,8 +18,8 @@ type User struct {
 	Token    string
 }
 
-// Function to get a webpage from DayMap using a username and password.
-// Useful for authentication to DayMap.
+// Get a webpage from DayMap using a username and password.
+// Used for authenticating with DayMap.
 func get(webUrl, username, password string) (string, string, error) {
 	// Stage 1 - Get a DayMap redirect to SAML.
 
@@ -263,7 +265,8 @@ func get(webUrl, username, password string) (string, string, error) {
 func Auth(school, usr, pwd string) (User, error) {
 	timezone, err := time.LoadLocation("Australia/Adelaide")
 	if err != nil {
-		panic(err)
+		newErr := errors.NewError("daymap: Auth", "failed to load timezone", err)
+		logger.Error(newErr)
 	}
 
 	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"

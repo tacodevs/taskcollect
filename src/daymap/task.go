@@ -5,6 +5,7 @@ import (
 	"html"
 	"io"
 	"io/ioutil"
+	"main/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -639,6 +640,6 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		return err
 	}
 
-	io.Copy(os.Stderr, fail.Body)
+	logger.Error("%v", fail.Body)
 	return nil
 }
