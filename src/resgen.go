@@ -122,6 +122,8 @@ func genLesson(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h in
 
 	boldFont, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
+		newErr := errors.NewError("main: genLesson", "font (bold) parsing failed", err)
+		logger.Error(newErr)
 		*img = canvas
 		daymapWG.Done()
 		return
@@ -129,6 +131,8 @@ func genLesson(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h in
 
 	regFont, err := freetype.ParseFont(goregular.TTF)
 	if err != nil {
+		newErr := errors.NewError("main: genLesson", "font (reg) parsing failed", err)
+		logger.Error(newErr)
 		*img = canvas
 		daymapWG.Done()
 		return
@@ -271,7 +275,8 @@ func genDay(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, co
 func genTimetable(creds tcUser, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {
-		logger.Error(err)
+		newErr := errors.NewError("main: genTimetable", "failed to get lessons", err)
+		logger.Error(newErr)
 		w.WriteHeader(500)
 		return
 	}
@@ -370,6 +375,8 @@ func genTimetable(creds tcUser, w http.ResponseWriter) {
 
 	boldFont, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
+		newErr := errors.NewError("main: genTimetable", "font (bold) parsing failed", err)
+		logger.Error(newErr)
 		w.WriteHeader(500)
 		return
 	}
@@ -425,6 +432,8 @@ func genTimetable(creds tcUser, w http.ResponseWriter) {
 	}
 
 	if err := png.Encode(w, canvas); err != nil {
+		newErr := errors.NewError("main: genTimetable", "timetable image encoding failed", err)
+		logger.Error(newErr)
 		w.WriteHeader(500)
 		return
 	}
@@ -545,33 +554,6 @@ func genHtmlResLink(className string, res []resource) resClass {
 	return class
 }
 
-// Generate the HTML page (and write that data to http.ResponseWriter)
-func genPage(w http.ResponseWriter, templates *template.Template, data pageData) {
-	//fmt.Printf("%+v\n", data)
-	err := templates.ExecuteTemplate(w, "page", data)
-	if err != nil {
-		logger.Error(err)
-	}
-
-	// TESTING CODE:
-	// NOTE: It seems that when fetching data (res or tasks) it fetches the data and writes to
-	// the file but that gets overridden by a 404 page instead.
-
-	/*
-		var processed bytes.Buffer
-		err := templates.ExecuteTemplate(&processed, "page", data)
-		outputPath := "./result.txt"
-		f, _ := os.Create(outputPath)
-		a := bufio.NewWriter(f)
-		a.WriteString(processed.String())
-		a.Flush()
-		if err != nil {
-			fmt.Println("Errors:")
-			logger.Error(err)
-		}
-	*/
-}
-
 // Generate resources and components for the webpage
 func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 	var data pageData
@@ -587,7 +569,8 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		tasks, err := getTasks(creds)
 		if err != nil {
-			return data, err
+			newErr := errors.NewError("main: genRes", "failed to get tasks", err)
+			return data, newErr
 		}
 
 		activeTasks := taskType{
@@ -651,7 +634,8 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		classes, resources, err := getResources(creds)
 		if err != nil {
-			return data, err
+			newErr := errors.NewError("main: genRes", "failed to get resources", err)
+			return data, newErr
 		}
 
 		for _, class := range classes {

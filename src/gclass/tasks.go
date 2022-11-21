@@ -11,6 +11,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
 	"google.golang.org/api/option"
+
+	"main/errors"
 )
 
 // Retrieve Google Classroom task information using a workload submission point ID.
@@ -22,7 +24,8 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 	).Fields("creationTime", "dueTime", "dueDate", "title", "alternateLink").Do()
 
 	if err != nil {
-		gErrChan <- err
+		newErr := errors.NewError("gclass: getTask", "failed to get coursework", err)
+		gErrChan <- newErr
 		return
 	}
 
@@ -82,7 +85,8 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 	).Do()
 
 	if err != nil {
-		gErrChan <- err
+		newErr := errors.NewError("gclass: getSubmissions", "failed to get student submissions", err)
+		gErrChan <- newErr
 		return
 	}
 
@@ -100,7 +104,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 	*tasks = submissions
 }
 
-// Public function to retrieve a list of tasks from Google Classroom for a user.
+// Retrieve a list of tasks from Google Classroom for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	ctx := context.Background()
 
@@ -113,18 +117,20 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	)
 
 	if err != nil {
+		newErr := errors.NewError("gclass: ListTasks", "failed to get config from JSON", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
 	r := strings.NewReader(creds.Token)
 	oauthTok := &oauth2.Token{}
-	err = json.NewDecoder(r).Decode(oauthTok)
 
+	err = json.NewDecoder(r).Decode(oauthTok)
 	if err != nil {
+		newErr := errors.NewError("gclass: ListTasks", "failed to decode JSON", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -136,8 +142,9 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	)
 
 	if err != nil {
+		newErr := errors.NewError("gclass: ListTasks", "failed to create new service", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
@@ -147,8 +154,9 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	).Do()
 
 	if err != nil {
+		newErr := errors.NewError("gclass: ListTasks", "failed to get response", err)
 		t <- nil
-		e <- err
+		e <- newErr
 		return
 	}
 
