@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"main/errors"
 	"net/url"
 	"os"
 	"strings"
@@ -40,10 +41,15 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 		return "", err
 	}
 
-	// urlResult.Path contains a leading "/": "/file/d/1234567890/view"
+	// NOTE: urlResult.Path contains a leading "/": "/file/d/1234567890/view"
 	// so the split list will have an extra element at the start hence splitUrl[3] and not splitUrl[2]
 
 	splitUrl := strings.Split(urlResult.Path, "/")
+	if len(splitUrl) < 4 {
+		newErr := errors.NewError("gclass: getDirectDriveLink", "split URL does not contain enough elements", nil)
+		return "", newErr
+	}
+
 	finalUrl := "https://drive.google.com/uc?export=download&id=" + splitUrl[3]
 	return finalUrl, nil
 }
