@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"net/http"
 	"sort"
 	"time"
 
@@ -46,6 +46,16 @@ type resource struct {
 	ResLinks [][2]string
 	Platform string
 	Id       string
+}
+
+type tcUser struct {
+	Timezone   *time.Location
+	School     string
+	Username   string
+	Password   string
+	Token      string
+	SiteTokens map[string]string
+	GAuthID    []byte
 }
 
 func getLessons(creds tcUser) ([][]lesson, error) {
@@ -276,7 +286,7 @@ func submitTask(creds tcUser, platform, taskId string) error {
 }
 
 // Upload work to a given platform.
-func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error {
+func uploadWork(creds tcUser, platform string, id string, r *http.Request) error {
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -286,13 +296,13 @@ func uploadWork(creds tcUser, platform, id, filename string, f *io.Reader) error
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
-		err = gclass.UploadWork(gcCreds, id, filename, f)
+		err = gclass.UploadWork(gcCreds, id, r)
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["daymap"],
 		}
-		err = daymap.UploadWork(dmCreds, id, filename, f)
+		err = daymap.UploadWork(dmCreds, id, r)
 	}
 
 	return err

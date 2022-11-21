@@ -10,6 +10,16 @@ import (
 	"main/errors"
 )
 
+const PAGE_SIZE = "1000000"
+
+var taskFormValues = map[string]string{
+	`ctl00_ctl00_cp_cp_grdAssignments_ctl00_ctl03_ctl01_PageSizeComboBox_ClientState`: `{"logEntries":[],"value":"50","text":"50","enabled":true,"checkedIndices":[],"checkedItemsTextOverflows":false}`,
+	`ctl00$ctl00$cp$cp$grdAssignments$ctl00$ctl03$ctl01$PageSizeComboBox`:             PAGE_SIZE,
+	`__EVENTTARGET`:                       `ctl00$ctl00$cp$cp$grdAssignments`,
+	`__EVENTARGUMENT`:                     `FireCommand:ctl00$ctl00$cp$cp$grdAssignments$ctl00;PageSize;` + PAGE_SIZE,
+	`ctl00_ctl00_cp_cp_ScriptManager_TSM`: `;;System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35:en-AU:9ddf364d-d65d-4f01-a69e-8b015049e026:ea597d4b:b25378d2;Telerik.Web.UI, Version=2020.1.219.45, Culture=neutral, PublicKeyToken=121fae78165ba3d4:en-AU:bb184598-9004-47ca-9e82-5def416be84b:16e4e7cd:33715776:58366029:f7645509:24ee1bba:f46195d3:2003d0b8:c128760b:88144a7a:1e771326:aa288e2d:258f1c72`,
+}
+
 // Retrieve a list of tasks from DayMap for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
@@ -121,15 +131,9 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(b, "<input ")
 	}
 
-	pageSize := "1000000"
-
-	// TODO: Move these elsewhere so they don't clutter the code
-
-	taskForm.Set(`ctl00_ctl00_cp_cp_grdAssignments_ctl00_ctl03_ctl01_PageSizeComboBox_ClientState`, `{"logEntries":[],"value":"50","text":"50","enabled":true,"checkedIndices":[],"checkedItemsTextOverflows":false}`)
-	taskForm.Set(`ctl00$ctl00$cp$cp$grdAssignments$ctl00$ctl03$ctl01$PageSizeComboBox`, pageSize)
-	taskForm.Set(`__EVENTTARGET`, `ctl00$ctl00$cp$cp$grdAssignments`)
-	taskForm.Set(`__EVENTARGUMENT`, `FireCommand:ctl00$ctl00$cp$cp$grdAssignments$ctl00;PageSize;`+pageSize)
-	taskForm.Set(`ctl00_ctl00_cp_cp_ScriptManager_TSM`, `;;System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35:en-AU:9ddf364d-d65d-4f01-a69e-8b015049e026:ea597d4b:b25378d2;Telerik.Web.UI, Version=2020.1.219.45, Culture=neutral, PublicKeyToken=121fae78165ba3d4:en-AU:bb184598-9004-47ca-9e82-5def416be84b:16e4e7cd:33715776:58366029:f7645509:24ee1bba:f46195d3:2003d0b8:c128760b:88144a7a:1e771326:aa288e2d:258f1c72`)
+	for val := range taskFormValues {
+		taskForm.Set(val, taskFormValues[val])
+	}
 
 	tdata := strings.NewReader(taskForm.Encode())
 

@@ -1,19 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
-	"mime"
 	"net/http"
 	"os"
 	"os/user"
 	fp "path/filepath"
-	"strings"
-	"time"
 	_ "time/tzdata"
 
 	"golang.org/x/term"
@@ -23,239 +19,14 @@ import (
 )
 
 var (
-	errAuthFailed  = errors.NewError("main", errors.ErrAuthFailed.Error(), nil)
-	errCorruptMIME = errors.NewError("main", errors.ErrCorruptMIME.Error(), nil)
+	errAuthFailed = errors.NewError("main", errors.ErrAuthFailed.Error(), nil)
+	//errCorruptMIME = errors.NewError("main", errors.ErrCorruptMIME.Error(), nil)
 	//errIncompleteCreds = errors.NewError("main", errors.ErrIncompleteCreds.Error(), nil)
 	errInvalidAuth = errors.NewError("main", errors.ErrInvalidAuth.Error(), nil)
 	errNoPlatform  = errors.NewError("main", errors.ErrNoPlatform.Error(), nil)
 	errNotFound    = errors.NewError("main", errors.ErrNotFound.Error(), nil)
 	errNeedsGAuth  = errors.NewError("main", errors.ErrNeedsGAuth.Error(), nil)
 )
-
-type tcUser struct {
-	Timezone   *time.Location
-	School     string
-	Username   string
-	Password   string
-	Token      string
-	SiteTokens map[string]string
-	GAuthID    []byte
-}
-
-type postReader struct {
-	div    []byte
-	reader io.Reader
-}
-
-func (pr postReader) Read(p []byte) (int, error) {
-	n := 0
-	reader := bufio.NewReader(pr.reader)
-
-	for n < len(p) {
-		b, err := reader.ReadByte()
-		if err != nil {
-			newErr := errors.NewError("main: Read", "failed to read bytes", err)
-			return n, newErr
-		}
-
-		i := 0
-
-		for i < len(pr.div) {
-			c, err := reader.Peek(i + 1)
-			if err != nil {
-				newErr := errors.NewError("main: Read", "failed to peek bytes", err)
-				return n, newErr
-			}
-			if c[i] != pr.div[i] {
-				break
-			}
-			i++
-		}
-
-		p[n] = b
-		n++
-
-		if i == len(pr.div) {
-			for x := 0; x < i; x++ {
-				_, err := reader.ReadByte()
-				if err != nil {
-					newErr := errors.NewError("main: Read", "failed to read bytes", err)
-					return n, newErr
-				}
-			}
-			return n, nil
-		}
-	}
-
-	return n, nil
-}
-
-func fileFromReq(r *http.Request) (string, io.Reader, error) {
-	reader := bufio.NewReader(r.Body)
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		newErr := errors.NewError("main: fileFromReq(1)", "failed to read string", err)
-		return "", nil, newErr
-	}
-
-	div := strings.ReplaceAll(line, "\n", "")
-	div = strings.ReplaceAll(div, "\r", "")
-
-	for line != "\n" {
-		line, err = reader.ReadString('\n')
-		if err != nil {
-			newErr := errors.NewError("main: fileFromReq(2)", "failed to read string", err)
-			return "", nil, newErr
-		}
-
-		if strings.HasPrefix(line, "Content-Disposition: form-data;") {
-			break
-		}
-	}
-
-	if line == "\n" {
-		return "", nil, errCorruptMIME
-	}
-
-	idx := strings.Index(line, "form-data;")
-	_, formVals, err := mime.ParseMediaType(line[idx:])
-	if err != nil {
-		newErr := errors.NewError("main: fileFromReq", "failed to parse MIME content", err)
-		return "", nil, newErr
-	}
-
-	for line != "\r\n" {
-		line, err = reader.ReadString('\n')
-		if err != nil {
-			newErr := errors.NewError("main: fileFromReq(3)", "failed to read string", err)
-			return "", nil, newErr
-		}
-	}
-
-	filename := formVals["filename"]
-
-	pr := postReader{
-		div:    []byte("\r\n" + div + "--"),
-		reader: reader,
-	}
-
-	return filename, pr, nil
-}
-
-// Handle things like submission and file uploads
-func handleTask(r *http.Request, c tcUser, p, id, cmd string) (int, pageData, [][2]string) {
-	data := pageData{}
-
-	res := r.URL.EscapedPath()
-	statusCode := 200
-	var headers [][2]string
-
-	if cmd == "submit" {
-		err := submitTask(c, p, id)
-		if err != nil {
-			newErr := errors.NewError("main: handleTask", "failed to submit task", err)
-			logger.Error(newErr)
-			data = statusServerErrorData
-			statusCode = 500
-		} else {
-			index := strings.Index(res, "/submit")
-			headers = [][2]string{{"Location", res[:index]}}
-			statusCode = 302
-		}
-	} else if cmd == "upload" {
-		filename, reader, err := fileFromReq(r)
-		if err != nil {
-			newErr := errors.NewError("main: handleTask", "file read error", err)
-			logger.Error(newErr)
-			return 500, statusServerErrorData, nil
-		}
-
-		err = uploadWork(c, p, id, filename, &reader)
-		if err != nil {
-			newErr := errors.NewError("main: handleTask", "failed to upload work", err)
-			logger.Error(newErr)
-			data = statusServerErrorData
-			statusCode = 500
-		} else {
-			index := strings.Index(res, "/upload")
-			headers = [][2]string{{"Location", res[:index]}}
-			statusCode = 302
-		}
-	} else if cmd == "remove" {
-		filenames := []string{}
-
-		for name := range r.URL.Query() {
-			filenames = append(filenames, name)
-		}
-
-		err := removeWork(c, p, id, filenames)
-		if err == errNoPlatform {
-			data = statusNotFoundData
-			statusCode = 404
-		} else if err != nil {
-			newErr := errors.NewError("main: handleTask", "failed to remove work", err)
-			logger.Error(newErr)
-			data = statusServerErrorData
-			statusCode = 500
-		} else {
-			index := strings.Index(res, "/remove")
-			headers = [][2]string{{"Location", res[:index]}}
-			statusCode = 302
-		}
-	} else {
-		data = statusNotFoundData
-		statusCode = 404
-	}
-
-	return statusCode, data, headers
-}
-
-func handleTaskReq(tmpls *template.Template, r *http.Request, creds tcUser) (int, pageData, [][2]string) {
-	res := r.URL.EscapedPath()
-
-	statusCode := 200
-	var data pageData
-	var headers [][2]string
-
-	platform := res[7:]
-	index := strings.Index(platform, "/")
-
-	if index == -1 {
-		data = statusNotFoundData
-		statusCode = 404
-		return statusCode, data, headers
-	}
-
-	taskId := platform[index+1:]
-	platform = platform[:index]
-	index = strings.Index(taskId, "/")
-
-	if index == -1 {
-		assignment, err := getTask(platform, taskId, creds)
-		if err != nil {
-			newErr := errors.NewError("main: handleTaskReq", "failed to get task", err)
-			logger.Error(newErr)
-			data = statusServerErrorData
-			statusCode = 500
-			return statusCode, data, headers
-		}
-
-		data = genTaskPage(assignment, creds)
-	} else {
-		taskCmd := taskId[index+1:]
-		taskId = taskId[:index]
-
-		statusCode, data, headers = handleTask(
-			r,
-			creds,
-			platform,
-			taskId,
-			taskCmd,
-		)
-	}
-
-	return statusCode, data, headers
-}
 
 // Create and manage necessary HTML files from template files.
 func initTemplates(resPath string) (*template.Template, error) {
