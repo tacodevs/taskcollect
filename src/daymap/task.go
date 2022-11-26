@@ -31,54 +31,6 @@ type Task struct {
 	Id        string
 }
 
-/*func (u fileUploader) Read(p []byte) (int, error) {
-	// TODO: Make sure the errors have contextual information
-
-	mimeDiv := strings.NewReader(u.MimeDivider)
-	mimeHead := strings.NewReader(u.MimeHeader)
-	mimeend := strings.NewReader(u.MimeDivider + "--")
-	n := 0
-
-	for n < len(p) {
-		b, err := mimeDiv.ReadByte()
-
-		if err != nil && err != io.EOF {
-			return n, err
-		} else if err == nil {
-			continue
-		}
-
-		b, err = mimeHead.ReadByte()
-
-		if err != nil && err != io.EOF {
-			return n, err
-		} else if err == nil {
-			continue
-		}
-
-		b, err = u.FileReader.ReadByte()
-
-		if err != nil && err != io.EOF {
-			return n, err
-		} else if err == nil {
-			continue
-		}
-
-		b, err = mimeend.ReadByte()
-
-		if err != nil && err != io.EOF {
-			return n, err
-		} else if err == nil {
-			continue
-		}
-
-		p[n] = b
-		n++
-	}
-
-	return n, nil
-}*/
-
 // TODO: Could use the function from utils.go -> Make a local utils package
 func contains(a []string, s string) bool {
 	for _, c := range a {
@@ -436,37 +388,6 @@ func GetTask(creds User, id string) (Task, error) {
 // TODO: Complete the below function.
 // https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID=78847
 func UploadWork(creds User, id string, r *http.Request) error {
-	/*
-		uploadUrl := "URL TO UPLOAD TO"
-
-		mimeDiv := "--MultipartMimeHtmlFormBoundaryPiFa8ZSp8tLEoC81"
-		mimeHead := `Content-Disposition: form-data; name="file"; filename="`
-		mimeHead += filename + "\"\nContent-Type: application/octet-stream\n\n"
-
-		uploader := fileUploader{
-			MimeDivider: mimeDiv,
-			MimeHeader: mimeHead,
-			FileReader: *f,
-		}
-
-		client := &http.Client{}
-		req, err := http.NewRequest("POST", uploadUrl, uploader)
-
-		if err != nil {
-			// use errors.NewError()
-			return err
-		}
-
-		req.Header.Set(
-			"Content-Type",
-			`multipart/form-data; boundary="` + mimeDiv + `"`,
-		)
-
-		req.Header.Set("Cookie", creds.Token)
-		_, err := client.Do(req)
-		return err
-	*/
-
 	return nil
 }
 
