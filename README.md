@@ -1,6 +1,12 @@
 # taskcollect
 A web server that multiplexes functionality from educational web platforms for students.
 
+## Status
+
+**Version 1.0 is set to be released on 9 January 2023.**
+
+Internal testing (testing by the developers) will begin on 3 January at the latest. External testing should begin approximately two weeks later.
+
 ## Description
 
 There is a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to several different factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to wade their way through all the platforms in use by their school to retrieve their homework and available educational resources.
