@@ -1,7 +1,5 @@
-# taskcollect: Implementation Documentation
-
+# Implementation details
 This document outlines how features are implemented in TaskCollect. 
-
 
 ## Database
 

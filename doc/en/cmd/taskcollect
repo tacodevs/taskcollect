@@ -20,7 +20,10 @@ DESCRIPTION
     Upon running TaskCollect, it will prompt you for the password to the Redis 
     database and will attempt to connect to the Redis server. The default
     address is localhost:6379 with a database index of 0, although this can be
-    changed in the config.json file.
+    changed in the config.json file. It is very important to note that on the
+    server computer, the Redis server MUST NOT BE EXPOSED TO THE NETWORK. The
+    Redis server should only be available on localhost for TaskCollect to
+    operate.
 
     TaskCollect requires a Google OAuth 2.0 client ID file in order to
     authenticate to the Google Classroom API. An OAuth 2 client ID may be
