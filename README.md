@@ -1,6 +1,4 @@
 # taskcollect
-
-
 A web server that multiplexes functionality from educational web platforms for students.
 
 ## Description
@@ -53,9 +51,14 @@ TaskCollect is ***not*** production-ready and should not be deployed to the publ
 
 TaskCollect, in its current state, is much like a newborn child and still needs to grow and develop into a secure, robust program. For that we need people testing TaskCollect, finding bugs/issues, and providing fixes and suggestions. If you have the time, please consider contributing, however small, to TaskCollect development.
 
-Issues can be reported on the Codeberg issue tracker. If you need to discuss something or ask questions about TaskCollect, this can be done through Matrix: #taskcollect:matrix.org
+Issues can be reported on the Codeberg issue tracker. For discussions and questions regarding TaskCollect, there are two mediums:
 
-It should be noted that the issue tracker is for issues and feature requests *only*, and the Matrix room is also not a place for general discourse.
+  * Public mailing list (~kvo/taskcollect@lists.sr.ht)
+  * Matrix (#taskcollect:matrix.org)
+
+It should be noted that the issue tracker is for issues and feature requests *only*, and neither the public mailing list nor the Matrix room are places for general discourse. The purpose of the Matrix room is **only for technical discussion** about the development of TaskCollect. **All general queries should be sent to the mailing list.** Questions about technical matters are also welcome on the mailing list, but general enquiries are not welcome in the Matrix room.
+
+Although the mailing list is public, the mailing list archives are not accessible to the general public as schools and those who work, teach, or learn therein may potentially ask school-specific questions about TaskCollect.
 
 ## Future directions
 
@@ -67,10 +70,9 @@ Support for:
   * Stile
   * InThinking
   * Kognity
-  * Managebac
 
 Additional feature tabs to TaskCollect:
 
   * Organisation (calendar-oriented organisation space)
   * Communication (emails, messages, etc.)
-  * Grades (grade summaries per term, grades for individual tasks)
+  * Grades (grade summaries per term, with a graph)
