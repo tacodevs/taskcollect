@@ -28,7 +28,7 @@ Build dependencies:
   * Git
   * Go 1.18+
   * Redis 7
-  * Python 3.8+ (for the build script)
+  * Python 3.9+ (for the build script)
 
 TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `python3 build.py`:
 

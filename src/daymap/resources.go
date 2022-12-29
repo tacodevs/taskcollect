@@ -22,6 +22,20 @@ type Resource struct {
 	Id       string
 }
 
+// Returns the next school resource type and its index, as well as a corresponding planDiv or fileDiv.
+func nextRes(buf, planDiv, fileDiv string) (bool, int, string) {
+	planIdx := strings.Index(buf, planDiv)
+	fileIdx := strings.Index(buf, fileDiv)
+
+	if planIdx == -1 && fileIdx == -1 {
+		return false, -1, ""
+	} else if fileIdx < planIdx && fileIdx != -1 || planIdx == -1 {
+		return true, fileIdx, fileDiv
+	} else {
+		return false, planIdx, planDiv
+	}
+}
+
 // Get a list of resources for a DayMap class.
 func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
@@ -50,9 +64,19 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 		return
 	}
 
-	div := "</div><div class='lpTitle'><a href='javascript:DMU.ViewPlan("
+	re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
+
+	if err != nil {
+		newErr := errors.NewError("daymap: getClassRes", "failed to compile regex", err)
+		e <- newErr
+		return
+	}
+
+	planDiv := "</div><div class='lpTitle'><a href='javascript:DMU.ViewPlan("
+	fileDiv := `<div class='fLinkDiv'><a href='#' onclick="DMU.OpenAttachment(`
 	b := string(respBody)
-	i := strings.Index(b, div)
+	isFile, i, div := nextRes(b, planDiv, fileDiv)
+	var posted time.Time
 
 	for i != -1 {
 		resource := Resource{}
@@ -61,27 +85,19 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 		dateRegion := b[:i]
 		b = b[i:]
-
-		re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
-		if err != nil {
-			newErr := errors.NewError("daymap: getClassRes", "failed to compile regex", err)
-			e <- newErr
-			return
-		}
-
 		dates := re.FindAllString(dateRegion, -1)
 
-		if dates == nil {
+		if dates == nil && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
 			e <- errNoDateFound
 			return
-		}
-
-		postStr := dates[len(dates)-1]
-		posted, err := time.Parse("2/01/2006", postStr)
-		if err != nil {
-			newErr := errors.NewError("daymap: getClassRes", "failed to parse time", err)
-			e <- newErr
-			return
+		} else if dates != nil {
+			postStr := dates[len(dates)-1]
+			posted, err = time.Parse("2/01/2006", postStr)
+			if err != nil {
+				newErr := errors.NewError("daymap: getClassRes", "failed to parse time", err)
+				e <- newErr
+				return
+			}
 		}
 
 		i = len(div)
@@ -101,7 +117,20 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 		}
 
 		resource.Id = b[:i]
-		b = b[i+4:]
+
+		if isFile {
+			i = strings.Index(b, "&nbsp;")
+
+			if i == -1 {
+				e <- errInvalidResp
+				return
+			}
+
+			b = b[i+6:]
+		} else {
+			b = b[i+4:]
+		}
+
 		i = strings.Index(b, "</a>")
 		if i == -1 {
 			e <- errInvalidResp
@@ -110,10 +139,17 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 		resource.Name = b[:i]
 		b = b[i:]
-		resource.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resource.Id
+
+		if isFile {
+			resource.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + resource.Id
+			resource.Id = "f" + resource.Id
+		} else {
+			resource.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resource.Id
+		}
+
 		*res = append(*res, resource)
 		b = b[i:]
-		i = strings.Index(b, div)
+		isFile, i, div = nextRes(b, planDiv, fileDiv)
 	}
 }
 
