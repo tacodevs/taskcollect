@@ -5,7 +5,7 @@ A web server that multiplexes functionality from educational web platforms for s
 
 **Version 1.0.0 is set to be released on 14 January 2023.**
 
-Internal testing (testing by the developers) will begin on 9 January at the latest. External testing should begin approximately two weeks after the version 1.0 release.
+Internal testing (testing by the developers) will begin on 9 January at the latest. External testing will probably begin on 20 January but can begin a bit earlier/later if necessary. The version 1.0.0 release date will not be changing and can be safely relied upon.
 
 ## Description
 
