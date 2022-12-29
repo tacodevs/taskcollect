@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/kvo/builtin"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -296,7 +297,7 @@ func genTimetable(creds tcUser, w http.ResponseWriter) {
 
 	for i := 0; i < len(lessons); i++ {
 		for j := 0; j < len(lessons[i]); j++ {
-			if !contains(classes, lessons[i][j].Class) {
+			if !builtin.Contains(classes, lessons[i][j].Class) {
 				classes = append(classes, lessons[i][j].Class)
 			}
 		}

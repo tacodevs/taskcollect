@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/kvo/builtin"
+
 	"main/errors"
 	"main/logger"
 )
@@ -29,16 +31,6 @@ type Task struct {
 	Comment   string
 	Platform  string
 	Id        string
-}
-
-// TODO: Could use the function from utils.go -> Make a local utils package
-func contains(a []string, s string) bool {
-	for _, c := range a {
-		if s == c {
-			return true
-		}
-	}
-	return false
 }
 
 // Public function to retrieve information about a DayMap task by its ID.
@@ -535,7 +527,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		fname := b[:i]
 		b = b[i:]
 
-		if contains(filenames, fname) {
+		if builtin.Contains(filenames, fname) {
 			rwForm.Set(name, "del")
 		}
 
