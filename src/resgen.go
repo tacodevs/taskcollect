@@ -68,9 +68,9 @@ func genDueStr(due time.Time, creds tcUser) string {
 	tmrEnd := todayStart.AddDate(0, 0, 2)
 	weekEnd := todayStart.AddDate(0, 0, 7)
 
-	if localDueDate.Before(todayStart) {
+	if localDueDate.Before(todayStart) || !localDueDate.Before(weekEnd) {
 		dueDate = strconv.Itoa(localDueDate.Day())
-		dueDate += " " + localDueDate.Month().String()
+		dueDate += " " + localDueDate.Month().String()[:3]
 		if localDueDate.Year() != now.Year() {
 			dueDate += " " + strconv.Itoa(localDueDate.Year())
 		}
@@ -80,12 +80,6 @@ func genDueStr(due time.Time, creds tcUser) string {
 		dueDate = "Tomorrow"
 	} else if localDueDate.Before(weekEnd) {
 		dueDate = localDueDate.Weekday().String()
-	} else {
-		dueDate = strconv.Itoa(localDueDate.Day())
-		dueDate += " " + localDueDate.Month().String()
-		if localDueDate.Year() != now.Year() {
-			dueDate += " " + strconv.Itoa(localDueDate.Year())
-		}
 	}
 
 	if localDueDate.Hour() != 0 || localDueDate.Minute() != 0 {
@@ -450,9 +444,10 @@ func genTask(assignment task, hasDueDate bool, creds tcUser) taskItem {
 		URL:      assignment.Link,
 	}
 
-	dueDate := genDueStr(assignment.Due, creds)
 	if hasDueDate {
-		task.DueDate = dueDate
+		task.DueDate = genDueStr(assignment.Due, creds)
+	} else {
+		task.Posted = genDueStr(assignment.Posted, creds)
 	}
 
 	return task
@@ -538,7 +533,7 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 }
 
 // Generate a resource link
-func genHtmlResLink(className string, res []resource) resClass {
+func genHtmlResLink(className string, res []resource, creds tcUser) resClass {
 	class := resClass{
 		Name: className,
 	}
@@ -547,6 +542,7 @@ func genHtmlResLink(className string, res []resource) resClass {
 		class.ResItems = append(class.ResItems, resItem{
 			Id:       r.Id,
 			Name:     r.Name,
+			Posted:   genDueStr(r.Posted, creds),
 			Platform: r.Platform,
 			URL:      r.Link,
 		})
@@ -643,6 +639,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 			data.Body.ResData.Classes = append(data.Body.ResData.Classes, genHtmlResLink(
 				class,
 				resources[class],
+				creds,
 			))
 		}
 
