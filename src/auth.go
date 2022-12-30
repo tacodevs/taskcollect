@@ -221,18 +221,7 @@ func (db *authDB) writeCreds(creds tcUser) error {
 	key := "studentToken:" + creds.Token
 	var duration time.Duration
 
-	// TODO: need to handle index error before this can be used
-	//expiration := strings.Split(creds.Token, "; Expires=")[1]
-	//t, err := time.ParseDuration(expiration)
-	//if err != nil {
-	//	newErr := errors.NewError("main: writeCreds", "could not parse token expiration", err)
-	//	logger.Error(newErr)
-	//	duration = time.Duration(604800000000000) // equal to 7 days
-	//} else {
-	//	duration = t
-	//}
-
-	duration = time.Duration(604800000000000) // equal to 7 days
+	duration = time.Until(time.Now().AddDate(0, 0, 3))
 
 	info := map[string]string{
 		"studentID": creds.Username,
@@ -301,7 +290,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	token := base64.StdEncoding.EncodeToString(b)
 	cookie := "token=" + token + "; Expires="
-	cookie += time.Now().UTC().AddDate(0, 0, 7).Format(time.RFC1123)
+	cookie += time.Now().UTC().AddDate(0, 0, 3).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
 	gAuthStatus := errNeedsGAuth.AsError()
