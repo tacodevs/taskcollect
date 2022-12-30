@@ -158,6 +158,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/styles.css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
+		w.Header().Add("Cache-Control", "max-age=3600")
 
 		cssFile, err := os.Open(fp.Join(h.database.path, "styles.css"))
 		if err != nil {
@@ -175,6 +176,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if res == "/mainfont.ttf" {
 		w.Header().Set("Content-Type", `font/ttf`)
+		w.Header().Add("Cache-Control", "max-age=259200")
 
 		fontFile, err := os.Open(fp.Join(h.database.path, "mainfont.ttf"))
 		if err != nil {
@@ -192,6 +194,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if res == "/navfont.ttf" {
 		w.Header().Set("Content-Type", `font/ttf`)
+		w.Header().Add("Cache-Control", "max-age=259200")
 
 		fontFile, err := os.Open(fp.Join(h.database.path, "navfont.ttf"))
 		if err != nil {
@@ -391,6 +394,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
 		} else {
+			w.Header().Add("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
 		}
 	} else {
@@ -458,6 +462,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
 		} else {
+			w.Header().Add("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
 		}
 	}
