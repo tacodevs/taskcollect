@@ -98,6 +98,10 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 				e <- newErr
 				return
 			}
+		} else {
+			b = b[len(div):]
+			isFile, i, div = nextRes(b, planDiv, fileDiv)
+			continue
 		}
 
 		i = len(div)
