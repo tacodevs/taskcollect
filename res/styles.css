@@ -60,16 +60,16 @@ h3 {
 }
 
 nav {
-	top: 0;
-	left: 0;
-	position: fixed;
-	width: 100vw;
-	margin: 0;
-	padding: 12px 20px;
 	background: black;
+	color: black;
 	font-family: var(--nav-font);
 	font-weight: bold;
-	color: black;
+	left: 0;
+	margin: 0;
+	padding: 12px 20px;
+	position: fixed;
+	top: 0;
+	width: 100vw;
 }
 
 nav a {
@@ -80,6 +80,12 @@ nav a {
 nav a:hover {
 	text-decoration: underline 3px solid var(--accent-color);
 }
+
+/*
+nav a[href="/logout"] {
+	float: right;
+}
+*/
 
 a {
 	color: var(--link-color);
@@ -120,11 +126,12 @@ details div:last-child {
 }
 
 details div * {
-	margin: 5px;
+	margin: 5px 10px;
 }
 
 details div * a {
 	color: var(--fg-color);
+	margin: 0;
 	text-decoration: none;
 }
 
@@ -132,8 +139,12 @@ details div * a:hover {
 	text-decoration: underline;
 }
 
-details:last-child summary {
+details:last-child:not([open]) summary {
 	border-bottom: 1px solid var(--input-color);
+}
+
+details div h5.datetime {
+	float: right;
 }
 
 table {

@@ -27,6 +27,7 @@ type resItem struct {
 	Id       string
 	Name     string
 	Platform string //e.g. daymap, gclass
+	Posted   string
 	URL      string
 }
 
@@ -61,6 +62,7 @@ type taskItem struct {
 	Platform string
 	Class    string
 	DueDate  string
+	Posted   string
 	URL      string
 }
 
