@@ -193,6 +193,8 @@ func main() {
 		tlsConn = false
 	}
 
+	fmt.Println(tcVersion)
+
 	curUser, err := user.Current()
 	if err != nil {
 		logger.Fatal("taskcollect: Cannot determine current user's home folder")
