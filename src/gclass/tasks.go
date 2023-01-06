@@ -114,6 +114,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
+		classroom.ClassroomAnnouncementsReadonlyScope,
 	)
 
 	if err != nil {

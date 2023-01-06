@@ -114,6 +114,7 @@ func GetTask(creds User, id string) (Task, error) {
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
+		classroom.ClassroomAnnouncementsReadonlyScope,
 	)
 
 	if err != nil {

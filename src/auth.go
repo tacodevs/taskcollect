@@ -335,6 +335,7 @@ func (db *authDB) genGAuthLoc() (string, error) {
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
+		classroom.ClassroomAnnouncementsReadonlyScope,
 	)
 	if err != nil {
 		newErr := errors.NewError("main: genGAuthLoc", "creation of config failed", err)
@@ -366,6 +367,7 @@ func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
+		classroom.ClassroomAnnouncementsReadonlyScope,
 	)
 	if err != nil {
 		newErr := errors.NewError("main: runGAuth", "failed to get config from JSON", err)
