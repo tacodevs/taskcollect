@@ -13,6 +13,17 @@ platforms = {
 }
 
 def build(os_name: str, arch: str):
+    version_line = 'const tcVersion = "TaskCollect 0.1.0 (build {0})"\n'
+    try:
+        version = subprocess.check_output("git describe --tags --abbrev=0", shell=True, stderr=subprocess.DEVNULL)
+        version = str(version)[3:-3]
+    except subprocess.CalledProcessError:
+        version = "0.1.0"
+    commit = subprocess.check_output("git rev-parse HEAD", shell=True, stderr=subprocess.DEVNULL)
+    version_line = version_line.replace("0.1.0", str(version)).replace("{0}", str(commit)[2:-3])
+    with open("version.go", "w") as f:
+        f.write("package main\n\n" + version_line)
+
     ext = ""
     if os_name == "windows":
         ext = ".exe"
