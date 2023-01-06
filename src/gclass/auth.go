@@ -32,6 +32,7 @@ func Test(gcid []byte, gTok string, e chan error) {
 		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
 		classroom.ClassroomCourseworkMeScope,
 		classroom.ClassroomCourseworkmaterialsReadonlyScope,
+		classroom.ClassroomAnnouncementsReadonlyScope,
 	)
 
 	if err != nil {
