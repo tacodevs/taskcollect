@@ -1,0 +1,257 @@
+@use "fonts";
+@use "root";
+
+@use "breakpoints";
+
+body {
+	margin: 5em 5% 3.75em 5%;
+	background: var(--bg-color);
+	font-family: var(--main-font);
+	font-size: var(--font-size);
+	color: var(--fg-color);
+}
+
+h1 {
+	font-size: 2em;
+}
+
+h2 {
+	font-size: 1.5em;
+}
+
+h3 {
+	font-size: 1.2em;
+}
+
+nav {
+	background: black;
+	color: black;
+	font-family: var(--nav-font);
+	font-weight: bold;
+	left: 0;
+	margin: 0;
+	padding: 12px 20px;
+	position: fixed;
+	top: 0;
+	width: 100vw;
+}
+
+nav a {
+	color: white;
+	text-decoration: none;
+}
+
+nav a:hover {
+	text-decoration: underline 3px solid var(--accent-color);
+}
+
+/*
+nav a[href="/logout"] {
+	float: right;
+}
+*/
+
+a {
+	color: var(--link-color);
+}
+
+img#timetable {
+	display: block;
+	margin: 0 auto;
+}
+
+summary:hover {
+	cursor: pointer;
+}
+
+details div,
+summary {
+	border-top: 1px solid var(--input-color);
+	padding: 10px;
+}
+
+div:hover,
+summary:hover {
+	background: var(--th-color);
+}
+
+details div {
+	border-color: var(--fg-color);
+	margin: 0 30px;
+}
+
+details div:first-child {
+	margin-top: 30px;
+}
+
+details div:last-child {
+	border-bottom: 1px solid var(--fg-color);
+	margin-bottom: 30px;
+}
+
+details div * {
+	margin: 5px 10px;
+}
+
+details div * a {
+	color: var(--fg-color);
+	margin: 0;
+	text-decoration: none;
+}
+
+details div * a:hover {
+	text-decoration: underline;
+}
+
+details:last-child:not([open]) summary {
+	border-bottom: 1px solid var(--input-color);
+}
+
+details div h5.datetime {
+	float: right;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+}
+
+th.due, th.subject {
+	width: 15%;
+}
+
+th.task, th.link {
+	width: 35%;
+}
+
+th, td {
+	border: 1px solid var(--fg-color);
+	padding: 5px 7px;
+}
+
+th {
+	background: var(--th-color);
+}
+
+select, input {
+	border: 1px solid #aaaaaa;
+}
+
+select {
+	background: var(--input-color);
+	color: var(--fg-color);
+	font-family: var(--main-font);
+}
+
+input {
+	background: var(--input-color);
+	color: var(--fg-color);
+	font-family: var(--main-font);
+}
+
+form[action="/auth"] {
+	margin: auto;
+	max-width: 25%;
+	text-align: left;
+}
+
+form[action="/auth"] h1,
+form[action="/auth"] h3 {
+	text-align: center;
+}
+
+form[action="/auth"] h3 {
+	font-size: 1.25em;
+}
+
+form[action="/auth"] h4,
+select#school,
+input#usr,
+input#pwd {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+form[action="/auth"] h4,
+select#school,
+input#usr,
+input#pwd,
+input[type="submit"],
+input[type="file"]::-webkit-file-upload-button {
+	border-radius: 5px;
+	font-family: var(--main-font);
+	font-size: 11pt;
+}
+
+form[action="/auth"] h4 {
+	background: var(--err-bg);
+	border: 1px solid red;
+	padding: 9px 13px;
+}
+
+select#school,
+input#usr,
+input#pwd,
+input[type="submit"] {
+	margin: 8px 0;
+}
+
+select#school {
+	padding: 5px 5px;
+}
+
+input#usr,
+input#pwd {
+	padding: 5px 10px;
+}
+
+form[action="/auth"] input[type="submit"] {
+	margin-top: 10px;
+	padding: 10px 20px;
+	width: 100%;
+}
+
+input[type="submit"],
+input[type="file"]::-webkit-file-upload-button {
+	background: var(--accent-color);
+	border: none;
+	color: white;
+	outline: 0 !important;
+	padding: 7px 15px;
+}
+
+input[type="submit"]:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
+	background: var(--accent-hover);
+	cursor: pointer;
+}
+
+input[type="submit"]:active,
+input[type="file"]::-webkit-file-upload-button:active {
+	background: var(--accent-click);
+	cursor: pointer;
+}
+
+input:focus,
+select:focus {
+	outline-color: var(--accent-color);
+}
+
+hr {
+	border: 0;
+	border-bottom: 1px solid #aaaaaa;
+	margin: 20px 0;
+}
+
+input[type="file"] {
+	background: var(--bg-color);
+	border: none;
+	font-family: var(--main-font);
+	font-size: 11pt;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+	padding: 5px 12px;
+	margin: 0 10px 0 5px;
+}
