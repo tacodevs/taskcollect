@@ -51,7 +51,7 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 		return "", newErr
 	}
 
-	finalUrl := "https://drive.google.com/uc?export=download&id=" + splitUrl[3]
+	finalUrl := "https://drive.google.com/uc?export=download&confirm=t&id=" + splitUrl[3]
 	return finalUrl, nil
 }
 
