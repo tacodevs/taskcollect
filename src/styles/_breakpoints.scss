@@ -1,0 +1,75 @@
+$breakpoints: (
+    xs: 0,
+    sm: 480px,
+    md: 768px,
+    lg: 1024px,
+    xl: 1200px
+);
+
+
+//@mixin xs {
+//    @media (min-width: map-get($breakpoints, "xs")) {
+//        @content;
+//    }
+//}
+//
+//@mixin sm {
+//    @media (min-width: map-get($breakpoints, "sm")) {
+//        @content;
+//    }
+//  }
+//
+//@mixin md {
+//    @media (min-width: map-get($breakpoints, "md")) {
+//        @content;
+//    }
+//}
+//
+//@mixin lg {
+//    @media (min-width: map-get($breakpoints, "lg")) {
+//        @content;
+//    }
+//}
+//
+//@mixin xl {
+//    @media (min-width: map-get($breakpoints, "xl")) {
+//        @content;
+//    }
+//}
+//
+//@mixin breakpoint($bp: 0) {
+//    @media (min-width: $bp) {
+//        @content;
+//    }
+//}
+
+
+@media only screen and (max-width: 480px) {
+	form[action="/auth"] {
+		max-width: 90%;
+	}
+}
+
+@media only screen and (min-width: 481px) and (max-width: 768px) {
+	form[action="/auth"] {
+		max-width: 80%;
+	}
+}
+
+@media only screen and (min-width: 769px) and (max-width: 1024px) {
+	form[action="/auth"] {
+		max-width: 60%;
+	}
+}
+
+@media only screen and (min-width: 1025px) and (max-width: 1200px) {
+	form[action="/auth"] {
+		max-width: 50%;
+	}
+}
+
+@media only screen and (min-width: 1201px) {
+	form[action="/auth"] {
+		max-width: 25%;
+	}
+}

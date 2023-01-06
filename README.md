@@ -24,25 +24,33 @@ TaskCollect currently supports users from the following schools:
 
 ## Setup
 
+### Building
 Build dependencies:
   * Git
   * Go 1.18+
-  * Redis 7
   * Python 3.9+ (for the build script)
+  * Sass 1.57+
 
-TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter its `src/` subdirectory, and run `python3 build.py`:
+TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter into its `src/` subdirectory, and run `python3 build.py -u`:
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
 cd taskcollect/src/
-python3 build.py
+python3 build.py -u
 ```
 
-If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing executable programs for all major operating systems and CPU architectures.
+If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing the executable program for the current system. The `-u` flag in the build script additionally copies across the assets that are required to run TaskCollect from the `res/` folder to `$home/res/taskcollect`.
+
+To build executable programs for all major operating systems and CPU architectures, run `python3 build.py all`
+
+### Deployment
+
+Deployment dependencies:
+  * Redis 7
 
 From here, deployment is simple:
 
-  1. Copy the contents of the `res/` folder into `$home/res/taskcollect/` where `$home` is the current user's home directory.
+  1. Copy the contents of the `res/` folder into `$home/res/taskcollect/` where `$home` is the current user's home directory. You can either do this manually or use the build script. Invoke the build script using the `-u` flag to both build TaskCollect and copy the contents of the `res/` folder, or use the `-U` flag to copy the `res/` folder without building.
 
   2. Obtain a Google OAuth 2.0 client ID and save it to `$home/res/taskcollect/` (see `doc/en/cmd/taskcollect` for more info)
 
@@ -68,7 +76,7 @@ Although the mailing list is public, the mailing list archives are not accessibl
 
 ## Future directions
 
-Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 is rather conservative in order to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
+Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 is rather conservative to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
 
 Support for:
 
