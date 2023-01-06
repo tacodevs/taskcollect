@@ -275,7 +275,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 		err = r.ParseForm()
 
 		// If err != nil, the "else" section of the next if/else block will
-        // execute, which returns the "could not authenticate user" error.
+		// execute, which returns the "could not authenticate user" error.
 		if err == nil {
 			cookie, err = h.database.auth(r.PostForm)
 		}
