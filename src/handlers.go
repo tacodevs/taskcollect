@@ -273,29 +273,31 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 		var cookie string
 
 		err = r.ParseForm()
+
+		// If err != nil, the "else" section of the next if/else block will
+        // execute, which returns the "could not authenticate user" error.
 		if err == nil {
 			cookie, err = h.database.auth(r.PostForm)
 		}
+
 		if err == nil {
 			w.Header().Set("Location", "/timetable")
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
-			return
-		} else if !errors.Is(err, errNeedsGAuth) {
+		} else if errors.Is(err, errNeedsGAuth) {
+			gAuthLoc, err := h.database.genGAuthLoc()
+			if err != nil {
+				newErr := errors.NewError("main: authHandler", "failed to retrieve Google Cloud project file", err)
+				logger.Error(newErr)
+			} else {
+				w.Header().Set("Location", gAuthLoc)
+				w.Header().Set("Set-Cookie", cookie)
+				w.WriteHeader(302)
+			}
+		} else {
 			newErr := errors.NewError("main: authHandler", "could not authenticate user", err)
 			logger.Error(newErr)
 			w.Header().Set("Location", "/login?auth=failed")
-			w.WriteHeader(302)
-			return
-		}
-
-		gAuthLoc, err := h.database.genGAuthLoc()
-		if err != nil {
-			newErr := errors.NewError("main: authHandler", "failed to retrieve Google Cloud project file", err)
-			logger.Error(newErr)
-		} else {
-			w.Header().Set("Location", gAuthLoc)
-			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		}
 	} else {
