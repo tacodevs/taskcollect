@@ -59,7 +59,6 @@ def run(argv: list[str]):
 
 def update_res_files():
     from distutils.dir_util import copy_tree
-    import glob
     from pathlib import Path
     import shutil
 
@@ -77,6 +76,19 @@ def update_res_files():
     copy_tree(str(src), str(dst))
     print(f"Copied {src} -> {dst}")
 
+
+    # Compile SCSS to CSS
+
+    # NOTE: shell=True must be set for the command to work on Windows systems.
+    # This is due to the Sass program being invoked via `sass.bat` which is not recognised
+    # by subprocess unless shell=True. 
+
+    subprocess.run(
+        "sass ./styles/styles.scss ../res/styles.css --no-source-map", 
+        shell=True
+    )
+    print("Compiled SCSS files to CSS file")
+
     # Copy CSS stylesheet
     src = res_src.joinpath("styles.css")
     dst = res_dst.joinpath("styles.css")
@@ -93,7 +105,7 @@ def main(argc: int, argv: list[str]):
         argc -= 1
     elif "-U" in argv:
         update_res_files()
-        print("Files have been copied. Not building due to no-build option")
+        print("Files have been copied. Not building TaskCollect due to no-build option")
         sys.exit(0)
 
     if argc == 1:
