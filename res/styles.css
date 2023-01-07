@@ -1,64 +1,27 @@
-@font-face {
-  font-family: "Lato";
-  font-style: normal;
-  font-weight: 400;
-  src: url(/assets/mainfont.ttf);
-}
-@font-face {
-  font-family: "Red Hat Display";
-  font-style: normal;
-  font-weight: 500;
-  src: url(/assets/navfont.ttf);
-}
 :root {
+  --font-size: 16px;
+  --main-font: "Lato", sans-serif;
+  --nav-font: "Red Hat Display", sans-serif;
+  --login-font-size: 15px;
   --accent-color: #347aff;
   --accent-hover: #246aef;
   --accent-click: #044acf;
   --bg-color: #ffffff;
-  --err-bg: #f09090;
   --fg-color: #000000;
-  --main-font: "Lato", sans-serif;
-  --font-size: 16px;
+  --err-bg: #f09090;
   --input-color: #e0e0e0;
   --link-color: #2e6dd3;
-  --login-font-size: 11pt;
-  --nav-font: "Red Hat Display", sans-serif;
   --th-color: #dadada;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-color: #202020;
-    --err-bg: #500000;
     --fg-color: #ffffff;
+    --err-bg: #500000;
     --input-color: #505050;
     --link-color: #80b1ff;
     --th-color: #4a4a4a;
-  }
-}
-@media only screen and (max-width: 480px) {
-  form[action="/auth"] {
-    max-width: 90%;
-  }
-}
-@media only screen and (min-width: 481px) and (max-width: 768px) {
-  form[action="/auth"] {
-    max-width: 80%;
-  }
-}
-@media only screen and (min-width: 769px) and (max-width: 1024px) {
-  form[action="/auth"] {
-    max-width: 60%;
-  }
-}
-@media only screen and (min-width: 1025px) and (max-width: 1200px) {
-  form[action="/auth"] {
-    max-width: 50%;
-  }
-}
-@media only screen and (min-width: 1201px) {
-  form[action="/auth"] {
-    max-width: 25%;
   }
 }
 body {
@@ -81,40 +44,24 @@ h3 {
   font-size: 1.2em;
 }
 
-nav {
-  background: black;
-  color: black;
-  font-family: var(--nav-font);
-  font-weight: bold;
-  left: 0;
-  margin: 0;
-  padding: 12px 20px;
-  position: fixed;
-  top: 0;
-  width: 100vw;
-}
-
-nav a {
-  color: white;
-  text-decoration: none;
-}
-
-nav a:hover {
-  text-decoration: underline 3px solid var(--accent-color);
-}
-
-/*
-nav a[href="/logout"] {
-	float: right;
-}
-*/
 a {
   color: var(--link-color);
 }
 
-img#timetable {
-  display: block;
-  margin: 0 auto;
+select, input {
+  border: 1px solid #aaaaaa;
+}
+
+select {
+  background: var(--input-color);
+  color: var(--fg-color);
+  font-family: var(--main-font);
+}
+
+input {
+  background: var(--input-color);
+  color: var(--fg-color);
+  font-family: var(--main-font);
 }
 
 summary:hover {
@@ -136,11 +83,9 @@ details div {
   border-color: var(--fg-color);
   margin: 0 30px;
 }
-
 details div:first-child {
   margin-top: 30px;
 }
-
 details div:last-child {
   border-bottom: 1px solid var(--fg-color);
   margin-bottom: 30px;
@@ -191,82 +136,48 @@ th {
   background: var(--th-color);
 }
 
-select, input {
-  border: 1px solid #aaaaaa;
+hr {
+  border: 0;
+  border-bottom: 1px solid #aaaaaa;
+  margin: 20px 0;
 }
 
-select {
-  background: var(--input-color);
-  color: var(--fg-color);
-  font-family: var(--main-font);
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 400;
+  src: url(/assets/mainfont.ttf);
+}
+@font-face {
+  font-family: "Red Hat Display";
+  font-style: normal;
+  font-weight: 500;
+  src: url(/assets/navfont.ttf);
+}
+nav {
+  top: 0;
+  left: 0;
+  position: fixed;
+  margin: 0;
+  padding: 12px 20px;
+  width: 100vw;
+  background: black;
+  color: black;
+  font-family: var(--nav-font);
+  font-weight: bold;
+}
+nav a {
+  color: white;
+  text-decoration: none;
+}
+nav a:hover {
+  text-decoration: underline 3px solid var(--accent-color);
 }
 
-input {
-  background: var(--input-color);
-  color: var(--fg-color);
-  font-family: var(--main-font);
-}
-
-form[action="/auth"] {
-  margin: auto;
-  max-width: 25%;
-  text-align: left;
-}
-
-form[action="/auth"] h1,
-form[action="/auth"] h3 {
-  text-align: center;
-}
-
-form[action="/auth"] h3 {
-  font-size: 1.25em;
-}
-
-form[action="/auth"] h4,
-select#school,
-input#usr,
-input#pwd {
-  box-sizing: border-box;
-  width: 100%;
-}
-
-form[action="/auth"] h4,
-select#school,
-input#usr,
-input#pwd,
-input[type=submit],
 input[type=file]::-webkit-file-upload-button {
   border-radius: 5px;
   font-family: var(--main-font);
   font-size: 11pt;
-}
-
-form[action="/auth"] h4 {
-  background: var(--err-bg);
-  border: 1px solid red;
-  padding: 9px 13px;
-}
-
-select#school,
-input#usr,
-input#pwd,
-input[type=submit] {
-  margin: 8px 0;
-}
-
-select#school {
-  padding: 5px 5px;
-}
-
-input#usr,
-input#pwd {
-  padding: 5px 10px;
-}
-
-form[action="/auth"] input[type=submit] {
-  margin-top: 10px;
-  padding: 10px 20px;
-  width: 100%;
 }
 
 input[type=submit],
@@ -295,12 +206,6 @@ select:focus {
   outline-color: var(--accent-color);
 }
 
-hr {
-  border: 0;
-  border-bottom: 1px solid #aaaaaa;
-  margin: 20px 0;
-}
-
 input[type=file] {
   background: var(--bg-color);
   border: none;
@@ -311,4 +216,79 @@ input[type=file] {
 input[type=file]::-webkit-file-upload-button {
   padding: 5px 12px;
   margin: 0 10px 0 5px;
+}
+
+form[action="/auth"] {
+  margin: auto;
+  max-width: 25%;
+  text-align: left;
+}
+form[action="/auth"] h1 {
+  text-align: center;
+}
+form[action="/auth"] h3 {
+  text-align: center;
+  font-size: 1.25em;
+}
+form[action="/auth"] h4 {
+  padding: 9px 13px;
+  background: var(--err-bg);
+  border: 1px solid red;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 5px;
+  font-family: var(--main-font);
+  font-size: 11pt;
+}
+form[action="/auth"] input#usr,
+form[action="/auth"] input#pwd,
+form[action="/auth"] select#school {
+  margin: 10px 0;
+  padding: 5px 10px;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 5px;
+  font-family: var(--main-font);
+  font-size: 11pt;
+}
+form[action="/auth"] select#school {
+  padding: 5px 5px !important;
+}
+form[action="/auth"] input[type=submit] {
+  border-radius: 5px;
+  font-family: var(--main-font);
+  font-size: 11pt;
+  margin-top: 14px;
+  padding: 10px 20px !important;
+  width: 100%;
+}
+@media (min-width: 0) and (max-width: 479px) {
+  form[action="/auth"] {
+    max-width: 90%;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  form[action="/auth"] {
+    max-width: 80%;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  form[action="/auth"] {
+    max-width: 60%;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  form[action="/auth"] {
+    max-width: 40%;
+  }
+}
+@media (min-width: 1200px) {
+  form[action="/auth"] {
+    max-width: 25%;
+  }
+}
+
+img#timetable {
+  display: block;
+  margin: 0 auto;
 }

@@ -1,0 +1,27 @@
+nav {
+    top: 0;
+    left: 0;
+    position: fixed;
+
+    margin: 0;
+    padding: 12px 20px;
+    width: 100vw;
+
+    background: black;
+    color: black;
+    font-family: var(--nav-font);
+    font-weight: bold;
+
+    a {
+        color: white;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline 3px solid var(--accent-color);
+        }
+    }
+}
+
+//nav a[href="/logout"] {
+//    float: right;
+//}

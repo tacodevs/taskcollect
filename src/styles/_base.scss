@@ -1,0 +1,147 @@
+:root {
+    --font-size: 16px;
+    --main-font: "Lato", sans-serif;
+    --nav-font: "Red Hat Display", sans-serif;
+    --login-font-size: 15px;
+
+    --accent-color: #347aff;
+    --accent-hover: #246aef;
+    --accent-click: #044acf;
+    --bg-color: #ffffff;
+    --fg-color: #000000;
+    --err-bg: #f09090;
+    --input-color: #e0e0e0;
+    --link-color: #2e6dd3;
+    --th-color: #dadada;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #202020;
+        --fg-color: #ffffff;
+        --err-bg: #500000;
+        --input-color: #505050;
+        --link-color: #80b1ff;
+        --th-color: #4a4a4a;
+    }
+}
+
+body {
+    margin: 5em 5% 3.75em 5%;
+    background: var(--bg-color);
+    font-family: var(--main-font);
+    font-size: var(--font-size);
+    color: var(--fg-color);
+}
+
+h1 {
+    font-size: 2em;
+}
+
+h2 {
+    font-size: 1.5em;
+}
+
+h3 {
+    font-size: 1.2em;
+}
+
+a {
+    color: var(--link-color);
+}
+
+select, input {
+    border: 1px solid #aaaaaa;
+}
+
+select {
+    background: var(--input-color);
+    color: var(--fg-color);
+    font-family: var(--main-font);
+}
+
+input {
+    background: var(--input-color);
+    color: var(--fg-color);
+    font-family: var(--main-font);
+}
+
+summary:hover {
+    cursor: pointer;
+}
+
+details div,
+summary {
+    border-top: 1px solid var(--input-color);
+    padding: 10px;
+}
+
+div:hover,
+summary:hover {
+    background: var(--th-color);
+}
+
+details div {
+    border-color: var(--fg-color);
+    margin: 0 30px;
+
+    &:first-child {
+        margin-top: 30px;
+    }
+
+    &:last-child {
+        border-bottom: 1px solid var(--fg-color);
+        margin-bottom: 30px;
+    }
+}
+
+details div * {
+    margin: 5px 10px;
+}
+
+details div * a {
+    color: var(--fg-color);
+    margin: 0;
+    text-decoration: none;
+}
+
+details div * a:hover {
+    text-decoration: underline;
+}
+
+details:last-child:not([open]) summary {
+    border-bottom: 1px solid var(--input-color);
+}
+
+details div h5.datetime {
+    float: right;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+}
+
+th.due, th.subject {
+    width: 15%;
+}
+
+th.task, th.link {
+    width: 35%;
+}
+
+th, td {
+    border: 1px solid var(--fg-color);
+    padding: 5px 7px;
+}
+
+th {
+    background: var(--th-color);
+}
+
+hr {
+    border: 0;
+    border-bottom: 1px solid #aaaaaa;
+    margin: 20px 0;
+}
