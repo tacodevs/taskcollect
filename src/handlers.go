@@ -158,7 +158,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/styles.css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		w.Header().Add("Cache-Control", "max-age=3600")
+		//w.Header().Add("Cache-Control", "max-age=3600")
 
 		cssFile, err := os.Open(fp.Join(h.database.path, "styles.css"))
 		if err != nil {

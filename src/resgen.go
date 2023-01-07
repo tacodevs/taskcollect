@@ -267,6 +267,19 @@ func genDay(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, co
 	*img = canvas
 }
 
+//func newGenTimetable(creds tcUser, w http.ResponseWriter) {
+//	lessons, err := getLessons(creds)
+//	if err != nil {
+//		newErr := errors.NewError("main: genTimetable", "failed to get lessons", err)
+//		logger.Error(newErr)
+//		w.WriteHeader(500)
+//		return
+//	}
+//
+//	weekday := int(time.Now().Weekday())
+//
+//}
+
 func genTimetable(creds tcUser, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {

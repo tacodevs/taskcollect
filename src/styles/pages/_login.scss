@@ -1,0 +1,71 @@
+@use "../breakpoints" as bp;
+@use "../components/forms";
+
+@mixin -box {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+form[action="/auth"] {
+    margin: auto;
+    max-width: 25%;
+    text-align: left;
+
+    h1 {
+        text-align: center;
+    }
+
+    h3 {
+        text-align: center;
+        font-size: 1.25em;
+    }
+
+    // TODO: use an ID for h4
+    h4 {
+        padding: 9px 13px;
+        background: var(--err-bg);
+        border: 1px solid red;
+        @include -box;
+        @include forms.styling-1;
+    }
+
+    input#usr,
+    input#pwd,
+    select#school {
+        margin: 10px 0;
+        padding: 5px 10px;
+        @include -box;
+        @include forms.styling-1;
+    }
+
+    select#school {
+        padding: 5px 5px !important;
+    }
+
+    input[type="submit"] {
+        @include forms.styling-1;
+        margin-top: 14px;
+        padding: 10px 20px !important;
+        width: 100%;
+    }
+
+    @include bp.xs {
+        max-width: 90%;
+    }
+
+    @include bp.sm {
+        max-width: 80%;
+    }
+
+    @include bp.md {
+        max-width: 60%;
+    }
+
+    @include bp.lg {
+        max-width: 40%;
+    }
+
+    @include bp.xl {
+        max-width: 25%;
+    }
+}
