@@ -1,16 +1,10 @@
 package gclass
 
 import (
-	"context"
-	"encoding/json"
-	"strings"
 	"sync"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
-	"google.golang.org/api/option"
 
 	"main/errors"
 )
@@ -106,45 +100,9 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 
 // Retrieve a list of tasks from Google Classroom for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
-	ctx := context.Background()
-
-	gAuthConfig, err := google.ConfigFromJSON(
-		creds.ClientID,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		classroom.ClassroomAnnouncementsReadonlyScope,
-	)
-
+	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to get config from JSON", err)
-		t <- nil
-		e <- newErr
-		return
-	}
-
-	r := strings.NewReader(creds.Token)
-	oauthTok := &oauth2.Token{}
-
-	err = json.NewDecoder(r).Decode(oauthTok)
-	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to decode JSON", err)
-		t <- nil
-		e <- newErr
-		return
-	}
-
-	client := gAuthConfig.Client(context.Background(), oauthTok)
-
-	svc, err := classroom.NewService(
-		ctx,
-		option.WithHTTPClient(client),
-	)
-
-	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to create new service", err)
-		t <- nil
+		newErr := errors.NewError("gclass: ListTasks", "Google auth failed", err)
 		e <- newErr
 		return
 	}

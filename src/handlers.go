@@ -285,9 +285,9 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		} else if errors.Is(err, errNeedsGAuth) {
-			gAuthLoc, err := h.database.genGAuthLoc()
+			gAuthLoc, err := h.database.gAuthEndpoint()
 			if err != nil {
-				newErr := errors.NewError("main: authHandler", "failed to retrieve Google Cloud project file", err)
+				newErr := errors.NewError("main: authHandler", "failed to generate Google auth endpoint URL", err)
 				logger.Error(newErr)
 			} else {
 				w.Header().Set("Location", gAuthLoc)

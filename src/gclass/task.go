@@ -1,18 +1,13 @@
 package gclass
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
-	"google.golang.org/api/option"
 
 	"main/errors"
 )
@@ -93,11 +88,6 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 	taskErrChan <- nil
 }
 
-/*
-ISSUE(#6): The Google Classroom API does not seem to have any mechanism to request
-teacher comments for a task, so task.Comment is always empty.
-*/
-
 // Get a task from Google Classroom for a user.
 func GetTask(creds User, id string) (Task, error) {
 	cid := strings.SplitN(id, "-", 3)
@@ -106,40 +96,9 @@ func GetTask(creds User, id string) (Task, error) {
 		return Task{}, errInvalidTaskID
 	}
 
-	ctx := context.Background()
-
-	gAuthConfig, err := google.ConfigFromJSON(
-		creds.ClientID,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		classroom.ClassroomAnnouncementsReadonlyScope,
-	)
-
+	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "failed to get config from JSON", err)
-		return Task{}, newErr
-	}
-
-	r := strings.NewReader(creds.Token)
-	oauthTok := &oauth2.Token{}
-
-	err = json.NewDecoder(r).Decode(oauthTok)
-	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "failed to decode JSON", err)
-		return Task{}, newErr
-	}
-
-	client := gAuthConfig.Client(context.Background(), oauthTok)
-
-	svc, err := classroom.NewService(
-		ctx,
-		option.WithHTTPClient(client),
-	)
-
-	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "failed to get new service", err)
+		newErr := errors.NewError("gclass: GetTask", "Google auth failed", err)
 		return Task{}, newErr
 	}
 
@@ -176,6 +135,7 @@ func GetTask(creds User, id string) (Task, error) {
 		Class:    class,
 		Link:     gc.AlternateLink,
 		Desc:     gc.Description,
+		Comment:  "The Google Classroom API does not support retrieving teacher comments.",
 		Platform: "gclass",
 		Id:       id,
 	}
@@ -294,7 +254,7 @@ func GetTask(creds User, id string) (Task, error) {
 ISSUE(#3): All functions relating to submitting, uploading, and removing work do
 *not* work!
 
-Google had this strange idea that "the only service that can submit assignments
+Google has a requirement that "the only service that can submit assignments
 is the one that made it". Which translates to "the only service that can submit
 assignments is Google Classroom" because the only service that teachers use to
 interface with Google Classroom is Google Classroom itself.
@@ -312,59 +272,22 @@ https://codeberg.org/kvo/taskcollect/issues/3
 
 // Submit a Google Classroom task on behalf of a user.
 func SubmitTask(creds User, id string) error {
-	/*
-		cid := strings.SplitN(id, "-", 3)
+	/*svc, err := Auth(creds)
+	if err != nil {
+		newErr := errors.NewError("gclass: SubmitTask", "Google auth failed", err)
+		e <- newErr
+		return
+	}
 
-		if len(cid) != 3 {
-			return errInvalidTaskID
-		}
+	_, err = svc.Courses.CourseWork.StudentSubmissions.TurnIn(
+		cid[0], cid[1], cid[2],
+		&classroom.TurnInStudentSubmissionRequest{},
+	).Do()
 
-		ctx := context.Background()
-
-		gAuthConfig, err := google.ConfigFromJSON(
-			creds.ClientID,
-			classroom.ClassroomCoursesReadonlyScope,
-			classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-			classroom.ClassroomCourseworkMeScope,
-			classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		)
-
-		// TODO: use NewError
-		if err != nil {
-			return err
-		}
-
-		r := strings.NewReader(creds.Token)
-		oauthTok := &oauth2.Token{}
-		err = json.NewDecoder(r).Decode(oauthTok)
-
-		// TODO: use NewError
-		if err != nil {
-			return err
-		}
-
-		client := gAuthConfig.Client(context.Background(), oauthTok)
-
-		svc, err := classroom.NewService(
-			ctx,
-			option.WithHTTPClient(client),
-		)
-
-		// TODO: use NewError
-		if err != nil {
-			return err
-		}
-
-		_, err = svc.Courses.CourseWork.StudentSubmissions.TurnIn(
-			cid[0], cid[1], cid[2],
-			&classroom.TurnInStudentSubmissionRequest{},
-		).Do()
-
-		// TODO: use NewError
-		if err != nil {
-			return err
-		}
-	*/
+	if err != nil {
+		newErr := errors.NewError("gclass: SubmitTask", "error turning in task", err)
+		return newErr
+	}*/
 
 	return nil
 }

@@ -13,8 +13,6 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/classroom/v1"
 
 	"main/daymap"
 	"main/errors"
@@ -321,24 +319,17 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	return cookie, gAuthStatus
 }
 
-// Retrieve the Google Cloud project credentials file.
-func (db *authDB) genGAuthLoc() (string, error) {
+// Return the Google authentication endpoint URL.
+func (db *authDB) gAuthEndpoint() (string, error) {
 	gcid, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
 	if err != nil {
-		newErr := errors.NewError("main: genGAuthLoc", "failed to read gauth.json", err)
+		newErr := errors.NewError("main: gAuthEndpoint", "failed to read gauth.json", err)
 		return "", newErr.AsError()
 	}
 
-	gAuthConfig, err := google.ConfigFromJSON(
-		gcid,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		classroom.ClassroomAnnouncementsReadonlyScope,
-	)
+	gAuthConfig, err := gclass.AuthConfig(gcid)
 	if err != nil {
-		newErr := errors.NewError("main: genGAuthLoc", "creation of config failed", err)
+		newErr := errors.NewError("main: gAuthEndpoint", "creation of config failed", err)
 		return "", newErr.AsError()
 	}
 
@@ -361,14 +352,7 @@ func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 		return newErr.AsError()
 	}
 
-	gAuthConfig, err := google.ConfigFromJSON(
-		clientId,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		classroom.ClassroomAnnouncementsReadonlyScope,
-	)
+	gAuthConfig, err := gclass.AuthConfig(clientId)
 	if err != nil {
 		newErr := errors.NewError("main: runGAuth", "failed to get config from JSON", err)
 		return newErr
