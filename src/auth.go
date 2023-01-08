@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/kvo/builtin"
 	"github.com/go-redis/redis/v9"
 	"golang.org/x/oauth2"
 
@@ -192,9 +193,6 @@ func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 
 // Create new user or update pre-existing user in the database.
 func (db *authDB) writeCreds(creds tcUser) error {
-	// NOTE: creds.Username is the student ID
-	// TODO: rename username to student ID?
-
 	ctx := context.Background()
 
 	studentIDKey := "school:" + creds.School + ":studentID:" + creds.Username
@@ -244,6 +242,11 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	user := query.Get("usr")
 	pwd := query.Get("pwd")
+
+	if builtin.Contains([]string{user, pwd}, "") {
+		err := errors.NewError("main: auth", "username or password is empty", errAuthFailed)
+		return "", err
+	}
 
 	if school == "gihs" && !strings.HasPrefix(user, `CURRIC\`) {
 		user = `CURRIC\` + user
