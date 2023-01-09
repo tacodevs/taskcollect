@@ -11,8 +11,6 @@
         <div>
             {{if eq $taskType.NoteType "dueDate"}}
             <h5 class="datetime">Due {{$task.DueDate}}</h5>
-            {{else if eq $taskType.NoteType "grade"}}
-            <h5 class="datetime">Grade: {{$task.Grade}}</h5>
             {{else}}
             <h5 class="datetime">Posted {{$task.Posted}}</h5>
             {{end}}

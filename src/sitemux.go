@@ -119,12 +119,18 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 	}
 
 	for c, taskList := range gcTasks {
+		if c == "graded" {
+			continue
+		}
 		for i := 0; i < len(taskList); i++ {
 			t[c] = append(t[c], task(taskList[i]))
 		}
 	}
 
 	for c, taskList := range dmTasks {
+		if c == "graded" {
+			continue
+		}
 		for i := 0; i < len(taskList); i++ {
 			t[c] = append(t[c], task(taskList[i]))
 		}
@@ -329,4 +335,71 @@ func removeWork(creds tcUser, platform, taskId string, filenames []string) error
 	}
 
 	return err
+}
+
+// Return graded tasks from all supported platforms.
+func gradedTasks(creds tcUser) ([]task, error) {
+	gcChan := make(chan []gclass.Task)
+	gcErr := make(chan error)
+
+	gcCreds := gclass.User{
+		ClientID: creds.GAuthID,
+		Timezone: creds.Timezone,
+		Token:    creds.SiteTokens["gclass"],
+	}
+
+	go gclass.GradedTasks(gcCreds, gcChan, gcErr)
+
+	dmChan := make(chan []daymap.Task)
+	dmErr := make(chan error)
+
+	dmCreds := daymap.User{
+		Timezone: creds.Timezone,
+		Token:    creds.SiteTokens["daymap"],
+	}
+
+	go daymap.GradedTasks(dmCreds, dmChan, dmErr)
+
+	unordered := []task{}
+
+	gcTasks, err := <-gcChan, <-gcErr
+	if err != nil {
+		newErr := errors.NewError("main: gradedTasks", "failed to get graded tasks from gclass", err)
+		logger.Error(newErr)
+	}
+
+	dmTasks, err := <-dmChan, <-dmErr
+	if err != nil {
+		newErr := errors.NewError("main: gradedTasks", "failed to get graded tasks from daymap", err)
+		logger.Error(newErr)
+	}
+
+	for _, gcTask := range gcTasks {
+		unordered = append(unordered, task(gcTask))
+	}
+
+	for _, dmTask := range dmTasks {
+		unordered = append(unordered, task(dmTask))
+	}
+
+	times := map[int]int{}
+	taskIndexes := []int{}
+
+	for i, task := range unordered {
+		times[i] = int(task.Posted.UTC().Unix())
+		taskIndexes = append(taskIndexes, i)
+	}
+
+	sort.SliceStable(taskIndexes, func(i, j int) bool {
+		return times[taskIndexes[i]] > times[taskIndexes[j]]
+	})
+
+	tasks := []task{}
+
+	for i := range taskIndexes {
+		tasks = append(tasks, unordered[i])
+	}
+
+	return tasks, err
+
 }
