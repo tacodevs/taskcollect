@@ -13,6 +13,83 @@ import (
 	"main/errors"
 )
 
+// Return the grade for a DayMap task from a DayMap task webpage.
+func findGrade(page *string) (string, error) {
+	grade := ""
+	i := strings.Index(*page, "Grade:")
+
+	if i != -1 {
+		i = strings.Index(*page, "TaskGrade'>")
+
+		if i == -1 {
+			return "", errInvalidTaskResp
+		}
+
+		*page = (*page)[i:]
+		i = len("TaskGrade'>")
+		*page = (*page)[i:]
+		i = strings.Index(*page, "</div>")
+
+		if i == -1 {
+			return "", errInvalidTaskResp
+		}
+
+		grade = (*page)[:i]
+		*page = (*page)[i:]
+	}
+
+	i = strings.Index(*page, "Mark:")
+
+	if i != -1 {
+		i = strings.Index(*page, "TaskGrade'>")
+
+		if i == -1 {
+			return "", errInvalidTaskResp
+		}
+
+		*page = (*page)[i:]
+		i = len("TaskGrade'>")
+		*page = (*page)[i:]
+		i = strings.Index(*page, "</div>")
+
+		if i == -1 {
+			return "", errInvalidTaskResp
+		}
+
+		markStr := (*page)[:i]
+		*page = (*page)[i:]
+
+		x := strings.Index(markStr, " / ")
+
+		if x == -1 {
+			return "", errInvalidTaskResp
+		}
+
+		st := markStr[:x]
+		sb := markStr[x+3:]
+
+		it, err := strconv.ParseFloat(st, 64)
+		if err != nil {
+			return "", errors.NewError("daymap: GetTask", "(1) string to float64 conversion failed", err)
+		}
+
+		ib, err := strconv.ParseFloat(sb, 64)
+		if err != nil {
+			return "", errors.NewError("daymap: GetTask", "(2) string to float64 conversion failed", err)
+		}
+
+		percent := it/ib * 100
+
+		if grade == "" {
+			grade = fmt.Sprintf("%.f%%", percent)
+		} else {
+			grade += fmt.Sprintf(" (%.f%%)", percent)
+		}
+	}
+
+	return grade, nil
+}
+
 // Retrieve the grade given to a student for a particular DayMap task.
 func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -39,85 +116,8 @@ func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGrou
 		return
 	}
 
-	b := string(respBody)
-	i := strings.Index(b, "Grade:")
-
-	if i != -1 {
-		i = strings.Index(b, "TaskGrade'>")
-
-		if i == -1 {
-			*e = errInvalidTaskResp
-			return
-		}
-
-		b = b[i:]
-		i = len("TaskGrade'>")
-		b = b[i:]
-		i = strings.Index(b, "</div>")
-
-		if i == -1 {
-			*e = errInvalidTaskResp
-			return
-		}
-
-		*grade = b[:i]
-		b = b[i:]
-	}
-
-	i = strings.Index(b, "Mark:")
-
-	if i != -1 {
-		i = strings.Index(b, "TaskGrade'>")
-
-		if i == -1 {
-			*e = errInvalidTaskResp
-			return
-		}
-
-		b = b[i:]
-		i = len("TaskGrade'>")
-		b = b[i:]
-		i = strings.Index(b, "</div>")
-
-		if i == -1 {
-			*e = errInvalidTaskResp
-			return
-		}
-
-		markStr := b[:i]
-		b = b[i:]
-
-		x := strings.Index(markStr, " / ")
-
-		if x == -1 {
-			*e = errInvalidTaskResp
-			return
-		}
-
-		st := markStr[:x]
-		sb := markStr[x+3:]
-
-		it, err := strconv.ParseFloat(st, 64)
-		if err != nil {
-			*e = errors.NewError("daymap: GetTask", "(1) string to float64 conversion failed", err)
-			return
-		}
-
-		ib, err := strconv.ParseFloat(sb, 64)
-		if err != nil {
-			*e = errors.NewError("daymap: GetTask", "(2) string to float64 conversion failed", err)
-			return
-		}
-
-		percent := it/ib * 100
-
-		if *grade == "" {
-			*grade = fmt.Sprintf("%.f%%", percent)
-		} else {
-			*grade += fmt.Sprintf(" (%.f%%)", percent)
-		}
-	}
-
+	page := string(respBody)
+	*grade, *e = findGrade(&page)
 }
 
 // Retrieve a list of tasks from DayMap for a user.

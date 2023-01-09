@@ -601,12 +601,12 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		overdueTasks := taskType{
 			Name:     "Overdue tasks",
-			NoteType: "posted",
+			NoteType: "dueDate",
 		}
 		for i := 0; i < len(tasks["overdue"]); i++ {
 			overdueTasks.Tasks = append(overdueTasks.Tasks, genTask(
 				tasks["overdue"][i],
-				"posted",
+				"dueDate",
 				creds,
 			))
 		}
