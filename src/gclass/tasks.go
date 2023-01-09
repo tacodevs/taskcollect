@@ -11,7 +11,10 @@ import (
 )
 
 // Retrieve Google Classroom task information using a workload submission point ID.
-func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class string, task *Task, taskWG *sync.WaitGroup, gErrChan chan error) {
+func getTask(
+	studSub *classroom.StudentSubmission, svc *classroom.Service, class string,
+	task *Task, taskWG *sync.WaitGroup, gErrChan chan error,
+) {
 	defer taskWG.Done()
 
 	gcTask, err := svc.Courses.CourseWork.Get(

@@ -625,19 +625,6 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, submittedTasks)
 
-		gradedTasks := taskType{
-			Name:     "Graded tasks",
-			NoteType: "grade",
-		}
-		for i := 0; i < len(tasks["graded"]); i++ {
-			gradedTasks.Tasks = append(gradedTasks.Tasks, genTask(
-				tasks["graded"][i],
-				"grade",
-				creds,
-			))
-		}
-		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, gradedTasks)
-
 		return data, nil
 
 	} else if resURL == "/res" {
@@ -657,6 +644,23 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 				resources[class],
 				creds,
 			))
+		}
+
+	} else if resURL == "/grades" {
+		data.PageType = "grades"
+		data.Head.Title = "Grades"
+
+		tasks, err := gradedTasks(creds)
+		if err != nil {
+			newErr := errors.NewError("main: genRes", "failed to get graded tasks", err)
+			return data, newErr
+		}
+
+		for _, task := range tasks {
+			data.Body.GradesData.Tasks = append(
+				data.Body.GradesData.Tasks,
+				genTask(task, "grade", creds),
+			)
 		}
 
 	} else {

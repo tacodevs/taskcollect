@@ -7,6 +7,8 @@
     {{- template "login" . -}}
 {{else if eq .PageType "error"}}
     {{- template "error" . -}}
+{{else if eq .PageType "grades"}}
+    {{- template "grades" . -}}
 {{else if eq .PageType "res"}}
     {{- template "res" . -}}
 {{else if eq .PageType "tasks"}}

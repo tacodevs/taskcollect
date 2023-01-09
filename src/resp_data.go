@@ -21,39 +21,6 @@ type timetableData struct {
 	Img string
 }
 
-// Resources (/res page)
-
-type resItem struct {
-	Id       string
-	Name     string
-	Platform string //e.g. daymap, gclass
-	Posted   string
-	URL      string
-}
-
-type resClass struct {
-	Name     string
-	ResItems []resItem
-}
-
-type resData struct {
-	Heading string
-	Classes []resClass
-}
-
-// Resource (single resource)
-
-type resourceData struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     template.HTML
-	Posted   string
-	ResLinks map[string]string
-	Platform string
-	Id       string
-}
-
 // Tasks
 
 type taskItem struct {
@@ -99,6 +66,46 @@ type taskData struct {
 	Comment      template.HTML
 }
 
+// Resources (/res page)
+
+type resItem struct {
+	Id       string
+	Name     string
+	Platform string //e.g. daymap, gclass
+	Posted   string
+	URL      string
+}
+
+type resClass struct {
+	Name     string
+	ResItems []resItem
+}
+
+type resData struct {
+	Heading string
+	Classes []resClass
+}
+
+// Resource (single resource)
+
+type resourceData struct {
+	Name     string
+	Class    string
+	Link     string
+	Desc     template.HTML
+	Posted   string
+	ResLinks map[string]string
+	Platform string
+	Id       string
+}
+
+// Grades
+
+type gradesData struct {
+	Heading string
+	Tasks   []taskItem
+}
+
 // Primary (page, head, body)
 
 type headData struct {
@@ -110,6 +117,7 @@ type bodyData struct {
 	ErrorData     errData
 	LoginData     loginData
 	TimetableData timetableData
+	GradesData    gradesData
 	ResData       resData
 	TasksData     tasksData
 	TaskData      taskData
