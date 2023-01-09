@@ -1,14 +1,124 @@
 package daymap
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"main/errors"
 )
+
+// Retrieve the grade given to a student for a particular DayMap task.
+func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", taskUrl, nil)
+	if err != nil {
+		*e = errors.NewError("daymap: GetTask", "GET request failed", err)
+		return
+	}
+
+	req.Header.Set("Cookie", creds.Token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		*e = errors.NewError("daymap: GetTask", "failed to get resp", err)
+		return
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		*e = errors.NewError("daymap: GetTask", "failed to read resp.Body", err)
+		return
+	}
+
+	b := string(respBody)
+	i := strings.Index(b, "Grade:")
+
+	if i != -1 {
+		i = strings.Index(b, "TaskGrade'>")
+
+		if i == -1 {
+			*e = errInvalidTaskResp
+			return
+		}
+
+		b = b[i:]
+		i = len("TaskGrade'>")
+		b = b[i:]
+		i = strings.Index(b, "</div>")
+
+		if i == -1 {
+			*e = errInvalidTaskResp
+			return
+		}
+
+		*grade = b[:i]
+		b = b[i:]
+	}
+
+	i = strings.Index(b, "Mark:")
+
+	if i != -1 {
+		i = strings.Index(b, "TaskGrade'>")
+
+		if i == -1 {
+			*e = errInvalidTaskResp
+			return
+		}
+
+		b = b[i:]
+		i = len("TaskGrade'>")
+		b = b[i:]
+		i = strings.Index(b, "</div>")
+
+		if i == -1 {
+			*e = errInvalidTaskResp
+			return
+		}
+
+		markStr := b[:i]
+		b = b[i:]
+
+		x := strings.Index(markStr, " / ")
+
+		if x == -1 {
+			*e = errInvalidTaskResp
+			return
+		}
+
+		st := markStr[:x]
+		sb := markStr[x+3:]
+
+		it, err := strconv.ParseFloat(st, 64)
+		if err != nil {
+			*e = errors.NewError("daymap: GetTask", "(1) string to float64 conversion failed", err)
+			return
+		}
+
+		ib, err := strconv.ParseFloat(sb, 64)
+		if err != nil {
+			*e = errors.NewError("daymap: GetTask", "(2) string to float64 conversion failed", err)
+			return
+		}
+
+		percent := it/ib * 100
+
+		if *grade == "" {
+			*grade = fmt.Sprintf("%.f%%", percent)
+		} else {
+			*grade += fmt.Sprintf(" (%.f%%)", percent)
+		}
+	}
+
+}
 
 // Retrieve a list of tasks from DayMap for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
@@ -157,6 +267,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	b = string(fullBody)
 	unsortedTasks := []Task{}
 	i = strings.Index(b, `href="javascript:ViewAssignment(`)
+	graded := []string{}
 
 	for i != -1 {
 		task := Task{
@@ -291,6 +402,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 		if i != -1 {
 			task.Submitted = true
+			graded = append(graded, task.Id)
 		}
 
 		i = strings.Index(taskLine, `Your work has been received`)
@@ -303,15 +415,47 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(b, `href="javascript:ViewAssignment(`)
 	}
 
+	wg := sync.WaitGroup{}
+	grades := make([]string, len(graded))
+	errs := make([]error, len(graded))
+
+	for i, id := range graded {
+		wg.Add(1)
+		go taskGrade(creds, id, &grades[i], &errs[i], &wg)
+	}
+
+	wg.Wait()
+
+	if !errors.HasOnly(errs, nil) {
+		t <- nil
+		// TODO: Return all errs to higher call frame.
+		e <- errGetGradesFailed
+		return
+	}
+
+	for i, task := range unsortedTasks {
+		for j, id := range graded {
+			if task.Id == id {
+				unsortedTasks[i].Grade = grades[j]
+			}
+		}
+	}
+
 	tasks := map[string][]Task{
 		"active":    {},
 		"notDue":    {},
 		"overdue":   {},
 		"submitted": {},
+		"graded":    {},
 	}
 
 	for x := 0; x < len(unsortedTasks); x++ {
-		if unsortedTasks[x].Submitted {
+		if unsortedTasks[x].Grade != "" {
+			tasks["graded"] = append(
+				tasks["graded"],
+				unsortedTasks[x],
+			)
+		} else if unsortedTasks[x].Submitted {
 			tasks["submitted"] = append(
 				tasks["submitted"],
 				unsortedTasks[x],

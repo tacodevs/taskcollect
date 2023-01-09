@@ -1,6 +1,7 @@
 package gclass
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -15,7 +16,14 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 
 	gcTask, err := svc.Courses.CourseWork.Get(
 		studSub.CourseId, studSub.CourseWorkId,
-	).Fields("creationTime", "dueTime", "dueDate", "title", "alternateLink").Do()
+	).Fields(
+		"alternateLink",
+		"creationTime",
+		"dueTime",
+		"dueDate",
+		"maxPoints",
+		"title",
+	).Do()
 
 	if err != nil {
 		newErr := errors.NewError("gclass: getTask", "failed to get coursework", err)
@@ -60,6 +68,11 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 		task.Submitted = true
 	}
 
+	if studSub.AssignedGrade != 0 && gcTask.MaxPoints != 0 {
+		percent := studSub.AssignedGrade / gcTask.MaxPoints * 100
+		task.Grade = fmt.Sprintf("%.f%%", percent)
+	}
+
 	task.Name = gcTask.Title
 	task.Class = class
 	task.Link = gcTask.AlternateLink
@@ -76,6 +89,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 		"studentSubmissions/state",
 		"studentSubmissions/courseId",
 		"studentSubmissions/courseWorkId",
+		"studentSubmissions/assignedGrade",
 	).Do()
 
 	if err != nil {
@@ -152,11 +166,17 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		"notDue":    {},
 		"overdue":   {},
 		"submitted": {},
+		"graded":    {},
 	}
 
 	for x := 0; x < len(tasks); x++ {
 		for y := 0; y < len(tasks[x]); y++ {
-			if tasks[x][y].Submitted {
+			if tasks[x][y].Grade != "" {
+				gcTasks["graded"] = append(
+					gcTasks["graded"],
+					tasks[x][y],
+				)
+			} else if tasks[x][y].Submitted {
 				gcTasks["submitted"] = append(
 					gcTasks["submitted"],
 					tasks[x][y],

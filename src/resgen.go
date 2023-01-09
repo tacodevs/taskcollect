@@ -435,7 +435,7 @@ func genTimetable(creds tcUser, w http.ResponseWriter) {
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
-func genTask(assignment task, hasDueDate bool, creds tcUser) taskItem {
+func genTask(assignment task, noteType string, creds tcUser) taskItem {
 	task := taskItem{
 		Id:       assignment.Id,
 		Name:     assignment.Name,
@@ -444,10 +444,13 @@ func genTask(assignment task, hasDueDate bool, creds tcUser) taskItem {
 		URL:      assignment.Link,
 	}
 
-	if hasDueDate {
+	switch noteType {
+	case "dueDate":
 		task.DueDate = genDueStr(assignment.Due, creds)
-	} else {
+	case "posted":
 		task.Posted = genDueStr(assignment.Posted, creds)
+	case "grade":
+		task.Grade = assignment.Grade
 	}
 
 	return task
@@ -571,56 +574,69 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 		}
 
 		activeTasks := taskType{
-			Name:       "Active tasks",
-			HasDueDate: true,
+			Name:     "Active tasks",
+			NoteType: "dueDate",
 		}
 		for i := 0; i < len(tasks["active"]); i++ {
 			activeTasks.Tasks = append(activeTasks.Tasks, genTask(
 				tasks["active"][i],
-				true,
+				"dueDate",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, activeTasks)
 
 		notDueTasks := taskType{
-			Name:       "No due date",
-			HasDueDate: false,
+			Name:     "No due date",
+			NoteType: "posted",
 		}
 		for i := 0; i < len(tasks["notDue"]); i++ {
 			notDueTasks.Tasks = append(notDueTasks.Tasks, genTask(
 				tasks["notDue"][i],
-				false,
+				"posted",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, notDueTasks)
 
 		overdueTasks := taskType{
-			Name:       "Overdue tasks",
-			HasDueDate: false,
+			Name:     "Overdue tasks",
+			NoteType: "posted",
 		}
 		for i := 0; i < len(tasks["overdue"]); i++ {
 			overdueTasks.Tasks = append(overdueTasks.Tasks, genTask(
 				tasks["overdue"][i],
-				false,
+				"posted",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, overdueTasks)
 
 		submittedTasks := taskType{
-			Name:       "Submitted tasks",
-			HasDueDate: false,
+			Name:     "Submitted tasks",
+			NoteType: "posted",
 		}
 		for i := 0; i < len(tasks["submitted"]); i++ {
 			submittedTasks.Tasks = append(submittedTasks.Tasks, genTask(
 				tasks["submitted"][i],
-				false,
+				"posted",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, submittedTasks)
+
+		gradedTasks := taskType{
+			Name:     "Graded tasks",
+			NoteType: "grade",
+		}
+		for i := 0; i < len(tasks["graded"]); i++ {
+			gradedTasks.Tasks = append(gradedTasks.Tasks, genTask(
+				tasks["graded"][i],
+				"grade",
+				creds,
+			))
+		}
+		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, gradedTasks)
 
 		return data, nil
 

@@ -63,12 +63,13 @@ type taskItem struct {
 	Class    string
 	DueDate  string
 	Posted   string
+	Grade    string
 	URL      string
 }
 
 type taskType struct {
 	Name       string
-	HasDueDate bool
+	NoteType   string
 	Tasks      []taskItem
 }
 
