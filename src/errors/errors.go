@@ -72,6 +72,16 @@ func (err ErrorWrapper) AsError() error {
 	}
 }
 
+// HasOnly checks if all elements of s are elem.
+func HasOnly(s []error, elem error) bool {
+	for _, v := range s {
+		if !errors.Is(v, elem) {
+			return false
+		}
+	}
+	return true
+}
+
 // NewError returns an ErrorWrapper which contains information on which package and/or function
 // the error originated, the error text/message, and the error itself
 func NewError(origin string, text string, err error) ErrorWrapper {
