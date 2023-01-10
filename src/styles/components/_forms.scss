@@ -1,0 +1,44 @@
+@mixin styling-1 {
+    border-radius: 5px;
+    font-family: var(--main-font);
+    font-size: 15px;
+}
+
+input[type="submit"],
+input[type="file"]::-webkit-file-upload-button {
+    @include styling-1;
+    background: var(--accent-color);
+    border: none;
+    color: white;
+    outline: 0 !important;
+    padding: 7px 15px;
+}
+
+input[type="submit"]:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
+    background: var(--accent-hover);
+    cursor: pointer;
+}
+
+input[type="submit"]:active,
+input[type="file"]::-webkit-file-upload-button:active {
+    background: var(--accent-click);
+    cursor: pointer;
+}
+
+input:focus,
+select:focus {
+    outline-color: var(--accent-color);
+}
+
+input[type="file"] {
+    background: var(--bg-color);
+    border: none;
+    font-family: var(--main-font);
+    font-size: 11pt;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+    padding: 5px 12px !important;
+    margin: 0 10px 0 5px;
+}

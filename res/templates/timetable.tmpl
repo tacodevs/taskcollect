@@ -1,4 +1,37 @@
 {{define "timetable"}}
 {{template "nav" -}}
-<img id="timetable" src="/timetable.png" alt="timetable.png">
+<!-- <img id="timetable" src="/timetable.png" alt="timetable.png"> -->
+<!-- <button id="timetable-img" src="/timetable.png" alt="timetable.png">Download timetable</button> -->
+
+<div id="timetable">
+{{$currentDay := .Body.TimetableData.CurrentDay}}
+
+{{range $index, $day := .Body.TimetableData.Days}}
+{{$weekday := (add $index 1)}}
+{{if eq $currentDay $weekday}}
+    <div class="day" style="background: #c2cdfc;">
+{{else}}
+    <div class="day">
+{{end}}
+        <h2>{{$day.Day}}</h2>
+        <div class="lessons">
+        {{range $i, $lesson := $day.Lessons}}
+
+            <div class="lesson" style="min-height: {{$lesson.Height}}px; top: {{$lesson.TopOffset}}px; color: {{$lesson.Color}}; background-color: {{$lesson.BGColor}};">
+                <h3 class="class-name">{{$lesson.Class}}</h3>
+                {{if ne $lesson.Notice ""}}
+                    <p class="notice">{{$lesson.Notice}}</p>
+                {{end}}
+                <p class="time-room">{{$lesson.FormattedTime}}, {{$lesson.Room}}</p>
+                {{if ne $lesson.Teacher ""}}
+                    <p class="teacher">{{$lesson.Teacher}}</p>
+                {{end}}
+            </div>
+
+        {{end}}
+        </div>
+    </div>
+{{end}}
+</div>
+
 {{end}}
