@@ -86,14 +86,15 @@ type resItem struct {
 // Resource (single resource)
 
 type resourceData struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     template.HTML
-	Posted   string
-	ResLinks map[string]string
-	Platform string
-	Id       string
+	Name        string
+	Class       string
+	URL         string
+	Desc        template.HTML
+	Posted      string
+	HasResLinks bool
+	ResLinks    map[string]string
+	Platform    string
+	Id          string
 }
 
 // Tasks
