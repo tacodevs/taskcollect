@@ -2,6 +2,30 @@ package main
 
 import "html/template"
 
+// Primary (page, head, body)
+
+type pageData struct {
+	PageType string
+	Head     headData
+	Body     bodyData
+}
+
+type headData struct {
+	Title string
+	//CssFiles []string
+}
+
+type bodyData struct {
+	ErrorData     errData
+	LoginData     loginData
+	TimetableData timetableData
+	GradesData    gradesData
+	ResourceData  resourceData
+	ResData       resData
+	TasksData     tasksData
+	TaskData      taskData
+}
+
 // Error Page
 
 type errData struct {
@@ -18,7 +42,59 @@ type loginData struct {
 // Timetable
 
 type timetableData struct {
-	Img string
+	CurrentDay int
+	Days       []ttDay
+}
+
+type ttDay struct {
+	Day     string
+	Lessons []ttLesson
+}
+
+type ttLesson struct {
+	Class         string
+	FormattedTime string
+	Height        float64
+	TopOffset     float64
+	Room          string
+	Teacher       string
+	Notice        string
+	Color         string
+	BGColor       string
+}
+
+// Resources (/res page)
+
+type resData struct {
+	Heading string
+	Classes []resClass
+}
+
+type resClass struct {
+	Name     string
+	ResItems []resItem
+}
+
+type resItem struct {
+	Id       string
+	Name     string
+	Platform string //e.g. daymap, gclass
+	Posted   string
+	URL      string
+}
+
+// Resource (single resource)
+
+type resourceData struct {
+	Name        string
+	Class       string
+	URL         string
+	Desc        template.HTML
+	Posted      string
+	HasResLinks bool
+	ResLinks    map[string]string
+	Platform    string
+	Id          string
 }
 
 // Tasks
@@ -35,9 +111,9 @@ type taskItem struct {
 }
 
 type taskType struct {
-	Name       string
-	NoteType   string
-	Tasks      []taskItem
+	Name     string
+	NoteType string
+	Tasks    []taskItem
 }
 
 type tasksData struct {
@@ -66,69 +142,11 @@ type taskData struct {
 	Comment      template.HTML
 }
 
-// Resources (/res page)
-
-type resItem struct {
-	Id       string
-	Name     string
-	Platform string //e.g. daymap, gclass
-	Posted   string
-	URL      string
-}
-
-type resClass struct {
-	Name     string
-	ResItems []resItem
-}
-
-type resData struct {
-	Heading string
-	Classes []resClass
-}
-
-// Resource (single resource)
-
-type resourceData struct {
-	Name        string
-	Class       string
-	URL         string
-	Desc        template.HTML
-	Posted      string
-	HasResLinks bool
-	ResLinks    map[string]string
-	Platform    string
-	Id          string
-}
-
 // Grades
 
 type gradesData struct {
 	Heading string
 	Tasks   []taskItem
-}
-
-// Primary (page, head, body)
-
-type headData struct {
-	Title string
-	//CssFiles []string
-}
-
-type bodyData struct {
-	ErrorData     errData
-	LoginData     loginData
-	TimetableData timetableData
-	GradesData    gradesData
-	ResourceData  resourceData
-	ResData       resData
-	TasksData     tasksData
-	TaskData      taskData
-}
-
-type pageData struct {
-	PageType string
-	Head     headData
-	Body     bodyData
 }
 
 var loginPageData = pageData{

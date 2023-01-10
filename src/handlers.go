@@ -531,7 +531,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		// NOTE: Perhaps still keep the png generation even though the main timetable will
 		// be replaced by a table, rather than image
 	} else if validAuth && res == "/timetable.png" {
-		genTimetable(creds, w)
+		genTimetableImg(creds, w)
 
 		// Invalid URL while logged in redirects to /timetable
 	} else if validAuth && invalidRes {
