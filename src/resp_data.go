@@ -19,6 +19,8 @@ type bodyData struct {
 	ErrorData     errData
 	LoginData     loginData
 	TimetableData timetableData
+	GradesData    gradesData
+	ResourceData  resourceData
 	ResData       resData
 	TasksData     tasksData
 	TaskData      taskData
@@ -96,17 +98,6 @@ type resourceData struct {
 
 // Tasks
 
-type tasksData struct {
-	Heading   string
-	TaskTypes []taskType
-}
-
-type taskType struct {
-	Name       string
-	HasDueDate bool
-	Tasks      []taskItem
-}
-
 type taskItem struct {
 	Id       string
 	Name     string
@@ -114,7 +105,19 @@ type taskItem struct {
 	Class    string
 	DueDate  string
 	Posted   string
+	Grade    string
 	URL      string
+}
+
+type taskType struct {
+	Name     string
+	NoteType string
+	Tasks    []taskItem
+}
+
+type tasksData struct {
+	Heading   string
+	TaskTypes []taskType
 }
 
 // Task (single task)
@@ -136,6 +139,13 @@ type taskData struct {
 	HasUpload    bool
 	Grade        string
 	Comment      template.HTML
+}
+
+// Grades
+
+type gradesData struct {
+	Heading string
+	Tasks   []taskItem
 }
 
 var loginPageData = pageData{

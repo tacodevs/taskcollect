@@ -285,9 +285,9 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		} else if errors.Is(err, errNeedsGAuth) {
-			gAuthLoc, err := h.database.genGAuthLoc()
+			gAuthLoc, err := h.database.gAuthEndpoint()
 			if err != nil {
-				newErr := errors.NewError("main: authHandler", "failed to retrieve Google Cloud project file", err)
+				newErr := errors.NewError("main: authHandler", "failed to generate Google auth endpoint URL", err)
 				logger.Error(newErr)
 			} else {
 				w.Header().Set("Location", gAuthLoc)
@@ -332,6 +332,57 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
 		}
+	} else {
+		w.Header().Set("Location", "/login")
+		w.WriteHeader(302)
+	}
+}
+
+// Handle individual resource pages (located under "/res/").
+func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
+	validAuth := true
+	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
+
+	if errors.Is(err, errInvalidAuth) {
+		validAuth = false
+	} else if err != nil {
+		newErr := errors.NewError("main: resHandler", "failed to get creds", err)
+		logger.Error(newErr)
+		h.genPage(w, statusServerErrorData)
+		return
+	}
+
+	creds.GAuthID = h.database.gAuth
+
+	if validAuth {
+		reqRes := r.URL.EscapedPath()
+	
+		statusCode := 200
+		var respBody pageData	
+		platform := reqRes[5:]
+		index := strings.Index(platform, "/")
+	
+		if index == -1 {
+			w.WriteHeader(404)
+			h.genPage(w, statusNotFoundData)
+			return
+		}
+	
+		resId := platform[index+1:]
+		platform = platform[:index]
+
+		res, err := getResource(platform, resId, creds)
+		if err != nil {
+			newErr := errors.NewError("main: resHandler", "failed to get resource", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+			h.genPage(w, statusServerErrorData)
+			return
+		}
+
+		respBody = genResPage(res, creds)
+		w.WriteHeader(statusCode)
+		h.genPage(w, respBody)
 	} else {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(302)
@@ -392,6 +443,42 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 			h.genPage(w, statusNotFoundData)
 		} else if err != nil {
 			newErr := errors.NewError("main: tasksHandler", "failed to generate resources", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+			h.genPage(w, statusServerErrorData)
+		} else {
+			w.Header().Add("Cache-Control", "max-age=2400")
+			h.genPage(w, webpageData)
+		}
+	} else {
+		w.Header().Set("Location", "/login")
+		w.WriteHeader(302)
+	}
+}
+
+// Handle the "/res" page
+func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
+	validAuth := true
+	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
+
+	if errors.Is(err, errInvalidAuth) {
+		validAuth = false
+	} else if err != nil {
+		newErr := errors.NewError("main: resHandler", "failed to get creds", err)
+		logger.Error(newErr)
+		h.genPage(w, statusServerErrorData)
+		return
+	}
+
+	creds.GAuthID = h.database.gAuth
+
+	if validAuth {
+		webpageData, err := genRes(h.database.path, "/res", creds)
+		if errors.Is(err, errNotFound) {
+			w.WriteHeader(404)
+			h.genPage(w, statusNotFoundData)
+		} else if err != nil {
+			newErr := errors.NewError("main: resHandler", "failed to generate resources", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)

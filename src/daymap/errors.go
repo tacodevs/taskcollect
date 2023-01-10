@@ -4,6 +4,7 @@ import "main/errors"
 
 var (
 	errAuthFailed                  = errors.NewError("daymap", errors.ErrAuthFailed.Error(), nil)
+	errGetGradesFailed             = errors.NewError("daymap", "failed to get task grades", nil)
 	errInvalidDmJson               = errors.NewError("daymap", "invalid lessons JSON", nil)
 	errInvalidHtmlForm             = errors.NewError("daymap", "invalid HTML form", nil)
 	errInvalidResp                 = errors.NewError("daymap", "invalid HTML response", nil)

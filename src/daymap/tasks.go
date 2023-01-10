@@ -10,34 +10,28 @@ import (
 	"main/errors"
 )
 
-// Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds User, t chan map[string][]Task, e chan error) {
+// Retrieve a webpage of all DayMap tasks for a user.
+func tasksPage(creds User) (string, error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", tasksUrl, nil)
 	if err != nil {
 		newErr := errors.NewError("daymap: ListTasks", "GET request failed", err)
-		t <- nil
-		e <- newErr
-		return
+		return "", newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
 		newErr := errors.NewError("daymap: ListTasks", "failed to get resp", err)
-		t <- nil
-		e <- newErr
-		return
+		return "", newErr
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		newErr := errors.NewError("daymap: ListTasks", "failed to read resp.Body", err)
-		t <- nil
-		e <- newErr
-		return
+		return "", newErr
 	}
 
 	taskForm := url.Values{}
@@ -50,9 +44,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(b, ">")
 
 		if i == -1 {
-			t <- nil
-			e <- errInvalidResp
-			return
+			return "", errInvalidResp
 		}
 
 		inputTag := b[:i]
@@ -60,9 +52,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			t <- nil
-			e <- errInvalidResp
-			return
+			return "", errInvalidResp
 		}
 
 		i += len(`type="`)
@@ -70,9 +60,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			t <- nil
-			e <- errInvalidResp
-			return
+			return "", errInvalidResp
 		}
 
 		inputType = inputType[:i]
@@ -85,9 +73,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			t <- nil
-			e <- errInvalidResp
-			return
+			return "", errInvalidResp
 		}
 
 		i += len(`name="`)
@@ -95,9 +81,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			t <- nil
-			e <- errInvalidResp
-			return
+			return "", errInvalidResp
 		}
 
 		name = name[:i]
@@ -109,9 +93,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				t <- nil
-				e <- errInvalidResp
-				return
+				return "", errInvalidResp
 			}
 
 			value = value[:i]
@@ -130,9 +112,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
 	if err != nil {
 		newErr := errors.NewError("daymap: ListTasks", "POST request failed", err)
-		t <- nil
-		e <- newErr
-		return
+		return "", newErr
 	}
 
 	fullReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -141,22 +121,29 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	full, err := client.Do(fullReq)
 	if err != nil {
 		newErr := errors.NewError("daymap: ListTasks", "failed to get full resp", err)
-		t <- nil
-		e <- newErr
-		return
+		return "", newErr
 	}
 
 	fullBody, err := io.ReadAll(full.Body)
 	if err != nil {
 		newErr := errors.NewError("daymap: ListTasks", "failed to real full.Body", err)
+		return "", newErr
+	}
+
+	return string(fullBody), nil
+}
+
+// Retrieve a list of tasks from DayMap for a user.
+func ListTasks(creds User, t chan map[string][]Task, e chan error) {
+	b, err := tasksPage(creds)
+	if err != nil {
 		t <- nil
-		e <- newErr
+		e <- err
 		return
 	}
 
-	b = string(fullBody)
 	unsortedTasks := []Task{}
-	i = strings.Index(b, `href="javascript:ViewAssignment(`)
+	i := strings.Index(b, `href="javascript:ViewAssignment(`)
 
 	for i != -1 {
 		task := Task{

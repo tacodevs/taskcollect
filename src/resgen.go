@@ -59,7 +59,7 @@ func genDueStr(due time.Time, creds tcUser) string {
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
-func genTask(assignment task, hasDueDate bool, creds tcUser) taskItem {
+func genTask(assignment task, noteType string, creds tcUser) taskItem {
 	task := taskItem{
 		Id:       assignment.Id,
 		Name:     assignment.Name,
@@ -68,10 +68,13 @@ func genTask(assignment task, hasDueDate bool, creds tcUser) taskItem {
 		URL:      assignment.Link,
 	}
 
-	if hasDueDate {
+	switch noteType {
+	case "dueDate":
 		task.DueDate = genDueStr(assignment.Due, creds)
-	} else {
+	case "posted":
 		task.Posted = genDueStr(assignment.Posted, creds)
+	case "grade":
+		task.Grade = assignment.Grade
 	}
 
 	return task
@@ -156,6 +159,50 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 	return data
 }
 
+// Generate the HTML page for viewing a single resource
+func genResPage(res resource, creds tcUser) pageData {
+	data := pageData{
+		PageType: "resource",
+		Head: headData{
+			Title: res.Name,
+		},
+		Body: bodyData{
+			ResourceData: resourceData{
+				Id:          res.Id,
+				Name:        res.Name,
+				Platform:    res.Platform,
+				Class:       res.Class,
+				URL:         res.Link,
+				Desc:        "",
+				Posted:      genDueStr(res.Posted, creds),
+				ResLinks:    nil,
+				HasResLinks: false,
+			},
+		},
+	}
+
+	if res.Desc != "" {
+		resDesc := res.Desc
+		// Escape strings since it will be converted to safe HTML after
+		resDesc = html.EscapeString(resDesc)
+		resDesc = strings.ReplaceAll(resDesc, "\n", "<br>")
+		data.Body.ResourceData.Desc = template.HTML(resDesc)
+	}
+
+	if res.ResLinks != nil {
+		data.Body.ResourceData.HasResLinks = true
+
+		data.Body.ResourceData.ResLinks = make(map[string]string)
+		for i := 0; i < len(res.ResLinks); i++ {
+			url := res.ResLinks[i][0]
+			name := res.ResLinks[i][1]
+			data.Body.ResourceData.ResLinks[name] = url
+		}
+	}
+
+	return data
+}
+
 // Generate a resource link
 func genHtmlResLink(className string, res []resource, creds tcUser) resClass {
 	class := resClass{
@@ -203,59 +250,59 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 		}
 
 		activeTasks := taskType{
-			Name:       "Active tasks",
-			HasDueDate: true,
+			Name:     "Active tasks",
+			NoteType: "dueDate",
 		}
 		for i := 0; i < len(tasks["active"]); i++ {
 			activeTasks.Tasks = append(activeTasks.Tasks, genTask(
 				tasks["active"][i],
-				true,
+				"dueDate",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, activeTasks)
 
 		notDueTasks := taskType{
-			Name:       "No due date",
-			HasDueDate: false,
+			Name:     "No due date",
+			NoteType: "posted",
 		}
 		for i := 0; i < len(tasks["notDue"]); i++ {
 			notDueTasks.Tasks = append(notDueTasks.Tasks, genTask(
 				tasks["notDue"][i],
-				false,
+				"posted",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, notDueTasks)
 
 		overdueTasks := taskType{
-			Name:       "Overdue tasks",
-			HasDueDate: false,
+			Name:     "Overdue tasks",
+			NoteType: "dueDate",
 		}
 		for i := 0; i < len(tasks["overdue"]); i++ {
 			overdueTasks.Tasks = append(overdueTasks.Tasks, genTask(
 				tasks["overdue"][i],
-				false,
+				"dueDate",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, overdueTasks)
 
 		submittedTasks := taskType{
-			Name:       "Submitted tasks",
-			HasDueDate: false,
+			Name:     "Submitted tasks",
+			NoteType: "posted",
 		}
 		for i := 0; i < len(tasks["submitted"]); i++ {
 			submittedTasks.Tasks = append(submittedTasks.Tasks, genTask(
 				tasks["submitted"][i],
-				false,
+				"posted",
 				creds,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, submittedTasks)
 
 	} else if resURL == "/res" {
-		data.PageType = "res"
+		data.PageType = "resources"
 		data.Head.Title = "Resources"
 		data.Body.ResData.Heading = "Resources"
 
@@ -271,6 +318,23 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 				resources[class],
 				creds,
 			))
+		}
+
+	} else if resURL == "/grades" {
+		data.PageType = "grades"
+		data.Head.Title = "Grades"
+
+		tasks, err := gradedTasks(creds)
+		if err != nil {
+			newErr := errors.NewError("main: genRes", "failed to get graded tasks", err)
+			return data, newErr
+		}
+
+		for _, task := range tasks {
+			data.Body.GradesData.Tasks = append(
+				data.Body.GradesData.Tasks,
+				genTask(task, "grade", creds),
+			)
 		}
 
 	} else {

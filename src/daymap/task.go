@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -216,77 +215,9 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 	}
 
-	i = strings.Index(b, "Grade:")
-
-	if i != -1 {
-		i = strings.Index(b, "TaskGrade'>")
-
-		if i == -1 {
-			return Task{}, errInvalidTaskResp
-		}
-
-		b = b[i:]
-		i = len("TaskGrade'>")
-		b = b[i:]
-		i = strings.Index(b, "</div>")
-
-		if i == -1 {
-			return Task{}, errInvalidTaskResp
-		}
-
-		task.Grade = b[:i]
-		b = b[i:]
-	}
-
-	i = strings.Index(b, "Mark:")
-
-	if i != -1 {
-		i = strings.Index(b, "TaskGrade'>")
-
-		if i == -1 {
-			return Task{}, errInvalidTaskResp
-		}
-
-		b = b[i:]
-		i = len("TaskGrade'>")
-		b = b[i:]
-		i = strings.Index(b, "</div>")
-
-		if i == -1 {
-			return Task{}, errInvalidTaskResp
-		}
-
-		markStr := b[:i]
-		b = b[i:]
-
-		x := strings.Index(markStr, " / ")
-
-		if x == -1 {
-			return Task{}, errInvalidTaskResp
-		}
-
-		st := markStr[:x]
-		sb := markStr[x+3:]
-
-		it, err := strconv.Atoi(st)
-		if err != nil {
-			newErr := errors.NewError("daymap: GetTask", "(1) string -> int conversion failed", err)
-			return Task{}, newErr
-		}
-
-		ib, err := strconv.Atoi(sb)
-		if err != nil {
-			newErr := errors.NewError("daymap: GetTask", "(2) string -> int conversion failed", err)
-			return Task{}, newErr
-		}
-
-		percent := float64(it) / float64(ib) * 100
-
-		if task.Grade == "" {
-			task.Grade = fmt.Sprintf("%.f%%", percent)
-		} else {
-			task.Grade += fmt.Sprintf(" (%.f%%)", percent)
-		}
+	task.Grade, err = findGrade(&b)
+	if err != nil {
+		return Task{}, err
 	}
 
 	i = strings.Index(b, `class="WhiteBox">`)

@@ -1,0 +1,160 @@
+package gclass
+
+import (
+	"strings"
+	"time"
+
+	"google.golang.org/api/classroom/v1"
+
+	"main/errors"
+)
+
+type Resource struct {
+	Name     string
+	Class    string
+	Link     string
+	Desc     string
+	Posted   time.Time
+	ResLinks [][2]string
+	Platform string
+	Id       string
+}
+
+// Return resource links from a classroom.Material slice.
+func resFromMaterials(materials []*classroom.Material) ([][2]string, error) {
+	if materials == nil {
+		return nil, nil
+	}
+
+	resLinks := [][2]string{}
+
+	for _, m := range materials {
+		var link, name string
+		var err error
+
+		if m.DriveFile != nil {
+			link = m.DriveFile.DriveFile.AlternateLink
+			if strings.Contains(link, "://drive.google.com/") {
+				link, err = getDirectDriveLink(m.DriveFile.DriveFile.AlternateLink)
+				if err != nil {
+					newErr := errors.NewError("gclass: resFromMaterials", "failed to get direct drive link", err)
+					return nil, newErr
+				}
+			}
+			name = m.DriveFile.DriveFile.Title
+		} else if m.Form != nil {
+			link = m.Form.FormUrl
+			name = m.Form.Title
+		} else if m.YoutubeVideo != nil {
+			link = m.YoutubeVideo.AlternateLink
+			name = m.YoutubeVideo.Title
+		} else if m.Link != nil {
+			link = m.Link.Url
+			name = m.Link.Title
+		} else {
+			continue
+		}
+
+		if name == "" {
+			name = link
+		}
+
+		resLink := [2]string{link, name}
+		resLinks = append(resLinks, resLink)
+	}
+
+	return resLinks, nil
+}
+
+// Get a resource from Google Classroom for a user.
+func GetResource(creds User, id string) (Resource, error) {
+	resource := Resource{}
+	resource.Id = id
+	resource.Platform = "gclass"
+	isAnn := false
+	idSlice := strings.SplitN(id, "-", 2)
+
+	if strings.HasPrefix(idSlice[1], "a") {
+		isAnn = true
+		idSlice[1] = (idSlice[1])[1:]
+	}
+
+	svc, err := Auth(creds)
+	if err != nil {
+		newErr := errors.NewError("gclass: GetResource", "Google auth failed", err)
+		return Resource{}, newErr
+	}
+
+	classChan := make(chan string)
+	classErrChan := make(chan error)
+	go getClass(svc, idSlice[0], classChan, classErrChan)
+
+	if isAnn {
+		r, err := svc.Courses.Announcements.Get(idSlice[0], idSlice[1]).Do()
+
+		if err != nil {
+			newErr := errors.NewError("gclass: classAnnouncements", "failed to get course announcements", err)
+			return Resource{}, newErr
+		}
+
+		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
+
+		if err != nil {
+			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+		} else {
+			resource.Posted = posted
+		}
+
+		resName := []rune(r.Text)
+
+		if len(resName) >= 50 {
+			resName = resName[:50]
+			resName = append(resName, '…')
+		}
+
+		resource.Name = string(resName)
+		resource.Link = r.AlternateLink
+		resource.Desc = r.Text
+		resource.ResLinks, err = resFromMaterials(r.Materials)
+
+		if err != nil {
+			newErr := errors.NewError("gclass: GetResource", "failed getting resource links from gclass announcement", err)
+			return Resource{}, newErr
+		}
+	} else {
+		r, err := svc.Courses.CourseWorkMaterials.Get(
+			idSlice[0], idSlice[1],
+		).Fields("title", "alternateLink", "creationTime", "description", "materials").Do()
+
+		if err != nil {
+			newErr := errors.NewError("gclass: classResources", "failed to get coursework materials", err)
+			return Resource{}, newErr
+		}
+
+		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
+	
+		if err != nil {
+			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+		} else {
+			resource.Posted = posted
+		}
+	
+		resource.Name = r.Title
+		resource.Link = r.AlternateLink
+		resource.Desc = r.Description
+		resource.ResLinks, err = resFromMaterials(r.Materials)
+
+		if err != nil {
+			newErr := errors.NewError("gclass: GetResource", "failed getting resource links from gclass resource", err)
+			return Resource{}, newErr
+		}
+	}
+
+	resource.Class, err = <-classChan, <-classErrChan
+	if err != nil {
+		newErr := errors.NewError("gclass: GetResource", "failed to get class name from ID", err)
+		return Resource{}, newErr
+	}
+
+	return resource, nil
+}
