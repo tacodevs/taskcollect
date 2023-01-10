@@ -1,4 +1,106 @@
-img#timetable {
+@use "../breakpoints" as bp;
+
+//img#timetable {
+//    display: block;
+//    margin: 0 auto;
+//}
+
+#timetable-img {
     display: block;
     margin: 0 auto;
+    padding: 2px;
+}
+
+#timetable {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 1050px; // Compensate for the height of date at the top
+
+    box-sizing: border-box;
+
+    background-color: #e0e0e0;
+    color: #000000;
+
+
+    .day {
+        display: block;
+        width: 20%;
+        box-sizing: border-box;
+        border-right: 1px solid #363637;
+        padding-bottom: 1.5em;
+
+        > h2 {
+            text-align: center;
+            font-size: 1.3em;
+        }
+
+        .lessons {
+            position: relative;
+        }
+
+        .lessons > .lesson {
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            min-height: 90px;
+            background-color: #ffffff;
+            padding: 5px;
+            width: 95%;
+            //border: 0px solid #000000;
+            box-sizing: border-box;
+
+            .class-name {
+                margin-top: 2px;
+                margin-bottom: 5px;
+                font-size: 1.1em;
+                font-weight: bold;
+            }
+
+            .notice, .teacher, .time-room {
+                font-size: 0.9em;
+                margin: 5px 0;
+            }
+
+            .notice {
+                font-weight: bold;
+            }
+        }
+    }
+
+    @include bp.xs {
+        .day {
+            width: 100%;
+        }
+        .lessons > .lesson {
+            position: static !important;
+            top: 0px !important;
+            min-height: 90px !important;
+        }
+    }
+
+    @include bp.sm {
+        .day {
+            width: 100%;
+        }
+        .lessons > .lesson {
+            position: static !important;
+            top: 0px !important;
+            min-height: 90px !important;
+        }
+    }
+
+    @include bp.md {
+        //
+    }
+
+    @include bp.lg {
+        //
+    }
+
+    @include bp.xl {
+        //
+    }
 }

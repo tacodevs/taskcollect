@@ -158,7 +158,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/styles.css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		//w.Header().Add("Cache-Control", "max-age=3600")
+		w.Header().Add("Cache-Control", "max-age=3600")
 
 		cssFile, err := os.Open(fp.Join(h.database.path, "styles.css"))
 		if err != nil {
@@ -444,7 +444,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		// NOTE: Perhaps still keep the png generation even though the main timetable will
 		// be replaced by a table, rather than image
 	} else if validAuth && res == "/timetable.png" {
-		genTimetable(creds, w)
+		genTimetableImg(creds, w)
 
 		// Invalid URL while logged in redirects to /timetable
 	} else if validAuth && invalidRes {

@@ -95,7 +95,16 @@ func initTemplates(resPath string) (*template.Template, error) {
 	//}
 	sortedFiles := files
 
-	templates := template.Must(template.ParseFiles(sortedFiles...))
+	funcMap := template.FuncMap{
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"sub": func(a, b int) int {
+			return a - b
+		},
+	}
+
+	templates := template.Must(template.New("").Funcs(funcMap).ParseFiles(sortedFiles...))
 	return templates, nil
 }
 

@@ -2,6 +2,28 @@ package main
 
 import "html/template"
 
+// Primary (page, head, body)
+
+type pageData struct {
+	PageType string
+	Head     headData
+	Body     bodyData
+}
+
+type headData struct {
+	Title string
+	//CssFiles []string
+}
+
+type bodyData struct {
+	ErrorData     errData
+	LoginData     loginData
+	TimetableData timetableData
+	ResData       resData
+	TasksData     tasksData
+	TaskData      taskData
+}
+
 // Error Page
 
 type errData struct {
@@ -18,17 +40,32 @@ type loginData struct {
 // Timetable
 
 type timetableData struct {
-	Img string
+	CurrentDay int
+	Days       []ttDay
+}
+
+type ttDay struct {
+	Day     string
+	Lessons []ttLesson
+}
+
+type ttLesson struct {
+	Class         string
+	FormattedTime string
+	Height        float64
+	TopOffset     float64
+	Room          string
+	Teacher       string
+	Notice        string
+	Color         string
+	BGColor       string
 }
 
 // Resources (/res page)
 
-type resItem struct {
-	Id       string
-	Name     string
-	Platform string //e.g. daymap, gclass
-	Posted   string
-	URL      string
+type resData struct {
+	Heading string
+	Classes []resClass
 }
 
 type resClass struct {
@@ -36,9 +73,12 @@ type resClass struct {
 	ResItems []resItem
 }
 
-type resData struct {
-	Heading string
-	Classes []resClass
+type resItem struct {
+	Id       string
+	Name     string
+	Platform string //e.g. daymap, gclass
+	Posted   string
+	URL      string
 }
 
 // Resource (single resource)
@@ -56,14 +96,9 @@ type resourceData struct {
 
 // Tasks
 
-type taskItem struct {
-	Id       string
-	Name     string
-	Platform string
-	Class    string
-	DueDate  string
-	Posted   string
-	URL      string
+type tasksData struct {
+	Heading   string
+	TaskTypes []taskType
 }
 
 type taskType struct {
@@ -72,9 +107,14 @@ type taskType struct {
 	Tasks      []taskItem
 }
 
-type tasksData struct {
-	Heading   string
-	TaskTypes []taskType
+type taskItem struct {
+	Id       string
+	Name     string
+	Platform string
+	Class    string
+	DueDate  string
+	Posted   string
+	URL      string
 }
 
 // Task (single task)
@@ -96,28 +136,6 @@ type taskData struct {
 	HasUpload    bool
 	Grade        string
 	Comment      template.HTML
-}
-
-// Primary (page, head, body)
-
-type headData struct {
-	Title string
-	//CssFiles []string
-}
-
-type bodyData struct {
-	ErrorData     errData
-	LoginData     loginData
-	TimetableData timetableData
-	ResData       resData
-	TasksData     tasksData
-	TaskData      taskData
-}
-
-type pageData struct {
-	PageType string
-	Head     headData
-	Body     bodyData
 }
 
 var loginPageData = pageData{

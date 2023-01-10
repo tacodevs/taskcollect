@@ -1,15 +1,12 @@
 @mixin styling-1 {
     border-radius: 5px;
     font-family: var(--main-font);
-    font-size: 11pt;
-}
-
-input[type="file"]::-webkit-file-upload-button {
-    @include styling-1;
+    font-size: 15px;
 }
 
 input[type="submit"],
 input[type="file"]::-webkit-file-upload-button {
+    @include styling-1;
     background: var(--accent-color);
     border: none;
     color: white;
@@ -42,6 +39,6 @@ input[type="file"] {
 }
 
 input[type="file"]::-webkit-file-upload-button {
-    padding: 5px 12px;
+    padding: 5px 12px !important;
     margin: 0 10px 0 5px;
 }

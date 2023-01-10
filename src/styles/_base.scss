@@ -1,3 +1,5 @@
+@use "breakpoints" as bp;
+
 :root {
     --font-size: 16px;
     --main-font: "Lato", sans-serif;
@@ -32,6 +34,10 @@ body {
     font-family: var(--main-font);
     font-size: var(--font-size);
     color: var(--fg-color);
+
+    @include bp.xs {
+        margin: 3.5em 0 3em 0;
+    }
 }
 
 h1 {
@@ -76,7 +82,7 @@ summary {
     padding: 10px;
 }
 
-div:hover,
+details div:hover,
 summary:hover {
     background: var(--th-color);
 }
