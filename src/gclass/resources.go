@@ -1,30 +1,13 @@
 package gclass
 
 import (
-	"context"
-	"encoding/json"
-	"strings"
 	"sync"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
-	"google.golang.org/api/option"
 
 	"main/errors"
 )
-
-type Resource struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     string
-	Posted   time.Time
-	ResLinks [][2]string
-	Platform string
-	Id       string
-}
 
 // Get a list of announcements for a Google Classroom class.
 func classAnnouncements(
@@ -134,46 +117,9 @@ func classResources(
 
 // Get a list of resources from Google Classroom for a user.
 func ListRes(creds User, r chan []Resource, e chan error) {
-	// TODO: Move this Google auth init code to a separate file to deduplicate code.
-
-	ctx := context.Background()
-
-	gAuthConfig, err := google.ConfigFromJSON(
-		creds.ClientID,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		classroom.ClassroomAnnouncementsReadonlyScope,
-	)
-
+	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: ListRes", "failed to get config from JSON", err)
-		r <- nil
-		e <- newErr
-		return
-	}
-
-	reader := strings.NewReader(creds.Token)
-	oauthTok := &oauth2.Token{}
-
-	err = json.NewDecoder(reader).Decode(oauthTok)
-	if err != nil {
-		newErr := errors.NewError("gclass: ListRes", "failed to decode JSON", err)
-		r <- nil
-		e <- newErr
-		return
-	}
-
-	client := gAuthConfig.Client(context.Background(), oauthTok)
-
-	svc, err := classroom.NewService(
-		ctx,
-		option.WithHTTPClient(client),
-	)
-
-	if err != nil {
-		newErr := errors.NewError("gclass: ListRes", "failed to create new service", err)
+		newErr := errors.NewError("gclass: ListRes", "Google auth failed", err)
 		r <- nil
 		e <- newErr
 		return

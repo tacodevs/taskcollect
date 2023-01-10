@@ -1,27 +1,32 @@
 package gclass
 
 import (
-	"context"
-	"encoding/json"
-	"strings"
+	"fmt"
 	"sync"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/classroom/v1"
-	"google.golang.org/api/option"
 
 	"main/errors"
 )
 
 // Retrieve Google Classroom task information using a workload submission point ID.
-func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class string, task *Task, taskWG *sync.WaitGroup, gErrChan chan error) {
+func getTask(
+	studSub *classroom.StudentSubmission, svc *classroom.Service, class string,
+	task *Task, taskWG *sync.WaitGroup, gErrChan chan error,
+) {
 	defer taskWG.Done()
 
 	gcTask, err := svc.Courses.CourseWork.Get(
 		studSub.CourseId, studSub.CourseWorkId,
-	).Fields("creationTime", "dueTime", "dueDate", "title", "alternateLink").Do()
+	).Fields(
+		"alternateLink",
+		"creationTime",
+		"dueTime",
+		"dueDate",
+		"maxPoints",
+		"title",
+	).Do()
 
 	if err != nil {
 		newErr := errors.NewError("gclass: getTask", "failed to get coursework", err)
@@ -66,6 +71,11 @@ func getTask(studSub *classroom.StudentSubmission, svc *classroom.Service, class
 		task.Submitted = true
 	}
 
+	if studSub.AssignedGrade != 0 && gcTask.MaxPoints != 0 {
+		percent := studSub.AssignedGrade / gcTask.MaxPoints * 100
+		task.Grade = fmt.Sprintf("%.f%%", percent)
+	}
+
 	task.Name = gcTask.Title
 	task.Class = class
 	task.Link = gcTask.AlternateLink
@@ -82,6 +92,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 		"studentSubmissions/state",
 		"studentSubmissions/courseId",
 		"studentSubmissions/courseWorkId",
+		"studentSubmissions/assignedGrade",
 	).Do()
 
 	if err != nil {
@@ -106,45 +117,9 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 
 // Retrieve a list of tasks from Google Classroom for a user.
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
-	ctx := context.Background()
-
-	gAuthConfig, err := google.ConfigFromJSON(
-		creds.ClientID,
-		classroom.ClassroomCoursesReadonlyScope,
-		classroom.ClassroomStudentSubmissionsMeReadonlyScope,
-		classroom.ClassroomCourseworkMeScope,
-		classroom.ClassroomCourseworkmaterialsReadonlyScope,
-		classroom.ClassroomAnnouncementsReadonlyScope,
-	)
-
+	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to get config from JSON", err)
-		t <- nil
-		e <- newErr
-		return
-	}
-
-	r := strings.NewReader(creds.Token)
-	oauthTok := &oauth2.Token{}
-
-	err = json.NewDecoder(r).Decode(oauthTok)
-	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to decode JSON", err)
-		t <- nil
-		e <- newErr
-		return
-	}
-
-	client := gAuthConfig.Client(context.Background(), oauthTok)
-
-	svc, err := classroom.NewService(
-		ctx,
-		option.WithHTTPClient(client),
-	)
-
-	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to create new service", err)
-		t <- nil
+		newErr := errors.NewError("gclass: ListTasks", "Google auth failed", err)
 		e <- newErr
 		return
 	}
@@ -194,11 +169,17 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		"notDue":    {},
 		"overdue":   {},
 		"submitted": {},
+		"graded":    {},
 	}
 
 	for x := 0; x < len(tasks); x++ {
 		for y := 0; y < len(tasks[x]); y++ {
-			if tasks[x][y].Submitted {
+			if tasks[x][y].Grade != "" {
+				gcTasks["graded"] = append(
+					gcTasks["graded"],
+					tasks[x][y],
+				)
+			} else if tasks[x][y].Submitted {
 				gcTasks["submitted"] = append(
 					gcTasks["submitted"],
 					tasks[x][y],

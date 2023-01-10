@@ -16,13 +16,13 @@
 
 {{if ne .Body.TaskData.Desc ""}}
     <hr>
-    <h4>Task Description</h4>
+    <h4>Task description</h4>
     <p>{{.Body.TaskData.Desc}}</p>
 {{end}}
 
 {{if eq .Body.TaskData.HasResLinks true}}
     <hr>
-    <h4>Linked Resources</h4>
+    <h4>Linked resources</h4>
     <ul>
         {{range $name, $url := .Body.TaskData.ResLinks}}
             <li>
