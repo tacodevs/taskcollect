@@ -473,8 +473,6 @@ func genTimetable(creds tcUser) (timetableData, error) {
 		data.Days = append(data.Days, d)
 	}
 
-	// NOTE: must subtract 1 for comparison within timetable template
-	// TODO: Create a custom function that is loaded into the template
 	data.CurrentDay = today
 
 	return data, nil
