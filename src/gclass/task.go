@@ -180,38 +180,10 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 	}
 
-	for _, m := range gc.Materials {
-		var link, name string
-
-		if m.DriveFile != nil {
-			link = m.DriveFile.DriveFile.AlternateLink
-			if strings.Contains(link, "://drive.google.com/") {
-				link, err = getDirectDriveLink(m.DriveFile.DriveFile.AlternateLink)
-				if err != nil {
-					newErr := errors.NewError("gclass: GetTask", "failed to get direct drive link", err)
-					return Task{}, newErr
-				}
-			}
-			name = m.DriveFile.DriveFile.Title
-		} else if m.Form != nil {
-			link = m.Form.FormUrl
-			name = m.Form.Title
-		} else if m.YoutubeVideo != nil {
-			link = m.YoutubeVideo.AlternateLink
-			name = m.YoutubeVideo.Title
-		} else if m.Link != nil {
-			link = m.Link.Url
-			name = m.Link.Title
-		} else {
-			continue
-		}
-
-		if name == "" {
-			name = link
-		}
-
-		resLink := [2]string{link, name}
-		task.ResLinks = append(task.ResLinks, resLink)
+	task.ResLinks, err = resFromMaterials(gc.Materials)
+	if err != nil {
+		newErr := errors.NewError("gclass: GetTask", "failed getting resource links from task", err)
+		return Task{}, newErr
 	}
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {

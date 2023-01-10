@@ -1,0 +1,27 @@
+{{define "resource"}}
+{{template "nav" -}}
+<h1>{{.Body.ResourceData.Name}}</h1>
+<h3>{{.Body.ResourceData.Class}}</h3>
+
+<a href="{{.Body.ResourceData.URL}}">View task in original platform</a>
+<hr>
+<h4>Posted {{.Body.ResourceData.Posted}}</h4>
+
+{{if ne .Body.ResourceData.Desc ""}}
+    <hr>
+    <h4>Resource information</h4>
+    <p>{{.Body.ResourceData.Desc}}</p>
+{{end}}
+
+{{if eq .Body.ResourceData.HasResLinks true}}
+    <hr>
+    <h4>Linked resources</h4>
+    <ul>
+        {{range $name, $url := .Body.ResourceData.ResLinks}}
+            <li>
+                <a href="{{$url}}">{{$name}}</a>
+            </li>
+        {{end}}
+    </ul>
+{{end}}
+{{end}}
