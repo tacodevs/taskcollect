@@ -31,6 +31,11 @@ body {
   font-size: var(--font-size);
   color: var(--fg-color);
 }
+@media (min-width: 0) and (max-width: 479px) {
+  body {
+    margin: 3.5em 0 3em 0;
+  }
+}
 
 h1 {
   font-size: 2em;
@@ -74,7 +79,7 @@ summary {
   padding: 10px;
 }
 
-div:hover,
+details div:hover,
 summary:hover {
   background: var(--th-color);
 }
@@ -158,6 +163,7 @@ nav {
   top: 0;
   left: 0;
   position: fixed;
+  z-index: 5;
   margin: 0;
   padding: 12px 20px;
   width: 100vw;
@@ -174,14 +180,11 @@ nav a:hover {
   text-decoration: underline 3px solid var(--accent-color);
 }
 
+input[type=submit],
 input[type=file]::-webkit-file-upload-button {
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 11pt;
-}
-
-input[type=submit],
-input[type=file]::-webkit-file-upload-button {
+  font-size: 15px;
   background: var(--accent-color);
   border: none;
   color: white;
@@ -214,7 +217,7 @@ input[type=file] {
 }
 
 input[type=file]::-webkit-file-upload-button {
-  padding: 5px 12px;
+  padding: 5px 12px !important;
   margin: 0 10px 0 5px;
 }
 
@@ -238,7 +241,7 @@ form[action="/auth"] h4 {
   width: 100%;
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 11pt;
+  font-size: 15px;
 }
 form[action="/auth"] input#usr,
 form[action="/auth"] input#pwd,
@@ -249,7 +252,7 @@ form[action="/auth"] select#school {
   width: 100%;
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 11pt;
+  font-size: 15px;
 }
 form[action="/auth"] select#school {
   padding: 5px 5px !important;
@@ -257,7 +260,7 @@ form[action="/auth"] select#school {
 form[action="/auth"] input[type=submit] {
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 11pt;
+  font-size: 15px;
   margin-top: 14px;
   padding: 10px 20px !important;
   width: 100%;
@@ -288,7 +291,77 @@ form[action="/auth"] input[type=submit] {
   }
 }
 
-img#timetable {
+#timetable-img {
   display: block;
   margin: 0 auto;
+  padding: 2px;
+}
+
+#timetable {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 1050px;
+  box-sizing: border-box;
+  background-color: #e0e0e0;
+  color: #000000;
+}
+#timetable .day {
+  display: block;
+  width: 20%;
+  box-sizing: border-box;
+  border-right: 1px solid #363637;
+  padding-bottom: 1.5em;
+}
+#timetable .day > h2 {
+  text-align: center;
+  font-size: 1.3em;
+}
+#timetable .day .lessons {
+  position: relative;
+}
+#timetable .day .lessons > .lesson {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  min-height: 90px;
+  background-color: #ffffff;
+  padding: 5px;
+  width: 95%;
+  box-sizing: border-box;
+}
+#timetable .day .lessons > .lesson .class-name {
+  margin-top: 2px;
+  margin-bottom: 5px;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+#timetable .day .lessons > .lesson .notice, #timetable .day .lessons > .lesson .teacher, #timetable .day .lessons > .lesson .time-room {
+  font-size: 0.9em;
+  margin: 5px 0;
+}
+#timetable .day .lessons > .lesson .notice {
+  font-weight: bold;
+}
+@media (min-width: 0) and (max-width: 479px) {
+  #timetable .day {
+    width: 100%;
+  }
+  #timetable .lessons > .lesson {
+    position: static !important;
+    top: 0px !important;
+    min-height: 90px !important;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  #timetable .day {
+    width: 100%;
+  }
+  #timetable .lessons > .lesson {
+    position: static !important;
+    top: 0px !important;
+    min-height: 90px !important;
+  }
 }

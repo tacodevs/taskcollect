@@ -40,8 +40,41 @@ $breakpoints: (
     }
 }
 
-@mixin breakpoint($min-bp: 0) {
+// At least one value must be provided
+@mixin breakpoint($min-bp: null, $max-bp: null) {
+    @media (min-width: $min-bp) and (max-width: $max-bp) {
+        @content;
+    }
+}
+
+@mixin breakpoint-min($min-bp: null) {
     @media (min-width: $min-bp) {
         @content;
     }
+}
+
+@mixin breakpoint-max($max-bp: null) {
+    @media (max-width: $max-bp) {
+        @content;
+    }
+}
+
+@include xs {
+    //
+}
+
+@include sm {
+    //
+}
+
+@include md {
+    //
+}
+
+@include lg {
+    //
+}
+
+@include xl {
+    //
 }
