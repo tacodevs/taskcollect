@@ -9,8 +9,10 @@
     {{- template "error" . -}}
 {{else if eq .PageType "grades"}}
     {{- template "grades" . -}}
-{{else if eq .PageType "res"}}
-    {{- template "res" . -}}
+{{else if eq .PageType "resource"}}
+    {{- template "resource" . -}}
+{{else if eq .PageType "resources"}}
+    {{- template "resources" . -}}
 {{else if eq .PageType "tasks"}}
     {{- template "tasks" . -}}
 {{else if eq .PageType "task"}}

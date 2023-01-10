@@ -274,6 +274,34 @@ func getTask(platform, taskId string, creds tcUser) (task, error) {
 	return assignment, err
 }
 
+// Get a resource from the given platform.
+func getResource(platform, resId string, creds tcUser) (resource, error) {
+	res := resource{}
+	err := errNoPlatform.AsError()
+
+	switch platform {
+	case "gclass":
+		gcCreds := gclass.User{
+			ClientID: creds.GAuthID,
+			Timezone: creds.Timezone,
+			Token:    creds.SiteTokens["gclass"],
+		}
+		gcRes, gcErr := gclass.GetResource(gcCreds, resId)
+		res = resource(gcRes)
+		err = gcErr
+	case "daymap":
+		dmCreds := daymap.User{
+			Timezone: creds.Timezone,
+			Token:    creds.SiteTokens["daymap"],
+		}
+		dmRes, dmErr := daymap.GetResource(dmCreds, resId)
+		res = resource(dmRes)
+		err = dmErr
+	}
+
+	return res, err
+}
+
 // Submit task to a given platform.
 func submitTask(creds tcUser, platform, taskId string) error {
 	err := errNoPlatform.AsError()

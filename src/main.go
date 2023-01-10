@@ -266,6 +266,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/assets/", h.assetHandler)
+	mux.HandleFunc("/res", h.resHandler)
+	mux.HandleFunc("/res/", h.resourceHandler)
 	mux.HandleFunc("/tasks", h.tasksHandler)
 	mux.HandleFunc("/tasks/", h.taskHandler)
 	mux.HandleFunc("/login", h.loginHandler)

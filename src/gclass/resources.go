@@ -9,17 +9,6 @@ import (
 	"main/errors"
 )
 
-type Resource struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     string
-	Posted   time.Time
-	ResLinks [][2]string
-	Platform string
-	Id       string
-}
-
 // Get a list of announcements for a Google Classroom class.
 func classAnnouncements(
 	course *classroom.Course, svc *classroom.Service, annChan chan []Resource,

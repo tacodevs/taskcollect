@@ -11,17 +11,6 @@ import (
 	"main/errors"
 )
 
-type Resource struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     string
-	Posted   time.Time
-	ResLinks [][2]string
-	Platform string
-	Id       string
-}
-
 // Returns the next school resource type and its index, as well as a corresponding planDiv or fileDiv.
 func nextRes(buf, planDiv, fileDiv string) (bool, int, string) {
 	planIdx := strings.Index(buf, planDiv)

@@ -535,6 +535,50 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 	return data
 }
 
+// Generate the HTML page for viewing a single resource
+func genResPage(res resource, creds tcUser) pageData {
+	data := pageData{
+		PageType: "resource",
+		Head: headData{
+			Title: res.Name,
+		},
+		Body: bodyData{
+			ResourceData: resourceData{
+				Id:          res.Id,
+				Name:        res.Name,
+				Platform:    res.Platform,
+				Class:       res.Class,
+				URL:         res.Link,
+				Desc:        "",
+				Posted:      genDueStr(res.Posted, creds),
+				ResLinks:    nil,
+				HasResLinks: false,
+			},
+		},
+	}
+
+	if res.Desc != "" {
+		resDesc := res.Desc
+		// Escape strings since it will be converted to safe HTML after
+		resDesc = html.EscapeString(resDesc)
+		resDesc = strings.ReplaceAll(resDesc, "\n", "<br>")
+		data.Body.ResourceData.Desc = template.HTML(resDesc)
+	}
+
+	if res.ResLinks != nil {
+		data.Body.ResourceData.HasResLinks = true
+
+		data.Body.ResourceData.ResLinks = make(map[string]string)
+		for i := 0; i < len(res.ResLinks); i++ {
+			url := res.ResLinks[i][0]
+			name := res.ResLinks[i][1]
+			data.Body.ResourceData.ResLinks[name] = url
+		}
+	}
+
+	return data
+}
+
 // Generate a resource link
 func genHtmlResLink(className string, res []resource, creds tcUser) resClass {
 	class := resClass{
@@ -628,7 +672,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 		return data, nil
 
 	} else if resURL == "/res" {
-		data.PageType = "res"
+		data.PageType = "resources"
 		data.Head.Title = "Resources"
 		data.Body.ResData.Heading = "Resources"
 
