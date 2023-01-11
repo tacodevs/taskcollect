@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -21,14 +20,12 @@ var logFileOpenFailCount = 0
 var logFileOpenFailLimit = 20
 var logFileName string
 
-// TODO: Implement more customized logging formatting, such as the date formatting
-
 var (
-	infoLogger  = log.New(&buf, "INFO: ", log.Ldate|log.Ltime)
-	debugLogger = log.New(&buf, "DEBUG: ", log.Ldate|log.Ltime)
-	warnLogger  = log.New(&buf, "WARN: ", log.Ldate|log.Ltime)
-	errorLogger = log.New(&buf, "ERROR: ", log.Ldate|log.Ltime)
-	fatalLogger = log.New(&buf, "FATAL: ", log.Ldate|log.Ltime)
+	infoLogger  = newLogger(&buf, "INFO: ")
+	debugLogger = newLogger(&buf, "DEBUG: ")
+	warnLogger  = newLogger(&buf, "WARN: ")
+	errorLogger = newLogger(&buf, "ERROR: ")
+	fatalLogger = newLogger(&buf, "FATAL: ")
 )
 
 // Set up the logger to use a config file. Invoking it will start logging to file as well as console.
@@ -84,10 +81,11 @@ func write() {
 func Info(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
-		infoLogger.Printf(a, v...)
+		infoLogger.logWrite(a, v...)
+
 	case error:
 		err := fmt.Errorf("%v", a)
-		infoLogger.Printf(err.Error(), v...)
+		infoLogger.logWrite(err.Error(), v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -98,10 +96,10 @@ func Info(format any, v ...any) {
 func Debug(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
-		debugLogger.Printf(a, v...)
+		debugLogger.logWrite(a, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
-		debugLogger.Printf(err.Error(), v...)
+		debugLogger.logWrite(err.Error(), v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -111,10 +109,10 @@ func Debug(format any, v ...any) {
 func Warn(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
-		warnLogger.Printf(a, v...)
+		warnLogger.logWrite(a, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
-		warnLogger.Printf(err.Error(), v...)
+		warnLogger.logWrite(err.Error(), v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -124,10 +122,10 @@ func Warn(format any, v ...any) {
 func Error(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
-		errorLogger.Printf(a, v...)
+		errorLogger.logWrite(a, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
-		errorLogger.Printf(err.Error(), v...)
+		errorLogger.logWrite(err.Error(), v...)
 	default:
 		Fatal(errInvalidInterfaceType)
 	}
@@ -138,16 +136,16 @@ func Error(format any, v ...any) {
 func Fatal(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
-		fatalLogger.Printf(a, v...)
+		fatalLogger.logWrite(a, v...)
 	case errors.ErrorWrapper:
 		err := a.AsString()
-		fatalLogger.Printf(err, v...)
+		fatalLogger.logWrite(err, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
-		fatalLogger.Printf(err.Error(), v...)
+		fatalLogger.logWrite(err.Error(), v...)
 
 	default:
-		fatalLogger.Printf(errInvalidInterfaceType.Error())
+		fatalLogger.logWrite(errInvalidInterfaceType.Error())
 	}
 	write()
 	os.Exit(1)
