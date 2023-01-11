@@ -35,7 +35,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	tmplPath := fp.Join(resPath, "templates")
 	err := os.MkdirAll(tmplPath, os.ModePerm)
 	if err != nil {
-		newErr := errors.NewError("main: initTemplates", "could not make 'templates' directory", err)
+		newErr := errors.NewError("main.initTemplates", "could not make 'templates' directory", err)
 		return nil, newErr
 	}
 
@@ -142,25 +142,25 @@ func getConfig(cfgPath string) (config, error) {
 
 	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
-		newErr := errors.NewError("main: getConfig", "failed to open config.json", err)
+		newErr := errors.NewError("main.getConfig", "failed to open config.json", err)
 		return result, newErr
 	}
 
 	b, err := io.ReadAll(jsonFile)
 	if err != nil {
-		newErr := errors.NewError("main: getConfig", "failed to read config.json", err)
+		newErr := errors.NewError("main.getConfig", "failed to read config.json", err)
 		return result, newErr
 	}
 
 	err = jsonFile.Close()
 	if err != nil {
-		newErr := errors.NewError("main: getConfig", "failed to close config.json", err)
+		newErr := errors.NewError("main.getConfig", "failed to close config.json", err)
 		return result, newErr
 	}
 
 	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
 	if err != nil {
-		newErr := errors.NewError("main: getConfig", "failed to open config.json", err)
+		newErr := errors.NewError("main.getConfig", "failed to open config.json", err)
 		return result, newErr
 	}
 	defer jsonFile.Close()
@@ -168,7 +168,7 @@ func getConfig(cfgPath string) (config, error) {
 	if len(b) > 0 {
 		err = json.Unmarshal(b, &result)
 		if err != nil {
-			newErr := errors.NewError("main: getConfig", "failed to unmarshal config.json", err)
+			newErr := errors.NewError("main.getConfig", "failed to unmarshal config.json", err)
 			return result, newErr
 		}
 	} else {
@@ -177,13 +177,13 @@ func getConfig(cfgPath string) (config, error) {
 
 	rawJson, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
-		newErr := errors.NewError("main: getConfig", "failed to marshal config.json", err)
+		newErr := errors.NewError("main.getConfig", "failed to marshal config.json", err)
 		return config{}, newErr
 	}
 
 	_, err = jsonFile.Write(rawJson)
 	if err != nil {
-		newErr := errors.NewError("main: getConfig", "failed to write to config.json", err)
+		newErr := errors.NewError("main.getConfig", "failed to write to config.json", err)
 		return result, newErr
 	}
 
@@ -203,6 +203,7 @@ func main() {
 	}
 
 	fmt.Println(tcVersion)
+	fmt.Println("")
 
 	curUser, err := user.Current()
 	if err != nil {
@@ -233,6 +234,8 @@ func main() {
 			logger.Info("Log file set up successfully")
 		}
 	}
+
+	logger.Info("Running %v", tcVersion)
 
 	var password string
 	fmt.Print("Password to Redis database: ")

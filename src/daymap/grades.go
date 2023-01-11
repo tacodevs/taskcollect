@@ -69,15 +69,15 @@ func findGrade(page *string) (string, error) {
 
 		it, err := strconv.ParseFloat(st, 64)
 		if err != nil {
-			return "", errors.NewError("daymap: GetTask", "(1) string to float64 conversion failed", err)
+			return "", errors.NewError("daymap.GetTask", "(1) string to float64 conversion failed", err)
 		}
 
 		ib, err := strconv.ParseFloat(sb, 64)
 		if err != nil {
-			return "", errors.NewError("daymap: GetTask", "(2) string to float64 conversion failed", err)
+			return "", errors.NewError("daymap.GetTask", "(2) string to float64 conversion failed", err)
 		}
 
-		percent := it/ib * 100
+		percent := it / ib * 100
 
 		if grade == "" {
 			grade = fmt.Sprintf("%.f%%", percent)
@@ -97,7 +97,7 @@ func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGrou
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		*e = errors.NewError("daymap: GetTask", "GET request failed", err)
+		*e = errors.NewError("daymap.GetTask", "GET request failed", err)
 		return
 	}
 
@@ -105,13 +105,13 @@ func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGrou
 
 	resp, err := client.Do(req)
 	if err != nil {
-		*e = errors.NewError("daymap: GetTask", "failed to get resp", err)
+		*e = errors.NewError("daymap.GetTask", "failed to get resp", err)
 		return
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		*e = errors.NewError("daymap: GetTask", "failed to read resp.Body", err)
+		*e = errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
 		return
 	}
 
@@ -204,7 +204,7 @@ func GradedTasks(creds User, t chan []Task, e chan error) {
 
 		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
-			newErr := errors.NewError("daymap: ListTasks", "failed to parse time (postedString)", err)
+			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
 			t <- nil
 			e <- newErr
 			return
@@ -235,7 +235,7 @@ func GradedTasks(creds User, t chan []Task, e chan error) {
 
 		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
-			newErr := errors.NewError("daymap: ListTasks", "failed to parse time (dueString)", err)
+			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
 			t <- nil
 			e <- newErr
 			return
