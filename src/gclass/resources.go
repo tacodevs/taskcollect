@@ -24,7 +24,7 @@ func classAnnouncements(
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: classAnnouncements", "failed to get course announcements", err)
+		newErr := errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
 		errChan <- newErr
 		return
 	}
@@ -78,7 +78,7 @@ func classResources(
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: classResources", "failed to get coursework materials", err)
+		newErr := errors.NewError("gclass.classResources", "failed to get coursework materials", err)
 		gErrChan <- newErr
 		return
 	}
@@ -119,7 +119,7 @@ func classResources(
 func ListRes(creds User, r chan []Resource, e chan error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: ListRes", "Google auth failed", err)
+		newErr := errors.NewError("gclass.ListRes", "Google auth failed", err)
 		r <- nil
 		e <- newErr
 		return
@@ -131,7 +131,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: ListRes", "failed to get response", err)
+		newErr := errors.NewError("gclass.ListRes", "failed to get response", err)
 		r <- nil
 		e <- newErr
 		return

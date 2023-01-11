@@ -232,7 +232,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		timetable, err := genTimetable(creds)
 		if err != nil {
-			newErr := errors.NewError("main: genRes", "failed to generate timetable", err)
+			newErr := errors.NewError("main.genRes", "failed to generate timetable", err)
 			return data, newErr
 		}
 
@@ -245,7 +245,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		tasks, err := getTasks(creds)
 		if err != nil {
-			newErr := errors.NewError("main: genRes", "failed to get tasks", err)
+			newErr := errors.NewError("main.genRes", "failed to get tasks", err)
 			return data, newErr
 		}
 
@@ -308,7 +308,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		classes, resources, err := getResources(creds)
 		if err != nil {
-			newErr := errors.NewError("main: genRes", "failed to get resources", err)
+			newErr := errors.NewError("main.genRes", "failed to get resources", err)
 			return data, newErr
 		}
 
@@ -326,7 +326,7 @@ func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
 
 		tasks, err := gradedTasks(creds)
 		if err != nil {
-			newErr := errors.NewError("main: genRes", "failed to get graded tasks", err)
+			newErr := errors.NewError("main.genRes", "failed to get graded tasks", err)
 			return data, newErr
 		}
 

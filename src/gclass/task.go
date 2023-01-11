@@ -33,7 +33,7 @@ type Task struct {
 func getDirectDriveLink(inputUrl string) (string, error) {
 	urlResult, err := url.Parse(inputUrl)
 	if err != nil {
-		newErr := errors.NewError("gclass: getDirectDriveLink", "URL parse error", err)
+		newErr := errors.NewError("gclass.getDirectDriveLink", "URL parse error", err)
 		return "", newErr
 	}
 
@@ -42,7 +42,7 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 
 	splitUrl := strings.Split(urlResult.Path, "/")
 	if len(splitUrl) < 4 {
-		newErr := errors.NewError("gclass: getDirectDriveLink", "split URL does not contain enough elements", nil)
+		newErr := errors.NewError("gclass.getDirectDriveLink", "split URL does not contain enough elements", nil)
 		return "", newErr
 	}
 
@@ -54,7 +54,7 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan error) {
 	course, err := svc.Courses.Get(courseId).Fields("name").Do()
 	if err != nil {
-		newErr := errors.NewError("gclass: getClass", "failed to get class", err)
+		newErr := errors.NewError("gclass.getClass", "failed to get class", err)
 		classChan <- ""
 		classErrChan <- newErr
 		return
@@ -78,7 +78,7 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: getGCTask", "failed to get task information", err)
+		newErr := errors.NewError("gclass.getGCTask", "failed to get task information", err)
 		taskChan <- classroom.CourseWork{}
 		taskErrChan <- newErr
 		return
@@ -98,7 +98,7 @@ func GetTask(creds User, id string) (Task, error) {
 
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "Google auth failed", err)
+		newErr := errors.NewError("gclass.GetTask", "Google auth failed", err)
 		return Task{}, newErr
 	}
 
@@ -114,19 +114,19 @@ func GetTask(creds User, id string) (Task, error) {
 		cid[0], cid[1], cid[2],
 	).Fields("state", "assignedGrade", "assignmentSubmission").Do()
 	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "failed to get student submission", err)
+		newErr := errors.NewError("gclass.GetTask", "failed to get student submission", err)
 		return Task{}, newErr
 	}
 
 	gc, err := <-taskChan, <-taskErrChan
 	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "from taskErrChan", err)
+		newErr := errors.NewError("gclass.GetTask", "from taskErrChan", err)
 		return Task{}, newErr
 	}
 
 	class, err := <-classChan, <-classErrChan
 	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "from classErrChan", err)
+		newErr := errors.NewError("gclass.GetTask", "from classErrChan", err)
 		return Task{}, newErr
 	}
 
@@ -153,7 +153,7 @@ func GetTask(creds User, id string) (Task, error) {
 				if strings.Contains(link, "://drive.google.com/") {
 					link, err = getDirectDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
-						newErr := errors.NewError("gclass: GetTask", "failed to get direct drive link", err)
+						newErr := errors.NewError("gclass.GetTask", "failed to get direct drive link", err)
 						return Task{}, newErr
 					}
 				}
@@ -182,7 +182,7 @@ func GetTask(creds User, id string) (Task, error) {
 
 	task.ResLinks, err = resFromMaterials(gc.Materials)
 	if err != nil {
-		newErr := errors.NewError("gclass: GetTask", "failed getting resource links from task", err)
+		newErr := errors.NewError("gclass.GetTask", "failed getting resource links from task", err)
 		return Task{}, newErr
 	}
 
@@ -246,7 +246,7 @@ https://codeberg.org/kvo/taskcollect/issues/3
 func SubmitTask(creds User, id string) error {
 	/*svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: SubmitTask", "Google auth failed", err)
+		newErr := errors.NewError("gclass.SubmitTask", "Google auth failed", err)
 		e <- newErr
 		return
 	}
@@ -257,7 +257,7 @@ func SubmitTask(creds User, id string) error {
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: SubmitTask", "error turning in task", err)
+		newErr := errors.NewError("gclass.SubmitTask", "error turning in task", err)
 		return newErr
 	}*/
 

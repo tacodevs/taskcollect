@@ -46,7 +46,7 @@ func GetTask(creds User, id string) (Task, error) {
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap: GetTask", "GET request failed", err)
+		newErr := errors.NewError("daymap.GetTask", "GET request failed", err)
 		return Task{}, newErr
 	}
 
@@ -54,13 +54,13 @@ func GetTask(creds User, id string) (Task, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap: GetTask", "failed to get resp", err)
+		newErr := errors.NewError("daymap.GetTask", "failed to get resp", err)
 		return Task{}, newErr
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: GetTask", "failed to read resp.Body", err)
+		newErr := errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
 		return Task{}, newErr
 	}
 
@@ -150,7 +150,7 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 
 		if err != nil {
-			newErr := errors.NewError("daymap: GetTask", "failed to parse time", err)
+			newErr := errors.NewError("daymap.GetTask", "failed to parse time", err)
 			return Task{}, newErr
 		}
 
@@ -326,7 +326,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	req, err := http.NewRequest("GET", removeUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap: RemoveWork", "GET request failed", err)
+		newErr := errors.NewError("daymap.RemoveWork", "GET request failed", err)
 		return newErr
 	}
 
@@ -334,13 +334,13 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap: RemoveWork", "failed to get resp", err)
+		newErr := errors.NewError("daymap.RemoveWork", "failed to get resp", err)
 		return newErr
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: RemoveWork", "failed to read resp.Body", err)
+		newErr := errors.NewError("daymap.RemoveWork", "failed to read resp.Body", err)
 		return newErr
 	}
 
@@ -475,7 +475,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	post, err := http.NewRequest("POST", rwfurl, rwData)
 	if err != nil {
-		newErr := errors.NewError("daymap: RemoveWork", "POST request failed", err)
+		newErr := errors.NewError("daymap.RemoveWork", "POST request failed", err)
 		return newErr
 	}
 
@@ -484,7 +484,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	fail, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap: RemoveWork", "error returning response body", err)
+		newErr := errors.NewError("daymap.RemoveWork", "error returning response body", err)
 		return newErr
 	}
 

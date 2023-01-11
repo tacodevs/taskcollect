@@ -28,7 +28,7 @@ func get(webUrl, username, password string) (string, string, error) {
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "failed to create cookiejar", err)
+		newErr := errors.NewError("daymap.get", "failed to create cookiejar", err)
 		return "", "", newErr
 	}
 
@@ -36,13 +36,13 @@ func get(webUrl, username, password string) (string, string, error) {
 
 	s1, err := client.Get(webUrl)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "GET request failed", err)
+		newErr := errors.NewError("daymap.get", "GET request failed", err)
 		return "", "", newErr
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "failed to read s1.Body", err)
+		newErr := errors.NewError("daymap.get", "failed to read s1.Body", err)
 		return "", "", newErr
 	}
 
@@ -81,20 +81,20 @@ func get(webUrl, username, password string) (string, string, error) {
 
 	s2req, err := http.NewRequest("POST", s2url, s2data)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "(s2) POST request failed", err)
+		newErr := errors.NewError("daymap.get", "(s2) POST request failed", err)
 		return "", "", newErr
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s2, err := client.Do(s2req)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "s2req", err)
+		newErr := errors.NewError("daymap.get", "s2req", err)
 		return "", "", newErr
 	}
 
 	s2body, err := io.ReadAll(s2.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "failed to read s2.Body", err)
+		newErr := errors.NewError("daymap.get", "failed to read s2.Body", err)
 		return "", "", newErr
 	}
 
@@ -159,20 +159,20 @@ func get(webUrl, username, password string) (string, string, error) {
 	s3url := "https://portal.daymap.net/daymapidentity/adfs/gihs/"
 	s3req, err := http.NewRequest("POST", s3url, s3data)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "(s3) POST request failed", err)
+		newErr := errors.NewError("daymap.get", "(s3) POST request failed", err)
 		return "", "", newErr
 	}
 
 	s3req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s3, err := client.Do(s3req)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "s3req", err)
+		newErr := errors.NewError("daymap.get", "s3req", err)
 		return "", "", newErr
 	}
 
 	s3body, err := io.ReadAll(s3.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "failed to read s3.Body", err)
+		newErr := errors.NewError("daymap.get", "failed to read s3.Body", err)
 		return "", "", newErr
 	}
 
@@ -234,20 +234,20 @@ func get(webUrl, username, password string) (string, string, error) {
 	s4url := "https://gihs.daymap.net/Daymap/"
 	s4req, err := http.NewRequest("POST", s4url, s4data)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "(s4) POST request failed", err)
+		newErr := errors.NewError("daymap.get", "(s4) POST request failed", err)
 		return "", "", newErr
 	}
 
 	s4req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s4, err := client.Do(s4req)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "s4req", err)
+		newErr := errors.NewError("daymap.get", "s4req", err)
 		return "", "", newErr
 	}
 
 	s4body, err := io.ReadAll(s4.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: get", "failed to read s4.Body", err)
+		newErr := errors.NewError("daymap.get", "failed to read s4.Body", err)
 		return "", "", newErr
 	}
 
@@ -276,7 +276,7 @@ func get(webUrl, username, password string) (string, string, error) {
 func Auth(school, usr, pwd string) (User, error) {
 	timezone, err := time.LoadLocation("Australia/Adelaide")
 	if err != nil {
-		newErr := errors.NewError("daymap: Auth", "failed to load timezone", err)
+		newErr := errors.NewError("daymap.Auth", "failed to load timezone", err)
 		logger.Error(newErr)
 	}
 
@@ -284,7 +284,7 @@ func Auth(school, usr, pwd string) (User, error) {
 	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	_, authToken, err := get(page, usr, pwd)
 	if err != nil {
-		newErr := errors.NewError("daymap: Auth", "could not authenticate user with DayMap", err)
+		newErr := errors.NewError("daymap.Auth", "could not authenticate user with DayMap", err)
 		return User{}, newErr
 	}
 
