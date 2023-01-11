@@ -16,7 +16,7 @@ type logWriter struct {
 
 // Printf prints to the standard logger. Arguments are handled in the manner of fmt.Printf.
 func (lw logWriter) logWrite(format string, v ...any) {
-	timeFormat := time.Now().UTC().Format("2006-01-02 15:04:05")
+	timeFormat := time.Now().Format("2006-01-02 15:04:05")
 	str := fmt.Sprintf("%v %v%v\n", timeFormat, lw.prefix, fmt.Sprintf(format, v...))
 	lw.out.Write([]byte(str))
 
