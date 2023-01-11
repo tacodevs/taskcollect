@@ -21,12 +21,13 @@ nav {
             text-decoration: underline 3px solid var(--accent-color);
         }
     }
-}
 
-nav a[href="/logout"] {
-    float: right;
-    margin-right: 20px;
-}
-nav a[href="/timetable"]{
-    margin-left: 20px
+    a[href="/logout"] {
+        float: right;
+        margin-right: 20px;
+    }
+    
+    a[href="/timetable"]{
+        margin-left: 20px
+    }
 }
