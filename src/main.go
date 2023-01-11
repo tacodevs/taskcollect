@@ -235,6 +235,8 @@ func main() {
 		}
 	}
 
+	logger.Info("Running %v", tcVersion)
+
 	var password string
 	fmt.Print("Password to Redis database: ")
 	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
