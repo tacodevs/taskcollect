@@ -108,13 +108,13 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 
 	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
-		newErr := errors.NewError("main: getTasks", "failed to get list of tasks from gclass", err)
+		newErr := errors.NewError("main.getTasks", "failed to get list of tasks from gclass", err)
 		logger.Error(newErr)
 	}
 
 	dmTasks, err := <-dmChan, <-dmErr
 	if err != nil {
-		newErr := errors.NewError("main: getTasks", "failed to get list of tasks from daymap", err)
+		newErr := errors.NewError("main.getTasks", "failed to get list of tasks from daymap", err)
 		logger.Error(newErr)
 	}
 
@@ -197,13 +197,13 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 
 	gcResLinks, err := <-gResChan, <-gErrChan
 	if err != nil {
-		newErr := errors.NewError("main: getResources", "failed to get list of resources from gclass", err)
+		newErr := errors.NewError("main.getResources", "failed to get list of resources from gclass", err)
 		logger.Error(newErr)
 	}
 
 	dmResLinks, err := <-dmResChan, <-dmErrChan
 	if err != nil {
-		newErr := errors.NewError("main: getResources", "failed to get list of resources from daymap", err)
+		newErr := errors.NewError("main.getResources", "failed to get list of resources from daymap", err)
 		logger.Error(newErr)
 	}
 
@@ -392,13 +392,13 @@ func gradedTasks(creds tcUser) ([]task, error) {
 
 	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
-		newErr := errors.NewError("main: gradedTasks", "failed to get graded tasks from gclass", err)
+		newErr := errors.NewError("main.gradedTasks", "failed to get graded tasks from gclass", err)
 		logger.Error(newErr)
 	}
 
 	dmTasks, err := <-dmChan, <-dmErr
 	if err != nil {
-		newErr := errors.NewError("main: gradedTasks", "failed to get graded tasks from daymap", err)
+		newErr := errors.NewError("main.gradedTasks", "failed to get graded tasks from daymap", err)
 		logger.Error(newErr)
 	}
 

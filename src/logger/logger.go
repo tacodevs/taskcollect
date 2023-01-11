@@ -38,14 +38,14 @@ func UseConfigFile(logPath string) error {
 
 	err := os.MkdirAll(logPath, os.ModePerm)
 	if err != nil {
-		newErr := errors.NewError("logger", "failed to create directory", err)
+		newErr := errors.NewError("logger.UseConfigFile", "failed to create directory", err)
 		return newErr
 	}
 
 	logFileName = filepath.Join(logPath, time.Now().Format("2006-01-02_150405")+".log")
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		newErr := errors.NewError("logger", "could not open log file", err)
+		newErr := errors.NewError("logger.UseConfigFile", "could not open log file", err)
 		return newErr
 	}
 	defer logFile.Close()
@@ -63,7 +63,7 @@ func write() {
 	if useLogFile {
 		logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
-			newErr := errors.NewError("logger", "could not open log file", err)
+			newErr := errors.NewError("logger.write", "could not open log file", err)
 			Error(newErr)
 			logFileOpenFailCount += 1
 		}

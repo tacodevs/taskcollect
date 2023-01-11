@@ -29,7 +29,7 @@ func getTask(
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: getTask", "failed to get coursework", err)
+		newErr := errors.NewError("gclass.getTask", "failed to get coursework", err)
 		gErrChan <- newErr
 		return
 	}
@@ -96,7 +96,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: getSubmissions", "failed to get student submissions", err)
+		newErr := errors.NewError("gclass.getSubmissions", "failed to get student submissions", err)
 		gErrChan <- newErr
 		return
 	}
@@ -119,7 +119,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "Google auth failed", err)
+		newErr := errors.NewError("gclass.ListTasks", "Google auth failed", err)
 		e <- newErr
 		return
 	}
@@ -130,7 +130,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass: ListTasks", "failed to get response", err)
+		newErr := errors.NewError("gclass.ListTasks", "failed to get response", err)
 		t <- nil
 		e <- newErr
 		return

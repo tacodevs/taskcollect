@@ -42,7 +42,7 @@ func Auth(creds User) (*classroom.Service, error) {
 	authConfig, err := AuthConfig(creds.ClientID)
 
 	if err != nil {
-		newErr := errors.NewError("gclass: Auth", "failed to get config from JSON", err)
+		newErr := errors.NewError("gclass.Auth", "failed to get config from JSON", err)
 		return nil, newErr
 	}
 
@@ -51,7 +51,7 @@ func Auth(creds User) (*classroom.Service, error) {
 
 	err = json.NewDecoder(r).Decode(oauthTok)
 	if err != nil {
-		newErr := errors.NewError("gclass: Auth", "failed to decode JSON", err)
+		newErr := errors.NewError("gclass.Auth", "failed to decode JSON", err)
 		return nil, newErr
 	}
 
@@ -63,7 +63,7 @@ func Auth(creds User) (*classroom.Service, error) {
 	)
 
 	if err != nil {
-		newErr := errors.NewError("gclass: Auth", "failed to create new service", err)
+		newErr := errors.NewError("gclass.Auth", "failed to create new service", err)
 		return nil, newErr
 	}
 
@@ -77,14 +77,14 @@ func Test(gcid []byte, gTok string, e chan error) {
 
 	svc, err := Auth(User{ClientID: gcid, Token: gTok})
 	if err != nil {
-		newErr := errors.NewError("gclass: Test", "Google auth failed", err)
+		newErr := errors.NewError("gclass.Test", "Google auth failed", err)
 		e <- newErr
 		return
 	}
 
 	_, err = svc.Courses.List().PageSize(1).Do()
 	if err != nil {
-		newErr := errors.NewError("gclass: Test", "failed to get response", err)
+		newErr := errors.NewError("gclass.Test", "failed to get response", err)
 		e <- newErr
 		return
 	}

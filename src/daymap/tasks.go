@@ -17,20 +17,20 @@ func tasksPage(creds User) (string, error) {
 
 	req, err := http.NewRequest("GET", tasksUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListTasks", "GET request failed", err)
+		newErr := errors.NewError("daymap.ListTasks", "GET request failed", err)
 		return "", newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListTasks", "failed to get resp", err)
+		newErr := errors.NewError("daymap.ListTasks", "failed to get resp", err)
 		return "", newErr
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListTasks", "failed to read resp.Body", err)
+		newErr := errors.NewError("daymap.ListTasks", "failed to read resp.Body", err)
 		return "", newErr
 	}
 
@@ -111,7 +111,7 @@ func tasksPage(creds User) (string, error) {
 
 	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListTasks", "POST request failed", err)
+		newErr := errors.NewError("daymap.ListTasks", "POST request failed", err)
 		return "", newErr
 	}
 
@@ -120,13 +120,13 @@ func tasksPage(creds User) (string, error) {
 
 	full, err := client.Do(fullReq)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListTasks", "failed to get full resp", err)
+		newErr := errors.NewError("daymap.ListTasks", "failed to get full resp", err)
 		return "", newErr
 	}
 
 	fullBody, err := io.ReadAll(full.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListTasks", "failed to real full.Body", err)
+		newErr := errors.NewError("daymap.ListTasks", "failed to real full.Body", err)
 		return "", newErr
 	}
 
@@ -217,7 +217,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
-			newErr := errors.NewError("daymap: ListTasks", "failed to parse time (postedString)", err)
+			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
 			t <- nil
 			e <- newErr
 			return
@@ -248,7 +248,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
-			newErr := errors.NewError("daymap: ListTasks", "failed to parse time (dueString)", err)
+			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
 			t <- nil
 			e <- newErr
 			return

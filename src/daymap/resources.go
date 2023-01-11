@@ -33,7 +33,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 	req, err := http.NewRequest("GET", classUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap: getClassRes", "GET request failed", err)
+		newErr := errors.NewError("daymap.getClassRes", "GET request failed", err)
 		e <- newErr
 		return
 	}
@@ -41,14 +41,14 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap: getClassRes", "failed to get resp", err)
+		newErr := errors.NewError("daymap.getClassRes", "failed to get resp", err)
 		e <- newErr
 		return
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: getClassRes", "failed to read resp.Body", err)
+		newErr := errors.NewError("daymap.getClassRes", "failed to read resp.Body", err)
 		e <- newErr
 		return
 	}
@@ -56,7 +56,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 	re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
 
 	if err != nil {
-		newErr := errors.NewError("daymap: getClassRes", "failed to compile regex", err)
+		newErr := errors.NewError("daymap.getClassRes", "failed to compile regex", err)
 		e <- newErr
 		return
 	}
@@ -83,7 +83,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 			postStr := dates[len(dates)-1]
 			posted, err = time.Parse("2/01/2006", postStr)
 			if err != nil {
-				newErr := errors.NewError("daymap: getClassRes", "failed to parse time", err)
+				newErr := errors.NewError("daymap.getClassRes", "failed to parse time", err)
 				e <- newErr
 				return
 			}
@@ -153,7 +153,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 
 	req, err := http.NewRequest("GET", homeUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListRes", "GET request failed", err)
+		newErr := errors.NewError("daymap.ListRes", "GET request failed", err)
 		r <- nil
 		e <- newErr
 		return
@@ -163,7 +163,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListRes", "failed to get resp", err)
+		newErr := errors.NewError("daymap.ListRes", "failed to get resp", err)
 		r <- nil
 		e <- newErr
 		return
@@ -171,7 +171,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap: ListRes", "failed to read resp.Body", err)
+		newErr := errors.NewError("daymap.ListRes", "failed to read resp.Body", err)
 		r <- nil
 		e <- newErr
 		return
