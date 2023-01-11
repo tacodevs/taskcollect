@@ -28,7 +28,7 @@ func (h *handler) handleTask(r *http.Request, creds tcUser, platform, id, cmd st
 	if cmd == "submit" {
 		err := submitTask(creds, platform, id)
 		if err != nil {
-			newErr := errors.NewError("main: handleTask", "failed to submit task", err)
+			newErr := errors.NewError("main.handleTask", "failed to submit task", err)
 			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
@@ -40,7 +40,7 @@ func (h *handler) handleTask(r *http.Request, creds tcUser, platform, id, cmd st
 	} else if cmd == "upload" {
 		err := uploadWork(creds, platform, id, r)
 		if err != nil {
-			newErr := errors.NewError("main: handleTask", "failed to upload work", err)
+			newErr := errors.NewError("main.handleTask", "failed to upload work", err)
 			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
@@ -61,7 +61,7 @@ func (h *handler) handleTask(r *http.Request, creds tcUser, platform, id, cmd st
 			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
-			newErr := errors.NewError("main: handleTask", "failed to remove work", err)
+			newErr := errors.NewError("main.handleTask", "failed to remove work", err)
 			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
@@ -101,7 +101,7 @@ func (h *handler) handleTaskReq(r *http.Request, creds tcUser) (int, pageData, [
 	if index == -1 {
 		assignment, err := getTask(platform, taskId, creds)
 		if err != nil {
-			newErr := errors.NewError("main: handleTaskReq", "failed to get task", err)
+			newErr := errors.NewError("main.handleTaskReq", "failed to get task", err)
 			logger.Error(newErr)
 			data = statusServerErrorData
 			statusCode = 500
@@ -129,7 +129,7 @@ func (h *handler) handleTaskReq(r *http.Request, creds tcUser) (int, pageData, [
 func (h *handler) genPage(w http.ResponseWriter, data pageData) {
 	err := h.templates.ExecuteTemplate(w, "page", data)
 	if err != nil {
-		newErr := errors.NewError("main: genPage", "template execution failed", err)
+		newErr := errors.NewError("main.genPage", "template execution failed", err)
 		logger.Error(newErr)
 	}
 
@@ -162,7 +162,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 		cssFile, err := os.Open(fp.Join(h.database.path, "styles.css"))
 		if err != nil {
-			newErr := errors.NewError("main: assetHandler", "could not open cssFile", err)
+			newErr := errors.NewError("main.assetHandler", "could not open cssFile", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
@@ -170,7 +170,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, err = io.Copy(w, cssFile)
 		if err != nil {
-			newErr := errors.NewError("main: assetHandler", "could not copy contents of cssFile", err)
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of cssFile", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
@@ -180,7 +180,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 		fontFile, err := os.Open(fp.Join(h.database.path, "mainfont.ttf"))
 		if err != nil {
-			newErr := errors.NewError("main: assetHandler", "could not open mainfont.ttf", err)
+			newErr := errors.NewError("main.assetHandler", "could not open mainfont.ttf", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
@@ -188,7 +188,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, err = io.Copy(w, fontFile)
 		if err != nil {
-			newErr := errors.NewError("main: assetHandler", "could not copy contents of mainfont.ttf", err)
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of mainfont.ttf", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
@@ -198,7 +198,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 		fontFile, err := os.Open(fp.Join(h.database.path, "navfont.ttf"))
 		if err != nil {
-			newErr := errors.NewError("main: assetHandler", "could not open navfont.ttf", err)
+			newErr := errors.NewError("main.assetHandler", "could not open navfont.ttf", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
@@ -206,7 +206,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, err = io.Copy(w, fontFile)
 		if err != nil {
-			newErr := errors.NewError("main: assetHandler", "could not copy contents of navfont.ttf", err)
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of navfont.ttf", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
@@ -221,7 +221,7 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: loginHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.loginHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -261,7 +261,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: authHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.authHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -287,7 +287,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 		} else if errors.Is(err, errNeedsGAuth) {
 			gAuthLoc, err := h.database.gAuthEndpoint()
 			if err != nil {
-				newErr := errors.NewError("main: authHandler", "failed to generate Google auth endpoint URL", err)
+				newErr := errors.NewError("main.authHandler", "failed to generate Google auth endpoint URL", err)
 				logger.Error(newErr)
 			} else {
 				w.Header().Set("Location", gAuthLoc)
@@ -295,7 +295,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(302)
 			}
 		} else {
-			newErr := errors.NewError("main: authHandler", "could not authenticate user", err)
+			newErr := errors.NewError("main.authHandler", "could not authenticate user", err)
 			logger.Error(newErr)
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
@@ -313,7 +313,7 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: logoutHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.logoutHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -327,7 +327,7 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
 		} else {
-			newErr := errors.NewError("main: logoutHandler", "failed to log out user", err)
+			newErr := errors.NewError("main.logoutHandler", "failed to log out user", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
@@ -346,7 +346,7 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: resHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.resHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -356,24 +356,24 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		reqRes := r.URL.EscapedPath()
-	
+
 		statusCode := 200
-		var respBody pageData	
+		var respBody pageData
 		platform := reqRes[5:]
 		index := strings.Index(platform, "/")
-	
+
 		if index == -1 {
 			w.WriteHeader(404)
 			h.genPage(w, statusNotFoundData)
 			return
 		}
-	
+
 		resId := platform[index+1:]
 		platform = platform[:index]
 
 		res, err := getResource(platform, resId, creds)
 		if err != nil {
-			newErr := errors.NewError("main: resHandler", "failed to get resource", err)
+			newErr := errors.NewError("main.resHandler", "failed to get resource", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
@@ -397,7 +397,7 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: taskHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.taskHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -428,7 +428,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: tasksHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.tasksHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -442,7 +442,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
 			h.genPage(w, statusNotFoundData)
 		} else if err != nil {
-			newErr := errors.NewError("main: tasksHandler", "failed to generate resources", err)
+			newErr := errors.NewError("main.tasksHandler", "failed to generate resources", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
@@ -464,7 +464,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: resHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.resHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -478,7 +478,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
 			h.genPage(w, statusNotFoundData)
 		} else if err != nil {
-			newErr := errors.NewError("main: resHandler", "failed to generate resources", err)
+			newErr := errors.NewError("main.resHandler", "failed to generate resources", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
@@ -500,7 +500,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		newErr := errors.NewError("main: rootHandler", "failed to get creds", err)
+		newErr := errors.NewError("main.rootHandler", "failed to get creds", err)
 		logger.Error(newErr)
 		h.genPage(w, statusServerErrorData)
 		return
@@ -521,7 +521,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	} else if validAuth && res == "/gauth" {
 		err = h.database.runGAuth(creds, r.URL.Query())
 		if err != nil {
-			newErr := errors.NewError("main: rootHandler", "Google auth flow failed", err)
+			newErr := errors.NewError("main.rootHandler", "Google auth flow failed", err)
 			logger.Error(newErr)
 		}
 		w.Header().Set("Location", "/timetable")
@@ -546,7 +546,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
 			h.genPage(w, statusNotFoundData)
 		} else if err != nil {
-			newErr := errors.NewError("main: rootHandler", "failed to generate resources", err)
+			newErr := errors.NewError("main.rootHandler", "failed to generate resources", err)
 			logger.Error(newErr)
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
