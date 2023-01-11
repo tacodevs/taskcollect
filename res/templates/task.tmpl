@@ -44,15 +44,16 @@
         <input type="submit" value="Upload file">
     </form>
 
-    <h4>Remove file</h4>
+    <h4>Remove file(s)</h4>
     <form action="/tasks/{{$plat}}/{{$id}}/remove">
         {{range $name, $url := .Body.TaskData.WorkLinks}}
         <input type="checkbox" name="{{$name}}">
         <label for="{{$name}}">
             <a href="{{$url}}">{{$name}}</a>
         </label>
+        <br>
         {{end}}
-        <input type="submit" value="Remove file">
+        <input type="submit" value="Remove selected file(s)">
     </form>
 {{end}}
 
