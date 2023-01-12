@@ -12,7 +12,7 @@
 }
 
 #timetable {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     margin: 0 auto;
     width: 100%;
@@ -25,13 +25,15 @@
 
 
     .day {
+        overflow-y: auto;
+
         display: block;
         width: 20%;
         box-sizing: border-box;
         border-right: 1px solid #363637;
         padding-bottom: 1.5em;
 
-        > h2 {
+        >h2 {
             text-align: center;
             font-size: 1.3em;
         }
@@ -40,7 +42,7 @@
             position: relative;
         }
 
-        .lessons > .lesson {
+        .lessons>.lesson {
             position: absolute;
             left: 0;
             right: 0;
@@ -59,7 +61,9 @@
                 font-weight: bold;
             }
 
-            .notice, .teacher, .time-room {
+            .notice,
+            .teacher,
+            .time-room {
                 font-size: 0.9em;
                 margin: 5px 0;
             }
@@ -74,7 +78,8 @@
         .day {
             width: 100%;
         }
-        .lessons > .lesson {
+
+        .lessons>.lesson {
             position: static !important;
             top: 0px !important;
             min-height: 90px !important;
@@ -85,7 +90,8 @@
         .day {
             width: 100%;
         }
-        .lessons > .lesson {
+
+        .lessons>.lesson {
             position: static !important;
             top: 0px !important;
             min-height: 90px !important;
