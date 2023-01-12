@@ -1,0 +1,30 @@
+{{define "tasks"}}
+{{template "header" -}}
+
+<div id="root">
+<main id="main-content">
+    <h1>{{.Body.TasksData.Heading}}</h1>
+
+    {{range $index, $taskType := .Body.TasksData.TaskTypes}}
+    <details>
+        <summary>
+            {{$taskType.Name}}
+        </summary>
+        {{range $index, $task := $taskType.Tasks}}
+            <div>
+                {{if eq $taskType.NoteType "dueDate"}}
+                <h5 class="datetime">Due {{$task.DueDate}}</h5>
+                {{else}}
+                <h5 class="datetime">Posted {{$task.Posted}}</h5>
+                {{end}}
+                <p><a href="/tasks/{{$task.Platform}}/{{$task.Id}}">{{$task.Name}}</a></p>
+                <h5>{{$task.Class}}</h5>
+                <h5><a href="{{$task.URL}}">Open in source platform</a></h5>
+            </div>
+        {{end}}
+    </details>
+    {{end}}
+</main>
+<footer></footer>
+</div>
+{{end}}

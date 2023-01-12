@@ -106,6 +106,11 @@ def update_res_files():
     shutil.copy(src, dst)
     print(f"Copied {src} -> {dst}")
 
+    src = res_src.joinpath("script.js")
+    dst = res_dst.joinpath("script.js")
+    shutil.copy(src, dst)
+    print(f"Copied {src} -> {dst}")
+
 
 
 def main(argc: int, argv: list[str]):
