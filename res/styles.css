@@ -24,17 +24,46 @@
     --th-color: #4a4a4a;
   }
 }
+html {
+  box-sizing: border-box;
+  height: 100%;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
 body {
-  margin: 5em 5% 3.75em 5%;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
   background: var(--bg-color);
   font-family: var(--main-font);
   font-size: var(--font-size);
   color: var(--fg-color);
 }
+
+#root {
+  width: 100%;
+  height: calc(100% - 50px);
+  overflow-x: auto;
+  overflow-y: scroll;
+}
+
+main#main-content {
+  width: 100%;
+  padding: 2em 4% 3.75em 4%;
+}
 @media (min-width: 0) and (max-width: 479px) {
-  body {
-    margin: 3.5em 0 3em 0;
+  main#main-content {
+    padding: 3.5em 0 3em 0;
   }
+}
+
+footer {
+  width: 100%;
 }
 
 h1 {
@@ -53,7 +82,8 @@ a {
   color: var(--link-color);
 }
 
-select, input {
+select,
+input {
   border: 1px solid #aaaaaa;
 }
 
@@ -124,15 +154,18 @@ table {
   width: 100%;
 }
 
-th.due, th.subject {
+th.due,
+th.subject {
   width: 15%;
 }
 
-th.task, th.link {
+th.task,
+th.link {
   width: 35%;
 }
 
-th, td {
+th,
+td {
   border: 1px solid var(--fg-color);
   padding: 5px 7px;
 }
@@ -159,25 +192,124 @@ hr {
   font-weight: 500;
   src: url(/assets/navfont.ttf);
 }
-nav {
-  top: 0;
-  left: 0;
-  position: fixed;
-  z-index: 5;
-  margin: 0;
-  padding: 12px 20px;
-  width: 100vw;
+header {
+  display: flex;
+  justify-content: space-between;
+  height: 50px;
+  width: 100%;
+  z-index: 9999;
+  padding: 0 20px;
   background: black;
-  color: black;
+}
+header a {
+  text-decoration: none;
+}
+header #logo {
+  display: flex;
+  align-items: center;
+  padding-right: 0.8em;
+  font-family: var(--nav-font);
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+nav {
+  display: flex;
+  flex: 1;
+  justify-content: left;
+}
+nav #right-nav,
+nav #left-nav {
+  display: flex;
+}
+nav #left-nav {
+  flex: 1;
+}
+nav #right-nav {
+  margin-left: auto;
+  order: 2;
+}
+@media (max-width: 768px) {
+  nav {
+    display: none;
+  }
+}
+
+.open .bar1 {
+  -webkit-transform: rotate(-45deg) translate(-6px, 6px);
+  transform: rotate(-45deg) translate(-6px, 6px);
+}
+.open .bar2 {
+  opacity: 0;
+}
+.open .bar3 {
+  -webkit-transform: rotate(45deg) translate(-6px, -7px);
+  transform: rotate(45deg) translate(-6px, -7px);
+}
+.open .mobile-menu {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#hamburger-icon {
+  margin: auto 0;
+  display: none;
+  cursor: pointer;
+}
+#hamburger-icon div {
+  width: 27px;
+  height: 3px;
+  background-color: white;
+  margin: 6px 0;
+  transition: 0.6s;
+}
+#hamburger-icon .mobile-menu {
+  display: none;
+  position: absolute;
+  top: 50px;
+  left: 0;
+  height: calc(40vh - 50px);
+  width: 100%;
+  padding: 20px 0 30px 0;
+}
+#hamburger-icon .mobile-menu li {
+  margin: 0;
+  margin: 10px 0;
+}
+@media (max-width: 768px) {
+  #hamburger-icon {
+    display: block;
+  }
+}
+
+nav,
+#hamburger-icon {
   font-family: var(--nav-font);
   font-weight: bold;
 }
-nav a {
-  color: white;
-  text-decoration: none;
+nav ul,
+#hamburger-icon ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  background-color: black;
+  padding: 0;
 }
-nav a:hover {
-  text-decoration: underline 3px solid var(--accent-color);
+nav ul a,
+#hamburger-icon ul a {
+  color: white;
+}
+nav ul li,
+#hamburger-icon ul li {
+  padding: 0 0.8em;
+}
+nav ul li a:hover,
+#hamburger-icon ul li a:hover {
+  text-decoration: underline 1.5px solid var(--accent-color);
 }
 
 input[type=submit],
@@ -298,7 +430,7 @@ form[action="/auth"] input[type=submit] {
 }
 
 #timetable {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   margin: 0 auto;
   width: 100%;
@@ -308,6 +440,7 @@ form[action="/auth"] input[type=submit] {
   color: #000000;
 }
 #timetable .day {
+  overflow-y: auto;
   display: block;
   width: 20%;
   box-sizing: border-box;
@@ -338,7 +471,9 @@ form[action="/auth"] input[type=submit] {
   font-size: 1.1em;
   font-weight: bold;
 }
-#timetable .day .lessons > .lesson .notice, #timetable .day .lessons > .lesson .teacher, #timetable .day .lessons > .lesson .time-room {
+#timetable .day .lessons > .lesson .notice,
+#timetable .day .lessons > .lesson .teacher,
+#timetable .day .lessons > .lesson .time-room {
   font-size: 0.9em;
   margin: 5px 0;
 }
