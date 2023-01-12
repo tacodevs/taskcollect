@@ -35,6 +35,7 @@ TaskCollect has very simple build and deployment mechanisms. Simply clone this G
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
+cd taskcollect
 python3 build.py -u
 ```
 
