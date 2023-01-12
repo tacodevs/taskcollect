@@ -31,17 +31,16 @@ Build dependencies:
   * Python 3.9+ (for the build script)
   * Sass 1.57+
 
-TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository, enter into its `src/` subdirectory, and run `python3 build.py -u`:
+TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository and run `python3 build.py -u` (or `py build.py -u` on Windows):
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
-cd taskcollect/src/
 python3 build.py -u
 ```
 
 If all the build dependencies are installed and no errors occur, the folder `prg/` should appear in the root folder of the repository, containing the executable program for the current system. The `-u` flag in the build script additionally copies across the assets that are required to run TaskCollect from the `res/` folder to `$home/res/taskcollect`.
 
-To build executable programs for all major operating systems and CPU architectures, run `python3 build.py all`
+To build executable programs for all major operating systems and CPU architectures, run `python3 build.py all`. Be aware that this may take a while.
 
 ### Deployment
 
@@ -56,7 +55,7 @@ From here, deployment is simple:
 
   3. Run the program for your OS and CPU, and the web server will start, asking you for a passphrase at first.
 
-  4. If running for the first time, you will also need to set up a Redis server. If it is not the first time running TaskCollect or the credentials database has been imported from another TaskCollect session, then set up the Redis server as you normally would, then run TaskCollect.
+  4. If running for the first time, you will also need to set up a Redis server. You must ensure you are Redis 7 as no other version will work. If it is not the first time running TaskCollect or the credentials database has been imported from another TaskCollect session, then set up the Redis server as you normally would, then run TaskCollect.
 
 
 TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
@@ -87,6 +86,7 @@ Support for:
 
 Additional feature tabs to TaskCollect:
 
+  * Dashboard (e.g. a quick overview of recent tasks, grades, and lessons for the day)
   * Organisation (calendar-oriented organisation space)
   * Communication (emails, messages, etc.)
   * Grades (grade summaries per term, with a graph)
