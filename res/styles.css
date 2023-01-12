@@ -263,7 +263,7 @@ nav #right-nav {
   height: 3px;
   background-color: white;
   margin: 6px 0;
-  transition: 0.6s;
+  transition: 0.4s;
 }
 #hamburger-icon .mobile-menu {
   display: none;

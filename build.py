@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+from pathlib import Path
 import platform
 import subprocess
 import sys
@@ -21,19 +22,18 @@ def build(os_name: str, arch: str):
         version = "0.1.0"
     commit = subprocess.check_output("git rev-parse HEAD", shell=True, stderr=subprocess.DEVNULL)
     version_line = version_line.replace("0.1.0", str(version)).replace("{0}", str(commit)[2:-3])
-    with open("version.go", "w") as f:
+    with open("src/version.go", "w") as f:
         f.write("package main\n\n" + version_line)
 
     ext = ""
     if os_name == "windows":
         ext = ".exe"
 
+    cwd = Path.cwd().joinpath("src")
+
     output = f"../prg/{os_name}/{arch}/taskcollect{ext}"
     source = "."
-    cmd = [
-        "go", "build", "-ldflags=-s -w",
-        "-o", output, source
-    ]
+    cmd = ["go", "build", "-ldflags=-s -w", "-o", output, source]
 
     env = os.environ
     env["CGO_ENABLED"] = "0"
@@ -49,6 +49,7 @@ def build(os_name: str, arch: str):
             stderr=sys.stderr,
             check=True,
             env=env,
+            cwd=cwd
         )
         print("Done")
     except subprocess.CalledProcessError as e:
@@ -70,15 +71,14 @@ def run(argv: list[str]):
 
 def update_res_files():
     from distutils.dir_util import copy_tree
-    from pathlib import Path
     import shutil
 
-    res_src = Path.cwd().joinpath("..", "res")
+    res_src = Path.cwd().joinpath("res")
     res_src = Path.resolve(res_src)
-    tmpl_src = res_src.joinpath("./templates/")
+    tmpl_src = res_src.joinpath("templates")
 
-    res_dst = Path.home().joinpath("./res/taskcollect/")
-    tmpl_dst = res_dst.joinpath("./templates/")
+    res_dst = Path.home().joinpath("res/taskcollect")
+    tmpl_dst = res_dst.joinpath("templates")
 
     # Copy over template files
     src = tmpl_src
@@ -87,31 +87,46 @@ def update_res_files():
     copy_tree(str(src), str(dst))
     print(f"Copied {src} -> {dst}")
 
-
-    # Compile SCSS to CSS
-
     # NOTE: shell=True must be set for the command to work on Windows systems.
     # This is due to the Sass program being invoked via `sass.bat` which is not recognised
     # by subprocess unless shell=True. 
 
     subprocess.run(
-        "sass ./styles/styles.scss ../res/styles.css --no-source-map", 
+        "sass ./src/styles/styles.scss ./res/styles.css --no-source-map",
         shell=True
     )
     print("Compiled SCSS files to CSS file")
 
-    # Copy CSS stylesheet
-    src = res_src.joinpath("styles.css")
-    dst = res_dst.joinpath("styles.css")
-    shutil.copy(src, dst)
-    print(f"Copied {src} -> {dst}")
-
-    src = res_src.joinpath("script.js")
-    dst = res_dst.joinpath("script.js")
-    shutil.copy(src, dst)
-    print(f"Copied {src} -> {dst}")
+    assets = ["styles.css", "script.js"]
+    for asset in assets:
+        src = res_src.joinpath(asset)
+        dst = res_dst.joinpath(asset)
+        shutil.copy(src, dst)
+        print(f"Copied {src} -> {dst}")
 
 
+def print_help():
+    cmd = "python3 build.py"
+    if platform.system().lower() == "windows":
+        cmd = "py build.py"
+    print(
+        "--- TaskCollect: Build help ---\n\n"
+        "Supported OS and architectures:\n"
+        "  - darwin  (amd64, arm64)\n"
+        "  - linux   (386, amd64, arm, arm64)\n"
+        "  - windows (386, arm64)\n\n"
+        "Invoke the script without any arguments to automatically build for your system.\n\n"
+        "USAGE:\n"
+        f"    {cmd} [<<OS>/<ARCH>> ...]\n" # - Provide a valid combination of OS and architecture. Several can be built at once
+        "\n"
+        "OPTIONS:\n"
+        "    -u     Build while also copying across resource files\n"
+        "    -U     Only copy resource files, do not build\n"
+        "\n"
+        "COMMANDS:\n"
+        "    all    Build for all platforms (this may take a while)\n"
+        "    help   Shows this command\n"
+    )
 
 def main(argc: int, argv: list[str]):
     if "-u" in argv:
@@ -136,24 +151,7 @@ def main(argc: int, argv: list[str]):
         argv.append(f"{os_name}/{arch}")
         run(argv)
     elif argv[1] == "help":
-        print(
-            "--- taskcollect: Build help ---\n\n"
-            "Supported OS and architectures:\n"
-            "- darwin (amd64, arm64)\n"
-            "- linux (386, amd64, arm, arm64)\n"
-            "- windows (386, arm64)\n"
-            "\n"
-            "USAGE:\n"
-            "    [<<OS>/<ARCH>> ...]\n" # - Provide a valid combination of OS and architecture. Several can be built at once
-            "\n"
-            "OPTIONS:\n"
-            "    -u - Build while also copying across resource files\n"
-            "    -U - Only copy resource files, do not build\n"
-            "\n"
-            "COMMANDS:\n"
-            "    all - Build for all platforms (this may take a while)\n"
-            "    help - Shows this command\n"
-        )
+        print_help()
     elif argv[1] == "all" or argc >= 1:
         run(argv)
     else:
