@@ -1,0 +1,77 @@
+{{define "task"}}
+{{template "header" -}}
+
+<div id="root">
+<main id="main-content">
+    <h1>{{.Body.TaskData.Name}}</h1>
+    <h3>{{.Body.TaskData.Class}}</h3>
+
+    <a href="{{.Body.TaskData.URL}}">View task in original platform</a>
+    {{if eq .Body.TaskData.IsDue true}}
+        <hr>
+        <h4>Due {{.Body.TaskData.DueDate}}</h4>
+    {{end}}
+
+    {{if eq .Body.TaskData.Submitted false}}
+        <hr>
+        <a href="/tasks/{{.Body.TaskData.Platform}}/{{.Body.TaskData.Id}}/submit">Submit work</a>
+    {{end}}
+
+    {{if ne .Body.TaskData.Desc ""}}
+        <hr>
+        <h4>Task description</h4>
+        <p>{{.Body.TaskData.Desc}}</p>
+    {{end}}
+
+    {{if eq .Body.TaskData.HasResLinks true}}
+        <hr>
+        <h4>Linked resources</h4>
+        <ul>
+            {{range $name, $url := .Body.TaskData.ResLinks}}
+                <li>
+                    <a href="{{$url}}">{{$name}}</a>
+                </li>
+            {{end}}
+        </ul>
+    {{end}}
+
+    {{if eq .Body.TaskData.HasUpload true}}
+        {{$plat := .Body.TaskData.Platform}}
+        {{$id := .Body.TaskData.Id}}
+
+        <hr>
+        <h4>Upload file</h4>
+        <form method="POST" enctype="multipart/form-data" action="/tasks/{{$plat}}/{{$id}}/upload">
+            <label for="file">Select file:</label>
+            <input type="file" name="file"><br>
+            <input type="submit" value="Upload file">
+        </form>
+
+        <h4>Remove file(s)</h4>
+        <form action="/tasks/{{$plat}}/{{$id}}/remove">
+            {{range $name, $url := .Body.TaskData.WorkLinks}}
+            <input type="checkbox" name="{{$name}}">
+            <label for="{{$name}}">
+                <a href="{{$url}}">{{$name}}</a>
+            </label>
+            <br>
+            {{end}}
+            <input type="submit" value="Remove selected file(s)">
+        </form>
+    {{end}}
+
+    {{if ne .Body.TaskData.Grade ""}}
+        <hr>
+        <h3>Grade: {{.Body.TaskData.Grade}}</h3>
+    {{end}}
+
+
+    {{if ne .Body.TaskData.Comment ""}}
+        <hr>
+        <h4>Teacher comment:</h4>
+        <p>{{.Body.TaskData.Comment}}</p>
+    {{end}}
+</main>
+<footer></footer>
+</div>
+{{end}}

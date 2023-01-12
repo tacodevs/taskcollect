@@ -174,6 +174,24 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 			logger.Error(newErr)
 			w.WriteHeader(500)
 		}
+	} else if res == "/script.js" {
+		w.Header().Set("Content-Type", `text/javascript, charset="utf-8"`)
+		w.Header().Add("Cache-Control", "max-age=3600")
+
+		jsFile, err := os.Open(fp.Join(h.database.path, "script.js"))
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not open jsFile", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+		defer jsFile.Close()
+
+		_, err = io.Copy(w, jsFile)
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of jsFile", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
 	} else if res == "/mainfont.ttf" {
 		w.Header().Set("Content-Type", `font/ttf`)
 		w.Header().Add("Cache-Control", "max-age=259200")

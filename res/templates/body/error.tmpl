@@ -1,0 +1,12 @@
+{{define "error"}}
+{{template "header" -}}
+
+
+<div id="root">
+<main id="main-content">
+    <h1>{{.Body.ErrorData.Heading}}</h1>
+    <p>{{.Body.ErrorData.Message}}</p>
+</main>
+<footer></footer>
+</div>
+{{end}}
