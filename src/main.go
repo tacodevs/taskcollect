@@ -48,25 +48,28 @@ func initTemplates(resPath string) (*template.Template, error) {
 		}
 		// Skip the directory name itself from being appended, although its children won't be affected
 		// Excluding via info.IsDir() will exclude files that are under a subdirectory so it cannot be used
-		if info.Name() == "components" {
+		// For MacOS: The .DS_Store directory interferes so it must be ignored.
+		if info.Name() == "body" || info.Name() == "components" || (info.Name() == ".DS_Store") {
 			return nil
 		}
 		files = append(files, path)
 		return nil
 	})
 	if err != nil {
-		logger.Fatal(errors.NewError("main", "error walking the template/ directory", err))
+		logger.Fatal(errors.NewError("main.initTemplates", "error walking the template/ directory", err))
 	}
 
 	files = builtin.Remove(files, tmplResPath)
 
 	var requiredFiles []string
-	rf := []string{
-		"page", "head", "error", "login",
-		"components/nav", "components/footer",
-		"main", "res", "task", "tasks", "timetable",
+	tmplFiles := []string{
+		"page", "head",
+		"components/header", "components/nav", "components/footer",
+		"body/error", "body/login", "body/main",
+		"body/grades", "body/resource", "body/resources",
+		"body/task", "body/tasks", "body/timetable",
 	}
-	for _, f := range rf {
+	for _, f := range tmplFiles {
 		requiredFiles = append(requiredFiles, fp.Join(tmplResPath, f+".tmpl"))
 	}
 
@@ -80,7 +83,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	}
 	if filesMissing {
 		errStr := fmt.Errorf("%v:\n%+v", errors.ErrMissingFiles.Error(), missingFiles)
-		logger.Fatal(errors.NewError("main", errStr.Error(), nil))
+		logger.Fatal(errors.NewError("main.initTemplates", errStr.Error(), nil))
 	}
 
 	// Find page.tmpl and put it at the front; NOTE: (only needed when not using ExecuteTemplate)
