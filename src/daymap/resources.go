@@ -1,6 +1,8 @@
 package daymap
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"regexp"
@@ -11,34 +13,87 @@ import (
 	"main/errors"
 )
 
-// Returns the next school resource type and its index, as well as a corresponding planDiv or fileDiv.
-func nextRes(buf, planDiv, fileDiv string) (bool, int, string) {
+type resJson struct {
+	D string
+}
+
+// Returns the index of the next school resource type, as well as a corresponding planDiv/fileDiv/linkDiv.
+func nextRes(buf, planDiv, fileDiv, linkDiv string) (int, string) {
 	planIdx := strings.Index(buf, planDiv)
 	fileIdx := strings.Index(buf, fileDiv)
+	linkIdx := strings.Index(buf, linkDiv)
 
-	if planIdx == -1 && fileIdx == -1 {
-		return false, -1, ""
-	} else if fileIdx < planIdx && fileIdx != -1 || planIdx == -1 {
-		return true, fileIdx, fileDiv
+	isFile := (fileIdx != -1) && (fileIdx < planIdx || planIdx == -1)
+
+	if planIdx == -1 && fileIdx == -1 && linkIdx == -1 {
+		return -1, ""
+	} else if isFile {
+		return fileIdx, fileDiv
 	} else {
-		return false, planIdx, planDiv
+		return planIdx, planDiv
 	}
+}
+
+// Return secondary class ID from a link to a DayMap class page.
+func auxClassId(creds User, link string) (string, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", link, nil)
+	if err != nil {
+		newErr := errors.NewError("daymap.auxClassId", "GET request failed", err)
+		return "", newErr
+	}
+
+	req.Header.Set("Cookie", creds.Token)
+	resp, err := client.Do(req)
+	if err != nil {
+		newErr := errors.NewError("daymap.auxClassId", "failed to get resp", err)
+		return "", newErr
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		newErr := errors.NewError("daymap.auxClassId", "failed to read resp.Body", err)
+		return "", newErr
+	}
+
+	page := string(respBody)
+	re, err := regexp.Compile(`new Classroom\([0-9]+,null,[0-9]+,`)
+	if err != nil {
+		newErr := errors.NewError("daymap.auxClassId", "failed to compile regex", err)
+		return "", newErr
+	}
+
+	courseId := strings.Split(re.FindString(page), ",")[2]
+	return courseId, nil
 }
 
 // Get a list of resources for a DayMap class.
 func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
+	resUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx/InitialiseResources"
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
+
+	courseId, err := auxClassId(creds, classUrl)
+	if err != nil {
+		newErr := errors.NewError("daymap.getClassRes", "failed retrieving secondary class ID", err)
+		e <- newErr
+		return
+	}
+
+	jsonReq := fmt.Sprintf(`{"classId":%s,"courseId":%s}`, id, courseId)
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", classUrl, nil)
+	req, err := http.NewRequest("POST", resUrl, strings.NewReader(jsonReq))
 	if err != nil {
 		newErr := errors.NewError("daymap.getClassRes", "GET request failed", err)
 		e <- newErr
 		return
 	}
 
+	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Referer", classUrl)
 	resp, err := client.Do(req)
 	if err != nil {
 		newErr := errors.NewError("daymap.getClassRes", "failed to get resp", err)
@@ -61,10 +116,19 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 		return
 	}
 
-	planDiv := "</div><div class='lpTitle'><a href='javascript:DMU.ViewPlan("
+	var data resJson
+	err = json.Unmarshal(respBody, &data)
+	if err != nil {
+		newErr := errors.NewError("daymap.getClassRes", "failed to unmarshal JSON", err)
+		e <- newErr
+		return
+	}
+
+	b := data.D
+	planDiv := `</td><td class='active itm' onclick="DMU.ViewPlan(`
 	fileDiv := `<div class='fLinkDiv'><a href='#' onclick="DMU.OpenAttachment(`
-	b := string(respBody)
-	isFile, i, div := nextRes(b, planDiv, fileDiv)
+	linkDiv := `<a href='javascript:DMU.OpenNewWindow("`
+	i, div := nextRes(b, planDiv, fileDiv, linkDiv)
 	var posted time.Time
 
 	for i != -1 {
@@ -89,7 +153,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 			}
 		} else {
 			b = b[len(div):]
-			isFile, i, div = nextRes(b, planDiv, fileDiv)
+			i, div = nextRes(b, planDiv, fileDiv, linkDiv)
 			continue
 		}
 
@@ -111,29 +175,34 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 		resource.Id = b[:i]
 
-		if isFile {
+		if div == fileDiv {
 			i = strings.Index(b, "&nbsp;")
-
 			if i == -1 {
 				e <- errInvalidResp
 				return
 			}
 
-			b = b[i+6:]
+			i += len("&nbsp;")
+			b = b[i:]
+			i = strings.Index(b, "</a>")
+			if i == -1 {
+				e <- errInvalidResp
+				return
+			}
 		} else {
-			b = b[i+4:]
-		}
+			i += len(`);;"><div class='lpTitle'>`)
+			b = b[i:]
+			i = strings.Index(b, "</div>")
 
-		i = strings.Index(b, "</a>")
-		if i == -1 {
-			e <- errInvalidResp
-			return
+			if i == -1 {
+				e <- errInvalidResp
+				return
+			}
 		}
 
 		resource.Name = b[:i]
-		b = b[i:]
 
-		if isFile {
+		if div == fileDiv {
 			resource.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + resource.Id
 			resource.Id = "f" + resource.Id
 		} else {
@@ -142,7 +211,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 
 		*res = append(*res, resource)
 		b = b[i:]
-		isFile, i, div = nextRes(b, planDiv, fileDiv)
+		i, div = nextRes(b, planDiv, fileDiv, linkDiv)
 	}
 }
 
