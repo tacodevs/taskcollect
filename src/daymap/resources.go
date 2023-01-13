@@ -151,7 +151,6 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 		resource := plat.Resource{}
 		resource.Class = class
 		resource.Platform = "daymap"
-
 		dateRegion := b[:i]
 		b = b[i:]
 		dates := re.FindAllString(dateRegion, -1)

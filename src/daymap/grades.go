@@ -117,7 +117,6 @@ func taskGrade(creds User, id string, result plat.TaskGrade, grade *string, e *e
 		*e = errors.NewError("daymap.GetTask", "GET request failed", err)
 		return
 	}
-
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
