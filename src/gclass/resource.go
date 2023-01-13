@@ -7,18 +7,8 @@ import (
 	"google.golang.org/api/classroom/v1"
 
 	"main/errors"
+	"main/plat"
 )
-
-type Resource struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     string
-	Posted   time.Time
-	ResLinks [][2]string
-	Platform string
-	Id       string
-}
 
 // Return resource links from a classroom.Material slice.
 func resFromMaterials(materials []*classroom.Material) ([][2]string, error) {
@@ -67,8 +57,8 @@ func resFromMaterials(materials []*classroom.Material) ([][2]string, error) {
 }
 
 // Get a resource from Google Classroom for a user.
-func GetResource(creds User, id string) (Resource, error) {
-	resource := Resource{}
+func GetResource(creds User, id string) (plat.Resource, error) {
+	resource := plat.Resource{}
 	resource.Id = id
 	resource.Platform = "gclass"
 	isAnn := false
@@ -82,7 +72,7 @@ func GetResource(creds User, id string) (Resource, error) {
 	svc, err := Auth(creds)
 	if err != nil {
 		newErr := errors.NewError("gclass.GetResource", "Google auth failed", err)
-		return Resource{}, newErr
+		return plat.Resource{}, newErr
 	}
 
 	classChan := make(chan string)
@@ -94,7 +84,7 @@ func GetResource(creds User, id string) (Resource, error) {
 
 		if err != nil {
 			newErr := errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
-			return Resource{}, newErr
+			return plat.Resource{}, newErr
 		}
 
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
@@ -119,7 +109,7 @@ func GetResource(creds User, id string) (Resource, error) {
 
 		if err != nil {
 			newErr := errors.NewError("gclass.GetResource", "failed getting resource links from gclass announcement", err)
-			return Resource{}, newErr
+			return plat.Resource{}, newErr
 		}
 	} else {
 		r, err := svc.Courses.CourseWorkMaterials.Get(
@@ -128,7 +118,7 @@ func GetResource(creds User, id string) (Resource, error) {
 
 		if err != nil {
 			newErr := errors.NewError("gclass.classResources", "failed to get coursework materials", err)
-			return Resource{}, newErr
+			return plat.Resource{}, newErr
 		}
 
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
@@ -146,14 +136,14 @@ func GetResource(creds User, id string) (Resource, error) {
 
 		if err != nil {
 			newErr := errors.NewError("gclass.GetResource", "failed getting resource links from gclass resource", err)
-			return Resource{}, newErr
+			return plat.Resource{}, newErr
 		}
 	}
 
 	resource.Class, err = <-classChan, <-classErrChan
 	if err != nil {
 		newErr := errors.NewError("gclass.GetResource", "failed to get class name from ID", err)
-		return Resource{}, newErr
+		return plat.Resource{}, newErr
 	}
 
 	return resource, nil

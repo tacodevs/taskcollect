@@ -13,30 +13,14 @@ import (
 
 	"main/errors"
 	"main/logger"
+	"main/plat"
 )
 
-type Task struct {
-	Name      string
-	Class     string
-	Link      string
-	Desc      string
-	Due       time.Time
-	Posted    time.Time
-	ResLinks  [][2]string
-	Upload    bool
-	WorkLinks [][2]string
-	Submitted bool
-	Grade     string
-	Comment   string
-	Platform  string
-	Id        string
-}
-
 // Public function to retrieve information about a DayMap task by its ID.
-func GetTask(creds User, id string) (Task, error) {
+func GetTask(creds User, id string) (plat.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 
-	task := Task{
+	task := plat.Task{
 		Link:     taskUrl,
 		Platform: "daymap",
 		Id:       id,
@@ -47,7 +31,7 @@ func GetTask(creds User, id string) (Task, error) {
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
 		newErr := errors.NewError("daymap.GetTask", "GET request failed", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
@@ -55,13 +39,13 @@ func GetTask(creds User, id string) (Task, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		newErr := errors.NewError("daymap.GetTask", "failed to get resp", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		newErr := errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	b := string(respBody)
@@ -73,14 +57,14 @@ func GetTask(creds User, id string) (Task, error) {
 	i := strings.Index(b, "ctl00_ctl00_cp_cp_divResults")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
 	i = strings.Index(b, "SectionHeader")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -89,7 +73,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	task.Name = b[:i]
@@ -97,7 +81,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -106,7 +90,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	task.Class = b[:i]
@@ -114,7 +98,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -123,7 +107,7 @@ func GetTask(creds User, id string) (Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return Task{}, errInvalidTaskResp
+		return plat.Task{}, errInvalidTaskResp
 	}
 
 	b = b[i:]
@@ -136,7 +120,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errInvalidTaskResp
+			return plat.Task{}, errInvalidTaskResp
 		}
 
 		dueStr := b[:i]
@@ -151,7 +135,7 @@ func GetTask(creds User, id string) (Task, error) {
 
 		if err != nil {
 			newErr := errors.NewError("daymap.GetTask", "failed to parse time", err)
-			return Task{}, newErr
+			return plat.Task{}, newErr
 		}
 
 		task.Due = time.Date(
@@ -168,14 +152,14 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "<div><div>")
 
 		if i == -1 {
-			return Task{}, errInvalidTaskResp
+			return plat.Task{}, errInvalidTaskResp
 		}
 
 		b = b[i:]
 		i = strings.Index(b, "</div></div></div></div>")
 
 		if i == -1 {
-			return Task{}, errInvalidTaskResp
+			return plat.Task{}, errInvalidTaskResp
 		}
 
 		wlHtml := b[:i]
@@ -188,7 +172,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(wlHtml, `"`)
 
 			if x == -1 {
-				return Task{}, errInvalidTaskResp
+				return plat.Task{}, errInvalidTaskResp
 			}
 
 			wll := wlHtml[:x]
@@ -197,7 +181,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(wlHtml, "&nbsp;")
 
 			if x == -1 {
-				return Task{}, errInvalidTaskResp
+				return plat.Task{}, errInvalidTaskResp
 			}
 
 			x += len("&nbsp;")
@@ -205,7 +189,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(wlHtml, "</a>")
 
 			if x == -1 {
-				return Task{}, errInvalidTaskResp
+				return plat.Task{}, errInvalidTaskResp
 			}
 
 			name := wlHtml[:x]
@@ -215,9 +199,9 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 	}
 
-	task.Grade, err = findGrade(&b)
+	task.Result, err = findGrade(&b)
 	if err != nil {
-		return Task{}, err
+		return plat.Task{}, err
 	}
 
 	i = strings.Index(b, `class="WhiteBox">`)
@@ -229,7 +213,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errInvalidTaskResp
+			return plat.Task{}, errInvalidTaskResp
 		}
 
 		task.Comment = b[:i]
@@ -249,7 +233,7 @@ func GetTask(creds User, id string) (Task, error) {
 		}
 
 		if i == -1 {
-			return Task{}, errInvalidTaskResp
+			return plat.Task{}, errInvalidTaskResp
 		}
 
 		rlHtml := b[:i]
@@ -262,7 +246,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(rlHtml, ")")
 
 			if x == -1 {
-				return Task{}, errInvalidTaskResp
+				return plat.Task{}, errInvalidTaskResp
 			}
 
 			rlId := rlHtml[:x]
@@ -271,7 +255,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(rlHtml, "&nbsp;")
 
 			if x == -1 {
-				return Task{}, errInvalidTaskResp
+				return plat.Task{}, errInvalidTaskResp
 			}
 
 			x += len("&nbsp;")
@@ -279,7 +263,7 @@ func GetTask(creds User, id string) (Task, error) {
 			x = strings.Index(rlHtml, "</a>")
 
 			if x == -1 {
-				return Task{}, errInvalidTaskResp
+				return plat.Task{}, errInvalidTaskResp
 			}
 
 			name := rlHtml[:x]
@@ -298,7 +282,7 @@ func GetTask(creds User, id string) (Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return Task{}, errInvalidTaskResp
+			return plat.Task{}, errInvalidTaskResp
 		}
 
 		task.Desc = b[:i]
