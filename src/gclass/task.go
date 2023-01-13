@@ -172,21 +172,14 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {
 		percent := studSub.AssignedGrade / gc.MaxPoints * 100
-		task.Result.Grade = "-"
+		task.Result.Grade = ""
 		task.Result.Mark = percent
-		if percent < 50 {
-			task.Result.Color = color.RGBA{0xc9, 0x16, 0x14, 0xff} //RED
-		} else if (50 <= percent) && (percent < 70) {
-			task.Result.Color = color.RGBA{0xd9, 0x6b, 0x0a, 0xff} //AMBER/ORANGE
-		} else if (70 <= percent) && (percent < 85) {
-			task.Result.Color = color.RGBA{0xf6, 0xde, 0x0a, 0xff} //YELLOW
-		} else if percent >= 85 {
-			task.Result.Color = color.RGBA{0x03, 0x6e, 0x05, 0xff} //GREEN
-		}
+		task.Result.Color = color.RGBA{}
+
 	} else {
 		task.Result.Grade = "-"
 		task.Result.Mark = 0.0
-		task.Result.Color = color.RGBA{0xff, 0xff, 0xff, 0xff}
+		task.Result.Color = color.RGBA{}
 	}
 
 	if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {

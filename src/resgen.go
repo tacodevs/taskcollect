@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html"
 	"html/template"
 	"strconv"
@@ -147,10 +148,32 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 
 	if assignment.Result.Grade != "" {
 		data.Body.TaskData.TaskGrade.Grade = assignment.Result.Grade
+	} else {
+		data.Body.TaskData.TaskGrade.Grade = "—"
 	}
-
+	if assignment.Result.Mark != 0.0 {
+		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+		if assignment.Result.Mark < 50 {
+			data.Body.TaskData.TaskGrade.Color = "#c91614" //RED
+		} else if (50 <= assignment.Result.Mark) && (assignment.Result.Mark < 70) {
+			data.Body.TaskData.TaskGrade.Color = "#d96b0a" //AMBER/ORANGE
+		} else if (70 <= assignment.Result.Mark) && (assignment.Result.Mark < 85) {
+			data.Body.TaskData.TaskGrade.Color = "#f6de0a" //YELLOW
+		} else if assignment.Result.Mark >= 85 {
+			data.Body.TaskData.TaskGrade.Color = "#036e05" //GREEN
+		}
+	} else {
+		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+		data.Body.TaskData.TaskGrade.Color = "" //Blank string so it will default to the correct color
+	}
 	if assignment.Comment != "" {
 		taskCmt := assignment.Comment
+		// Escape strings since it will be converted to safe HTML after
+		taskCmt = html.EscapeString(taskCmt)
+		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
+		data.Body.TaskData.Comment = template.HTML(taskCmt)
+	} else {
+		taskCmt := "No teacher comment has been left for this task."
 		// Escape strings since it will be converted to safe HTML after
 		taskCmt = html.EscapeString(taskCmt)
 		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")

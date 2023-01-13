@@ -16,9 +16,9 @@ import (
 // Return the grade for a DayMap task from a DayMap task webpage.
 func findGrade(page *string) (plat.TaskGrade, error) {
 
-	grade := "—"
-	percent := 0.0
-	gradeColor := color.RGBA{0xff, 0xff, 0xff, 0xff}
+	var grade string
+	var percent float64
+	var gradeColor color.Color
 	i := strings.Index(*page, "Grade:")
 
 	if i != -1 {
@@ -89,15 +89,6 @@ func findGrade(page *string) (plat.TaskGrade, error) {
 		}
 
 		percent = it / ib * 100
-		if percent < 50 {
-			gradeColor = color.RGBA{0xc9, 0x16, 0x14, 0xff} //RED
-		} else if (50 <= percent) && (percent < 70) {
-			gradeColor = color.RGBA{0xd9, 0x6b, 0x0a, 0xff} //AMBER/ORANGE
-		} else if (70 <= percent) && (percent < 85) {
-			gradeColor = color.RGBA{0xf6, 0xde, 0x0a, 0xff} //YELLOW
-		} else if percent >= 85 {
-			gradeColor = color.RGBA{0x03, 0x6e, 0x05, 0xff} //GREEN
-		}
 
 	}
 
@@ -107,7 +98,7 @@ func findGrade(page *string) (plat.TaskGrade, error) {
 }
 
 // Retrieve the grade given to a student for a particular DayMap task.
-func taskGrade(creds User, id string, result plat.TaskGrade, grade *string, e *error, wg *sync.WaitGroup) {
+func taskGrade(creds User, id string, result plat.TaskGrade, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 	client := &http.Client{}
@@ -295,12 +286,11 @@ func GradedTasks(creds User, t chan []plat.Task, e chan error) {
 	}
 
 	wg := sync.WaitGroup{}
-	grades := make([]string, len(graded))
 	errs := make([]error, len(graded))
 
 	for i, id := range graded {
 		wg.Add(1)
-		go taskGrade(creds, id, result[i], &grades[i], &errs[i], &wg)
+		go taskGrade(creds, id, result[i], &errs[i], &wg)
 	}
 
 	wg.Wait()
