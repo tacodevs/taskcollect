@@ -149,7 +149,7 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 	if assignment.Result.Grade != "" {
 		data.Body.TaskData.TaskGrade.Grade = assignment.Result.Grade
 	} else {
-		data.Body.TaskData.TaskGrade.Grade = "—"
+		data.Body.TaskData.TaskGrade.Grade = "N/A"
 	}
 	if assignment.Result.Mark != 0.0 {
 		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
