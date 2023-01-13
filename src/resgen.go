@@ -172,12 +172,6 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 		taskCmt = html.EscapeString(taskCmt)
 		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
 		data.Body.TaskData.Comment = template.HTML(taskCmt)
-	} else {
-		taskCmt := "No teacher comment has been left for this task."
-		// Escape strings since it will be converted to safe HTML after
-		taskCmt = html.EscapeString(taskCmt)
-		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
-		data.Body.TaskData.Comment = template.HTML(taskCmt)
 	}
 
 	return data
