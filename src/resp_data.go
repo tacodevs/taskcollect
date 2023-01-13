@@ -1,6 +1,8 @@
 package main
 
-import "html/template"
+import (
+	"html/template"
+)
 
 // Primary (page, head, body)
 
@@ -138,8 +140,13 @@ type taskData struct {
 	HasWorkLinks bool
 	WorkLinks    map[string]string
 	HasUpload    bool
-	Grade        string
 	Comment      template.HTML
+	TaskGrade    taskGrade
+}
+type taskGrade struct {
+	Grade string
+	Mark  string
+	Color string
 }
 
 // Grades

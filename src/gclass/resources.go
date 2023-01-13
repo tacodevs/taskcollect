@@ -7,14 +7,15 @@ import (
 	"google.golang.org/api/classroom/v1"
 
 	"main/errors"
+	"main/plat"
 )
 
 // Get a list of announcements for a Google Classroom class.
 func classAnnouncements(
-	course *classroom.Course, svc *classroom.Service, annChan chan []Resource,
+	course *classroom.Course, svc *classroom.Service, annChan chan []plat.Resource,
 	errChan chan error,
 ) {
-	announcements := []Resource{}
+	announcements := []plat.Resource{}
 
 	resp, err := svc.Courses.Announcements.List(course.Id).Fields(
 		"announcements/text",
@@ -30,7 +31,7 @@ func classAnnouncements(
 	}
 
 	for _, r := range resp.Announcements {
-		resource := Resource{}
+		resource := plat.Resource{}
 
 		resource.Id = course.Id + "-a" + r.Id
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
@@ -62,11 +63,11 @@ func classAnnouncements(
 
 // Get a list of resources for a Google Classroom class.
 func classResources(
-	course *classroom.Course, svc *classroom.Service, res *[]Resource,
+	course *classroom.Course, svc *classroom.Service, res *[]plat.Resource,
 	resWG *sync.WaitGroup, gErrChan chan error,
 ) {
 	defer resWG.Done()
-	annChan := make(chan []Resource)
+	annChan := make(chan []plat.Resource)
 	annErrors := make(chan error)
 	go classAnnouncements(course, svc, annChan, annErrors)
 
@@ -84,7 +85,7 @@ func classResources(
 	}
 
 	for _, r := range resources.CourseWorkMaterial {
-		resource := Resource{}
+		resource := plat.Resource{}
 
 		resource.Id = course.Id + "-" + r.Id
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
@@ -116,7 +117,7 @@ func classResources(
 }
 
 // Get a list of resources from Google Classroom for a user.
-func ListRes(creds User, r chan []Resource, e chan error) {
+func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	svc, err := Auth(creds)
 	if err != nil {
 		newErr := errors.NewError("gclass.ListRes", "Google auth failed", err)
@@ -143,7 +144,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 		return
 	}
 
-	unordered := make([][]Resource, len(resp.Courses))
+	unordered := make([][]plat.Resource, len(resp.Courses))
 	gErrChan := make(chan error)
 	var resWG sync.WaitGroup
 	i := 0
@@ -166,7 +167,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 		break
 	}
 
-	resources := []Resource{}
+	resources := []plat.Resource{}
 
 	for _, resList := range unordered {
 		resources = append(resources, resList...)
