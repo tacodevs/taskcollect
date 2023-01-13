@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"main/errors"
+	"main/plat"
 )
 
 // Retrieve a webpage of all DayMap tasks for a user.
@@ -134,7 +135,7 @@ func tasksPage(creds User) (string, error) {
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds User, t chan map[string][]Task, e chan error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
@@ -142,11 +143,11 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		return
 	}
 
-	unsortedTasks := []Task{}
+	unsortedTasks := []plat.Task{}
 	i := strings.Index(b, `href="javascript:ViewAssignment(`)
 
 	for i != -1 {
-		task := Task{
+		task := plat.Task{
 			Platform: "daymap",
 		}
 
@@ -290,7 +291,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		i = strings.Index(b, `href="javascript:ViewAssignment(`)
 	}
 
-	tasks := map[string][]Task{
+	tasks := map[string][]plat.Task{
 		"active":    {},
 		"notDue":    {},
 		"overdue":   {},

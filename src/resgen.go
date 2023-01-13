@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html"
 	"html/template"
 	"strconv"
@@ -8,9 +9,10 @@ import (
 	"time"
 
 	"main/errors"
+	"main/plat"
 )
 
-func genDueStr(due time.Time, creds tcUser) string {
+func genDueStr(due time.Time, creds User) string {
 	var dueDate string
 	now := time.Now().In(creds.Timezone)
 	localDueDate := due.In(creds.Timezone)
@@ -59,7 +61,7 @@ func genDueStr(due time.Time, creds tcUser) string {
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
-func genTask(assignment task, noteType string, creds tcUser) taskItem {
+func genTask(assignment plat.Task, noteType string, creds User) taskItem {
 	task := taskItem{
 		Id:       assignment.Id,
 		Name:     assignment.Name,
@@ -74,14 +76,14 @@ func genTask(assignment task, noteType string, creds tcUser) taskItem {
 	case "posted":
 		task.Posted = genDueStr(assignment.Posted, creds)
 	case "grade":
-		task.Grade = assignment.Grade
+		task.Grade = assignment.Result.Grade
 	}
 
 	return task
 }
 
 // Generate the HTML page for viewing a single task
-func genTaskPage(assignment task, creds tcUser) pageData {
+func genTaskPage(assignment plat.Task, creds User) pageData {
 	data := pageData{
 		PageType: "task",
 		Head: headData{
@@ -144,12 +146,34 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 		}
 	}
 
-	if assignment.Grade != "" {
-		data.Body.TaskData.Grade = assignment.Grade
+	if assignment.Result.Grade != "" {
+		data.Body.TaskData.TaskGrade.Grade = assignment.Result.Grade
+	} else {
+		data.Body.TaskData.TaskGrade.Grade = "—"
 	}
-
+	if assignment.Result.Mark != 0.0 {
+		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+		if assignment.Result.Mark < 50 {
+			data.Body.TaskData.TaskGrade.Color = "#c91614" //RED
+		} else if (50 <= assignment.Result.Mark) && (assignment.Result.Mark < 70) {
+			data.Body.TaskData.TaskGrade.Color = "#d96b0a" //AMBER/ORANGE
+		} else if (70 <= assignment.Result.Mark) && (assignment.Result.Mark < 85) {
+			data.Body.TaskData.TaskGrade.Color = "#f6de0a" //YELLOW
+		} else if assignment.Result.Mark >= 85 {
+			data.Body.TaskData.TaskGrade.Color = "#036e05" //GREEN
+		}
+	} else {
+		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+		data.Body.TaskData.TaskGrade.Color = "" //Blank string so it will default to the correct color
+	}
 	if assignment.Comment != "" {
 		taskCmt := assignment.Comment
+		// Escape strings since it will be converted to safe HTML after
+		taskCmt = html.EscapeString(taskCmt)
+		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
+		data.Body.TaskData.Comment = template.HTML(taskCmt)
+	} else {
+		taskCmt := "No teacher comment has been left for this task."
 		// Escape strings since it will be converted to safe HTML after
 		taskCmt = html.EscapeString(taskCmt)
 		taskCmt = strings.ReplaceAll(taskCmt, "\n", "<br>")
@@ -160,7 +184,7 @@ func genTaskPage(assignment task, creds tcUser) pageData {
 }
 
 // Generate the HTML page for viewing a single resource
-func genResPage(res resource, creds tcUser) pageData {
+func genResPage(res plat.Resource, creds User) pageData {
 	data := pageData{
 		PageType: "resource",
 		Head: headData{
@@ -204,7 +228,7 @@ func genResPage(res resource, creds tcUser) pageData {
 }
 
 // Generate a resource link
-func genHtmlResLink(className string, res []resource, creds tcUser) resClass {
+func genHtmlResLink(className string, res []plat.Resource, creds User) resClass {
 	class := resClass{
 		Name: className,
 	}
@@ -223,7 +247,7 @@ func genHtmlResLink(className string, res []resource, creds tcUser) resClass {
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, creds tcUser) (pageData, error) {
+func genRes(resPath string, resURL string, creds User) (pageData, error) {
 	var data pageData
 
 	if resURL == "/timetable" {

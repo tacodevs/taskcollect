@@ -9,16 +9,8 @@ import (
 	"time"
 
 	"main/errors"
+	"main/plat"
 )
-
-type Lesson struct {
-	Start   time.Time
-	End     time.Time
-	Class   string
-	Room    string
-	Teacher string
-	Notice  string
-}
 
 type dmJsonEntry struct {
 	Text   string
@@ -29,7 +21,7 @@ type dmJsonEntry struct {
 }
 
 // Get a list of lessons for the week from DayMap for a user.
-func GetLessons(creds User) ([][]Lesson, error) {
+func GetLessons(creds User) ([][]plat.Lesson, error) {
 	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)
 
@@ -82,10 +74,10 @@ func GetLessons(creds User) ([][]Lesson, error) {
 		return nil, newErr
 	}
 
-	lessons := make([][]Lesson, 5)
+	lessons := make([][]plat.Lesson, 5)
 
 	for _, l := range dmJson {
-		lesson := Lesson{}
+		lesson := plat.Lesson{}
 		lesson.Start, err = time.Parse("2006-01-02T15:04:05.0000000", l.Start)
 
 		if err != nil {

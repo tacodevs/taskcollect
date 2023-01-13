@@ -21,6 +21,7 @@ import (
 
 	"main/errors"
 	"main/logger"
+	"main/plat"
 )
 
 var colors = []color.RGBA{
@@ -49,7 +50,7 @@ var _colors = map[string]color.RGBA{
 	"Grey":       {0x60, 0x60, 0x60, 0xff},
 }
 
-func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l lesson) {
+func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l plat.Lesson) {
 	defer daymapWG.Done()
 
 	canvas := image.NewRGBA(
@@ -147,7 +148,7 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 	*img = canvas
 }
 
-func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, colorList map[string]color.RGBA, day []lesson) {
+func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, colorList map[string]color.RGBA, day []plat.Lesson) {
 	defer wg.Done()
 
 	minPerDay := float64(600)
@@ -218,7 +219,7 @@ func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA,
 }
 
 // Generate a timetable image in PNG format.
-func genTimetableImg(creds tcUser, w http.ResponseWriter) {
+func genTimetableImg(creds User, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {
 		newErr := errors.NewError("main.genTimetableImg", "failed to get lessons", err)
@@ -386,7 +387,7 @@ func genTimetableImg(creds tcUser, w http.ResponseWriter) {
 }
 
 // Generate data for the HTML timetable.
-func genTimetable(creds tcUser) (timetableData, error) {
+func genTimetable(creds User) (timetableData, error) {
 	data := timetableData{}
 
 	lessons, err := getLessons(creds)

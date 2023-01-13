@@ -1,19 +1,20 @@
 package gclass
 
 import (
-	"fmt"
+	"image/color"
 	"sync"
 	"time"
 
 	"google.golang.org/api/classroom/v1"
 
 	"main/errors"
+	"main/plat"
 )
 
 // Retrieve Google Classroom task information using a workload submission point ID.
 func getTask(
 	studSub *classroom.StudentSubmission, svc *classroom.Service, class string,
-	task *Task, taskWG *sync.WaitGroup, gErrChan chan error,
+	task *plat.Task, taskWG *sync.WaitGroup, gErrChan chan error,
 ) {
 	defer taskWG.Done()
 
@@ -73,7 +74,21 @@ func getTask(
 
 	if studSub.AssignedGrade != 0 && gcTask.MaxPoints != 0 {
 		percent := studSub.AssignedGrade / gcTask.MaxPoints * 100
-		task.Grade = fmt.Sprintf("%.f%%", percent)
+		task.Result.Grade = "-"
+		task.Result.Mark = percent
+		if percent < 50 {
+			task.Result.Color = color.RGBA{0xc9, 0x16, 0x14, 0xff} //RED
+		} else if (50 <= percent) && (percent < 70) {
+			task.Result.Color = color.RGBA{0xd9, 0x6b, 0x0a, 0xff} //AMBER/ORANGE
+		} else if (70 <= percent) && (percent < 85) {
+			task.Result.Color = color.RGBA{0xf6, 0xde, 0x0a, 0xff} //YELLOW
+		} else if percent >= 85 {
+			task.Result.Color = color.RGBA{0x03, 0x6e, 0x05, 0xff} //GREEN
+		}
+	} else {
+		task.Result.Grade = "-"
+		task.Result.Mark = 0.0
+		task.Result.Color = color.RGBA{0xff, 0xff, 0xff, 0xff}
 	}
 
 	task.Name = gcTask.Title
@@ -83,7 +98,7 @@ func getTask(
 }
 
 // Get a list of work submission points for a Google Classroom class.
-func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, swg *sync.WaitGroup, gErrChan chan error) {
+func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.Task, swg *sync.WaitGroup, gErrChan chan error) {
 	defer swg.Done()
 	resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
 		c.Id, "-",
@@ -101,7 +116,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 		return
 	}
 
-	submissions := make([]Task, len(resp.StudentSubmissions))
+	submissions := make([]plat.Task, len(resp.StudentSubmissions))
 	var taskWG sync.WaitGroup
 	i := 0
 
@@ -116,7 +131,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]Task, 
 }
 
 // Retrieve a list of tasks from Google Classroom for a user.
-func ListTasks(creds User, t chan map[string][]Task, e chan error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 	svc, err := Auth(creds)
 	if err != nil {
 		newErr := errors.NewError("gclass.ListTasks", "Google auth failed", err)
@@ -143,7 +158,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 	}
 
 	gErrChan := make(chan error)
-	tasks := make([][]Task, len(resp.Courses))
+	tasks := make([][]plat.Task, len(resp.Courses))
 	var swg sync.WaitGroup
 	i := 0
 
@@ -164,7 +179,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 		break
 	}
 
-	gcTasks := map[string][]Task{
+	gcTasks := map[string][]plat.Task{
 		"active":    {},
 		"notDue":    {},
 		"overdue":   {},
@@ -174,7 +189,7 @@ func ListTasks(creds User, t chan map[string][]Task, e chan error) {
 
 	for x := 0; x < len(tasks); x++ {
 		for y := 0; y < len(tasks[x]); y++ {
-			if tasks[x][y].Grade != "" {
+			if tasks[x][y].Result.Grade != "-" {
 				gcTasks["graded"] = append(
 					gcTasks["graded"],
 					tasks[x][y],

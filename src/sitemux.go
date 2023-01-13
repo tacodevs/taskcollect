@@ -9,46 +9,10 @@ import (
 	"main/errors"
 	"main/gclass"
 	"main/logger"
+	"main/plat"
 )
 
-type task struct {
-	Name      string
-	Class     string
-	Link      string
-	Desc      string
-	Due       time.Time
-	Posted    time.Time
-	ResLinks  [][2]string
-	Upload    bool
-	WorkLinks [][2]string
-	Submitted bool
-	Grade     string
-	Comment   string
-	Platform  string
-	Id        string
-}
-
-type lesson struct {
-	Start   time.Time
-	End     time.Time
-	Class   string
-	Room    string
-	Teacher string
-	Notice  string
-}
-
-type resource struct {
-	Name     string
-	Class    string
-	Link     string
-	Desc     string
-	Posted   time.Time
-	ResLinks [][2]string
-	Platform string
-	Id       string
-}
-
-type tcUser struct {
+type User struct {
 	Timezone   *time.Location
 	School     string
 	Username   string
@@ -58,8 +22,8 @@ type tcUser struct {
 	GAuthID    []byte
 }
 
-func getLessons(creds tcUser) ([][]lesson, error) {
-	lessons := [][]lesson{}
+func getLessons(creds User) ([][]plat.Lesson, error) {
+	lessons := [][]plat.Lesson{}
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
@@ -69,10 +33,10 @@ func getLessons(creds tcUser) ([][]lesson, error) {
 	dmLessons, err := daymap.GetLessons(dmCreds)
 
 	for i := 0; i < len(dmLessons); i++ {
-		day := []lesson{}
+		day := []plat.Lesson{}
 
 		for j := 0; j < len(dmLessons[i]); j++ {
-			day = append(day, lesson(dmLessons[i][j]))
+			day = append(day, plat.Lesson(dmLessons[i][j]))
 		}
 
 		lessons = append(lessons, day)
@@ -81,8 +45,8 @@ func getLessons(creds tcUser) ([][]lesson, error) {
 	return lessons, err
 }
 
-func getTasks(creds tcUser) (map[string][]task, error) {
-	gcChan := make(chan map[string][]gclass.Task)
+func getTasks(creds User) (map[string][]plat.Task, error) {
+	gcChan := make(chan map[string][]plat.Task)
 	gcErr := make(chan error)
 
 	gcCreds := gclass.User{
@@ -93,7 +57,7 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 
 	go gclass.ListTasks(gcCreds, gcChan, gcErr)
 
-	dmChan := make(chan map[string][]daymap.Task)
+	dmChan := make(chan map[string][]plat.Task)
 	dmErr := make(chan error)
 
 	dmCreds := daymap.User{
@@ -103,8 +67,8 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 
 	go daymap.ListTasks(dmCreds, dmChan, dmErr)
 
-	t := map[string][]task{}
-	tasks := map[string][]task{}
+	t := map[string][]plat.Task{}
+	tasks := map[string][]plat.Task{}
 
 	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
@@ -123,7 +87,7 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 			continue
 		}
 		for i := 0; i < len(taskList); i++ {
-			t[c] = append(t[c], task(taskList[i]))
+			t[c] = append(t[c], plat.Task(taskList[i]))
 		}
 	}
 
@@ -132,7 +96,7 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 			continue
 		}
 		for i := 0; i < len(taskList); i++ {
-			t[c] = append(t[c], task(taskList[i]))
+			t[c] = append(t[c], plat.Task(taskList[i]))
 		}
 	}
 
@@ -171,8 +135,8 @@ func getTasks(creds tcUser) (map[string][]task, error) {
 	return tasks, err
 }
 
-func getResources(creds tcUser) ([]string, map[string][]resource, error) {
-	gResChan := make(chan []gclass.Resource)
+func getResources(creds User) ([]string, map[string][]plat.Resource, error) {
+	gResChan := make(chan []plat.Resource)
 	gErrChan := make(chan error)
 
 	gcCreds := gclass.User{
@@ -183,7 +147,7 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 
 	go gclass.ListRes(gcCreds, gResChan, gErrChan)
 
-	dmResChan := make(chan []daymap.Resource)
+	dmResChan := make(chan []plat.Resource)
 	dmErrChan := make(chan error)
 
 	dmCreds := daymap.User{
@@ -193,7 +157,7 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 
 	go daymap.ListRes(dmCreds, dmResChan, dmErrChan)
 
-	unordered := map[string][]resource{}
+	unordered := map[string][]plat.Resource{}
 
 	gcResLinks, err := <-gResChan, <-gErrChan
 	if err != nil {
@@ -208,14 +172,14 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 	}
 
 	for _, r := range gcResLinks {
-		unordered[r.Class] = append(unordered[r.Class], resource(r))
+		unordered[r.Class] = append(unordered[r.Class], plat.Resource(r))
 	}
 
 	for _, r := range dmResLinks {
-		unordered[r.Class] = append(unordered[r.Class], resource(r))
+		unordered[r.Class] = append(unordered[r.Class], plat.Resource(r))
 	}
 
-	resources := map[string][]resource{}
+	resources := map[string][]plat.Resource{}
 	classes := []string{}
 
 	for c := range unordered {
@@ -247,8 +211,8 @@ func getResources(creds tcUser) ([]string, map[string][]resource, error) {
 }
 
 // Get a task from the given platform.
-func getTask(platform, taskId string, creds tcUser) (task, error) {
-	assignment := task{}
+func getTask(platform, taskId string, creds User) (plat.Task, error) {
+	assignment := plat.Task{}
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -259,7 +223,7 @@ func getTask(platform, taskId string, creds tcUser) (task, error) {
 			Token:    creds.SiteTokens["gclass"],
 		}
 		gcTask, gcErr := gclass.GetTask(gcCreds, taskId)
-		assignment = task(gcTask)
+		assignment = plat.Task(gcTask)
 		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
@@ -267,7 +231,7 @@ func getTask(platform, taskId string, creds tcUser) (task, error) {
 			Token:    creds.SiteTokens["daymap"],
 		}
 		dmTask, dmErr := daymap.GetTask(dmCreds, taskId)
-		assignment = task(dmTask)
+		assignment = plat.Task(dmTask)
 		err = dmErr
 	}
 
@@ -275,8 +239,8 @@ func getTask(platform, taskId string, creds tcUser) (task, error) {
 }
 
 // Get a resource from the given platform.
-func getResource(platform, resId string, creds tcUser) (resource, error) {
-	res := resource{}
+func getResource(platform, resId string, creds User) (plat.Resource, error) {
+	res := plat.Resource{}
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -287,7 +251,7 @@ func getResource(platform, resId string, creds tcUser) (resource, error) {
 			Token:    creds.SiteTokens["gclass"],
 		}
 		gcRes, gcErr := gclass.GetResource(gcCreds, resId)
-		res = resource(gcRes)
+		res = plat.Resource(gcRes)
 		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
@@ -295,7 +259,7 @@ func getResource(platform, resId string, creds tcUser) (resource, error) {
 			Token:    creds.SiteTokens["daymap"],
 		}
 		dmRes, dmErr := daymap.GetResource(dmCreds, resId)
-		res = resource(dmRes)
+		res = plat.Resource(dmRes)
 		err = dmErr
 	}
 
@@ -303,7 +267,7 @@ func getResource(platform, resId string, creds tcUser) (resource, error) {
 }
 
 // Submit task to a given platform.
-func submitTask(creds tcUser, platform, taskId string) error {
+func submitTask(creds User, platform, taskId string) error {
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -320,7 +284,7 @@ func submitTask(creds tcUser, platform, taskId string) error {
 }
 
 // Upload work to a given platform.
-func uploadWork(creds tcUser, platform string, id string, r *http.Request) error {
+func uploadWork(creds User, platform string, id string, r *http.Request) error {
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -343,7 +307,7 @@ func uploadWork(creds tcUser, platform string, id string, r *http.Request) error
 }
 
 // Remove work from a given platform.
-func removeWork(creds tcUser, platform, taskId string, filenames []string) error {
+func removeWork(creds User, platform, taskId string, filenames []string) error {
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -366,8 +330,8 @@ func removeWork(creds tcUser, platform, taskId string, filenames []string) error
 }
 
 // Return graded tasks from all supported platforms.
-func gradedTasks(creds tcUser) ([]task, error) {
-	gcChan := make(chan []gclass.Task)
+func gradedTasks(creds User) ([]plat.Task, error) {
+	gcChan := make(chan []plat.Task)
 	gcErr := make(chan error)
 
 	gcCreds := gclass.User{
@@ -378,7 +342,7 @@ func gradedTasks(creds tcUser) ([]task, error) {
 
 	go gclass.GradedTasks(gcCreds, gcChan, gcErr)
 
-	dmChan := make(chan []daymap.Task)
+	dmChan := make(chan []plat.Task)
 	dmErr := make(chan error)
 
 	dmCreds := daymap.User{
@@ -388,7 +352,7 @@ func gradedTasks(creds tcUser) ([]task, error) {
 
 	go daymap.GradedTasks(dmCreds, dmChan, dmErr)
 
-	unordered := []task{}
+	unordered := []plat.Task{}
 
 	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
@@ -403,11 +367,11 @@ func gradedTasks(creds tcUser) ([]task, error) {
 	}
 
 	for _, gcTask := range gcTasks {
-		unordered = append(unordered, task(gcTask))
+		unordered = append(unordered, plat.Task(gcTask))
 	}
 
 	for _, dmTask := range dmTasks {
-		unordered = append(unordered, task(dmTask))
+		unordered = append(unordered, plat.Task(dmTask))
 	}
 
 	times := map[int]int{}
@@ -422,7 +386,7 @@ func gradedTasks(creds tcUser) ([]task, error) {
 		return times[taskIndexes[i]] > times[taskIndexes[j]]
 	})
 
-	tasks := []task{}
+	tasks := []plat.Task{}
 
 	for i := range taskIndexes {
 		tasks = append(tasks, unordered[i])

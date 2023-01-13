@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"main/errors"
+	"main/plat"
 )
 
 type resJson struct {
@@ -83,7 +84,7 @@ func auxClassInfo(creds User, link string) (string, string, error) {
 }
 
 // Get a list of resources for a DayMap class.
-func getClassRes(creds User, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
+func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
 	resUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx/InitialiseResources"
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
@@ -147,10 +148,9 @@ func getClassRes(creds User, id string, res *[]Resource, wg *sync.WaitGroup, e c
 	var posted time.Time
 
 	for i != -1 {
-		resource := Resource{}
+		resource := plat.Resource{}
 		resource.Class = class
 		resource.Platform = "daymap"
-
 		dateRegion := b[:i]
 		b = b[i:]
 		dates := re.FindAllString(dateRegion, -1)
@@ -232,7 +232,7 @@ func getClassRes(creds User, id string, res *[]Resource, wg *sync.WaitGroup, e c
 }
 
 // Get a list of resources from DayMap for a user.
-func ListRes(creds User, r chan []Resource, e chan error) {
+func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	client := &http.Client{}
 
@@ -294,7 +294,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 		i = strings.Index(b, "plans/class.aspx?id=")
 	}
 
-	unordered := make([][]Resource, len(classes))
+	unordered := make([][]plat.Resource, len(classes))
 	errChan := make(chan error)
 	var wg sync.WaitGroup
 	x := 0
@@ -316,7 +316,7 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 		break
 	}
 
-	resources := []Resource{}
+	resources := []plat.Resource{}
 
 	for _, resList := range unordered {
 		resources = append(resources, resList...)
