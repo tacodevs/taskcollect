@@ -34,46 +34,61 @@ func nextRes(buf, planDiv, fileDiv, linkDiv string) (int, string) {
 	}
 }
 
-// Return secondary class ID from a link to a DayMap class page.
-func auxClassId(creds User, link string) (string, error) {
+// Return auxillary class info from a link to a DayMap class page.
+func auxClassInfo(creds User, link string) (string, string, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap.auxClassId", "GET request failed", err)
-		return "", newErr
+		newErr := errors.NewError("daymap.auxClassInfo", "GET request failed", err)
+		return "", "", newErr
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap.auxClassId", "failed to get resp", err)
-		return "", newErr
+		newErr := errors.NewError("daymap.auxClassInfo", "failed to get resp", err)
+		return "", "", newErr
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap.auxClassId", "failed to read resp.Body", err)
-		return "", newErr
+		newErr := errors.NewError("daymap.auxClassInfo", "failed to read resp.Body", err)
+		return "", "", newErr
 	}
 
 	page := string(respBody)
 	re, err := regexp.Compile(`new Classroom\([0-9]+,null,[0-9]+,`)
 	if err != nil {
-		newErr := errors.NewError("daymap.auxClassId", "failed to compile regex", err)
-		return "", newErr
+		newErr := errors.NewError("daymap.auxClassInfo", "failed to compile regex", err)
+		return "", "", newErr
 	}
-
 	courseId := strings.Split(re.FindString(page), ",")[2]
-	return courseId, nil
+
+	classDiv := `<td><span id="ctl00_ctl00_cp_cp_divHeader" class="Header14" style="padding-left: 20px">`
+	i := strings.Index(page, classDiv)
+	if i == -1 {
+		newErr := errors.NewError("daymap.auxClassInfo", "can't find class name", errInvalidResp)
+		return "", "", newErr
+	}
+	i += len(classDiv)
+	page = page[i:]
+	i = strings.Index(page, "</span>")
+	if i == -1 {
+		newErr := errors.NewError("daymap.auxClassInfo", "can't find class name end", errInvalidResp)
+		return "", "", newErr
+	}
+	class := page[:i]
+
+	return class, courseId, nil
 }
 
 // Get a list of resources for a DayMap class.
-func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
+func getClassRes(creds User, id string, res *[]Resource, wg *sync.WaitGroup, e chan error) {
 	defer wg.Done()
 	resUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx/InitialiseResources"
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
 
-	courseId, err := auxClassId(creds, classUrl)
+	class, courseId, err := auxClassInfo(creds, classUrl)
 	if err != nil {
 		newErr := errors.NewError("daymap.getClassRes", "failed retrieving secondary class ID", err)
 		e <- newErr
@@ -209,6 +224,7 @@ func getClassRes(creds User, class, id string, res *[]Resource, wg *sync.WaitGro
 			resource.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resource.Id
 		}
 
+		resource.Id = id + "-" + resource.Id
 		*res = append(*res, resource)
 		b = b[i:]
 		i, div = nextRes(b, planDiv, fileDiv, linkDiv)
@@ -283,9 +299,9 @@ func ListRes(creds User, r chan []Resource, e chan error) {
 	var wg sync.WaitGroup
 	x := 0
 
-	for class, id := range classes {
+	for _, id := range classes {
 		wg.Add(1)
-		go getClassRes(creds, class, id, &unordered[x], &wg, errChan)
+		go getClassRes(creds, id, &unordered[x], &wg, errChan)
 		x++
 	}
 
