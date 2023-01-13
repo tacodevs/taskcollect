@@ -98,7 +98,7 @@ func findGrade(page *string) (plat.TaskGrade, error) {
 }
 
 // Retrieve the grade given to a student for a particular DayMap task.
-func taskGrade(creds User, id string, result plat.TaskGrade, e *error, wg *sync.WaitGroup) {
+func taskGrade(creds User, id string, result *plat.TaskGrade, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 	client := &http.Client{}
@@ -122,12 +122,11 @@ func taskGrade(creds User, id string, result plat.TaskGrade, e *error, wg *sync.
 		return
 	}
 	page := string(respBody)
-	result, *e = findGrade(&page)
+	*result, *e = findGrade(&page)
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
 func GradedTasks(creds User, t chan []plat.Task, e chan error) {
-	result := []plat.TaskGrade{}
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
@@ -286,11 +285,12 @@ func GradedTasks(creds User, t chan []plat.Task, e chan error) {
 	}
 
 	wg := sync.WaitGroup{}
+	result := make([]plat.TaskGrade, len(graded))
 	errs := make([]error, len(graded))
 
 	for i, id := range graded {
 		wg.Add(1)
-		go taskGrade(creds, id, result[i], &errs[i], &wg)
+		go taskGrade(creds, id, &result[i], &errs[i], &wg)
 	}
 
 	wg.Wait()

@@ -16,7 +16,7 @@ import (
 	"main/plat"
 )
 
-// Public function to retrieve information about a DayMap task by its ID.
+// Return information about a DayMap task by its ID.
 func GetTask(creds User, id string) (plat.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 
@@ -298,11 +298,11 @@ func UploadWork(creds User, id string, r *http.Request) error {
 	return nil
 }
 
-/*
-ISSUE: Although the below function theoretically works, in practice, for some
-reason, it does not.
-*/
 
+// ISSUE: Although the below function theoretically works, in practice, for some
+// reason, it does not.
+
+// Remove the specified student file submissions from a DayMap task.
 func RemoveWork(creds User, id string, filenames []string) error {
 	removeUrl := "https://gihs.daymap.net/daymap/student/attachments.aspx?Type=1&LinkID="
 	removeUrl += id
