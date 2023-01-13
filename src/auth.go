@@ -47,13 +47,13 @@ func initDB(addr string, pwd string, idx int) *redis.Client {
 }
 
 // Attempt to get pre-existing user credentials.
-func (db *authDB) getCreds(cookies string) (tcUser, error) {
-	creds := tcUser{}
+func (db *authDB) getCreds(cookies string) (User, error) {
+	creds := User{}
 	var token string
 
 	start := strings.Index(cookies, "token=")
 	if start == -1 {
-		return tcUser{}, errInvalidAuth
+		return User{}, errInvalidAuth
 	}
 
 	start += 6
@@ -116,7 +116,7 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
 			newErr := errors.NewError("main.getCreds", "could not load timezone location data", err)
-			return tcUser{}, newErr
+			return User{}, newErr
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -125,7 +125,7 @@ func (db *authDB) getCreds(cookies string) (tcUser, error) {
 		}
 	} else {
 		//newErr := errors.NewError("main.getCreds", "invalid school", errInvalidAuth)
-		return tcUser{}, errInvalidAuth
+		return User{}, errInvalidAuth
 	}
 
 	return creds, nil
@@ -192,7 +192,7 @@ func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 }
 
 // Create new user or update pre-existing user in the database.
-func (db *authDB) writeCreds(creds tcUser) error {
+func (db *authDB) writeCreds(creds User) error {
 	ctx := context.Background()
 
 	studentIDKey := "school:" + creds.School + ":studentID:" + creds.Username
@@ -304,7 +304,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 		}
 	}
 
-	creds := tcUser{
+	creds := User{
 		Timezone:   timezone,
 		School:     school,
 		Username:   user,
@@ -346,7 +346,7 @@ func (db *authDB) gAuthEndpoint() (string, error) {
 }
 
 // Run the Google authentication flow for a user.
-func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
+func (db *authDB) runGAuth(creds User, query url.Values) error {
 	authCode := query.Get("code")
 
 	clientId, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
@@ -384,7 +384,7 @@ func (db *authDB) runGAuth(creds tcUser, query url.Values) error {
 }
 
 // Logout a user from TaskCollect.
-func (db *authDB) logout(creds tcUser) error {
+func (db *authDB) logout(creds User) error {
 	token := creds.Token
 
 	// Clear tokens

@@ -1,7 +1,7 @@
 package daymap
 
 import (
-	"fmt"
+	"image/color"
 	"io"
 	"net/http"
 	"strconv"
@@ -10,18 +10,23 @@ import (
 	"time"
 
 	"main/errors"
+	"main/plat"
 )
 
 // Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(page *string) (string, error) {
-	grade := ""
+func findGrade(page *string) (plat.TaskGrade, error) {
+
+	var grade string
+	var percent float64
+	var gradeColor color.Color
 	i := strings.Index(*page, "Grade:")
 
 	if i != -1 {
 		i = strings.Index(*page, "TaskGrade'>")
 
 		if i == -1 {
-			return "", errInvalidTaskResp
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errInvalidTaskResp
 		}
 
 		*page = (*page)[i:]
@@ -30,7 +35,8 @@ func findGrade(page *string) (string, error) {
 		i = strings.Index(*page, "</div>")
 
 		if i == -1 {
-			return "", errInvalidTaskResp
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errInvalidTaskResp
 		}
 
 		grade = (*page)[:i]
@@ -43,7 +49,8 @@ func findGrade(page *string) (string, error) {
 		i = strings.Index(*page, "TaskGrade'>")
 
 		if i == -1 {
-			return "", errInvalidTaskResp
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errInvalidTaskResp
 		}
 
 		*page = (*page)[i:]
@@ -52,7 +59,8 @@ func findGrade(page *string) (string, error) {
 		i = strings.Index(*page, "</div>")
 
 		if i == -1 {
-			return "", errInvalidTaskResp
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errInvalidTaskResp
 		}
 
 		markStr := (*page)[:i]
@@ -61,7 +69,8 @@ func findGrade(page *string) (string, error) {
 		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
-			return "", errInvalidTaskResp
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errInvalidTaskResp
 		}
 
 		st := markStr[:x]
@@ -69,28 +78,27 @@ func findGrade(page *string) (string, error) {
 
 		it, err := strconv.ParseFloat(st, 64)
 		if err != nil {
-			return "", errors.NewError("daymap.GetTask", "(1) string to float64 conversion failed", err)
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errors.NewError("daymap.GetTask", "(1) string to float64 conversion failed", err)
 		}
 
 		ib, err := strconv.ParseFloat(sb, 64)
 		if err != nil {
-			return "", errors.NewError("daymap.GetTask", "(2) string to float64 conversion failed", err)
+			result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+			return result, errors.NewError("daymap.GetTask", "(2) string to float64 conversion failed", err)
 		}
 
-		percent := it / ib * 100
+		percent = it / ib * 100
 
-		if grade == "" {
-			grade = fmt.Sprintf("%.f%%", percent)
-		} else {
-			grade += fmt.Sprintf(" (%.f%%)", percent)
-		}
 	}
 
-	return grade, nil
+	result := plat.TaskGrade{Grade: grade, Mark: percent, Color: gradeColor}
+
+	return result, nil
 }
 
 // Retrieve the grade given to a student for a particular DayMap task.
-func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGroup) {
+func taskGrade(creds User, id string, result plat.TaskGrade, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 	client := &http.Client{}
@@ -100,7 +108,6 @@ func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGrou
 		*e = errors.NewError("daymap.GetTask", "GET request failed", err)
 		return
 	}
-
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
@@ -114,13 +121,13 @@ func taskGrade(creds User, id string, grade *string, e *error, wg *sync.WaitGrou
 		*e = errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
 		return
 	}
-
 	page := string(respBody)
-	*grade, *e = findGrade(&page)
+	result, *e = findGrade(&page)
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func GradedTasks(creds User, t chan []Task, e chan error) {
+func GradedTasks(creds User, t chan []plat.Task, e chan error) {
+	result := []plat.TaskGrade{}
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
@@ -128,12 +135,12 @@ func GradedTasks(creds User, t chan []Task, e chan error) {
 		return
 	}
 
-	unsortedTasks := []Task{}
+	unsortedTasks := []plat.Task{}
 	i := strings.Index(b, `href="javascript:ViewAssignment(`)
 	graded := []string{}
 
 	for i != -1 {
-		task := Task{
+		task := plat.Task{
 			Platform: "daymap",
 		}
 
@@ -279,12 +286,11 @@ func GradedTasks(creds User, t chan []Task, e chan error) {
 	}
 
 	wg := sync.WaitGroup{}
-	grades := make([]string, len(graded))
 	errs := make([]error, len(graded))
 
 	for i, id := range graded {
 		wg.Add(1)
-		go taskGrade(creds, id, &grades[i], &errs[i], &wg)
+		go taskGrade(creds, id, result[i], &errs[i], &wg)
 	}
 
 	wg.Wait()
@@ -299,15 +305,17 @@ func GradedTasks(creds User, t chan []Task, e chan error) {
 	for i, task := range unsortedTasks {
 		for j, id := range graded {
 			if task.Id == id {
-				unsortedTasks[i].Grade = grades[j]
+				unsortedTasks[i].Result.Grade = result[j].Grade
+				unsortedTasks[i].Result.Mark = result[j].Mark
+				unsortedTasks[i].Result.Color = result[j].Color
 			}
 		}
 	}
 
-	tasks := []Task{}
+	tasks := []plat.Task{}
 
 	for _, task := range unsortedTasks {
-		if task.Grade != "" {
+		if task.Result.Grade != "" {
 			tasks = append(tasks, task)
 		}
 	}

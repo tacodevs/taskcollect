@@ -1,7 +1,7 @@
 package gclass
 
 import (
-	"fmt"
+	"image/color"
 	"net/http"
 	"net/url"
 	"strings"
@@ -10,24 +10,8 @@ import (
 	"google.golang.org/api/classroom/v1"
 
 	"main/errors"
+	"main/plat"
 )
-
-type Task struct {
-	Name      string
-	Class     string
-	Link      string
-	Desc      string
-	Due       time.Time
-	Posted    time.Time
-	ResLinks  [][2]string
-	Upload    bool
-	WorkLinks [][2]string
-	Submitted bool
-	Grade     string
-	Comment   string
-	Platform  string
-	Id        string
-}
 
 // Create a direct download link to a Google Drive file from a web view link.
 func getDirectDriveLink(inputUrl string) (string, error) {
@@ -89,17 +73,17 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 }
 
 // Get a task from Google Classroom for a user.
-func GetTask(creds User, id string) (Task, error) {
+func GetTask(creds User, id string) (plat.Task, error) {
 	cid := strings.SplitN(id, "-", 3)
 
 	if len(cid) != 3 {
-		return Task{}, errInvalidTaskID
+		return plat.Task{}, errInvalidTaskID
 	}
 
 	svc, err := Auth(creds)
 	if err != nil {
 		newErr := errors.NewError("gclass.GetTask", "Google auth failed", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	classChan := make(chan string)
@@ -115,22 +99,22 @@ func GetTask(creds User, id string) (Task, error) {
 	).Fields("state", "assignedGrade", "assignmentSubmission").Do()
 	if err != nil {
 		newErr := errors.NewError("gclass.GetTask", "failed to get student submission", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	gc, err := <-taskChan, <-taskErrChan
 	if err != nil {
 		newErr := errors.NewError("gclass.GetTask", "from taskErrChan", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	class, err := <-classChan, <-classErrChan
 	if err != nil {
 		newErr := errors.NewError("gclass.GetTask", "from classErrChan", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
-	task := Task{
+	task := plat.Task{
 		Name:     gc.Title,
 		Class:    class,
 		Link:     gc.AlternateLink,
@@ -154,7 +138,7 @@ func GetTask(creds User, id string) (Task, error) {
 					link, err = getDirectDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
 						newErr := errors.NewError("gclass.GetTask", "failed to get direct drive link", err)
-						return Task{}, newErr
+						return plat.Task{}, newErr
 					}
 				}
 				name = w.DriveFile.Title
@@ -183,12 +167,19 @@ func GetTask(creds User, id string) (Task, error) {
 	task.ResLinks, err = resFromMaterials(gc.Materials)
 	if err != nil {
 		newErr := errors.NewError("gclass.GetTask", "failed getting resource links from task", err)
-		return Task{}, newErr
+		return plat.Task{}, newErr
 	}
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {
 		percent := studSub.AssignedGrade / gc.MaxPoints * 100
-		task.Grade = fmt.Sprintf("%.f%%", percent)
+		task.Result.Grade = ""
+		task.Result.Mark = percent
+		task.Result.Color = color.RGBA{}
+
+	} else {
+		task.Result.Grade = "-"
+		task.Result.Mark = 0.0
+		task.Result.Color = color.RGBA{}
 	}
 
 	if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {
