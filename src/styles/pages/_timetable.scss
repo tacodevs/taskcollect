@@ -1,4 +1,5 @@
 @use "../breakpoints" as bp;
+@use "../variables" as *;
 
 //img#timetable {
 //    display: block;
@@ -17,25 +18,34 @@
     margin: 0 auto;
     width: 100%;
     min-height: 1050px; // Compensate for the height of date at the top
-
-    box-sizing: border-box;
-
-    background-color: #e0e0e0;
+    background-color: #D2D2E3;
     color: #000000;
+
+    @media (prefers-color-scheme: dark) {
+        background-color: #505057;
+        color: #ffffff;
+    }
 
 
     .day {
-        overflow-y: auto;
-
         display: block;
+        overflow-y: auto;
         width: 20%;
-        box-sizing: border-box;
-        border-right: 1px solid #363637;
+        border-left: 2px solid var(--bg-color);
         padding-bottom: 1.5em;
 
         >h2 {
+            margin: 0;
+            padding: 1em 0;
+
             text-align: center;
             font-size: 1.3em;
+            background-color: #ABABC3;
+            border-bottom: 2px solid var(--bg-color);
+
+            @media (prefers-color-scheme: dark) {
+                background-color: #37373E;
+            }
         }
 
         .lessons {
@@ -75,8 +85,12 @@
     }
 
     @include bp.xs {
+        padding: 0;
+
         .day {
             width: 100%;
+            border-left: none;
+            border-bottom: 2px solid var(--bg-color);
         }
 
         .lessons>.lesson {
@@ -87,8 +101,12 @@
     }
 
     @include bp.sm {
+        padding: 0;
+
         .day {
             width: 100%;
+            border-left: none;
+            border-bottom: 2px solid var(--bg-color);
         }
 
         .lessons>.lesson {

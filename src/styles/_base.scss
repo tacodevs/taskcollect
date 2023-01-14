@@ -7,31 +7,34 @@
     --nav-font: "Red Hat Display", sans-serif;
     --login-font-size: 15px;
 
-    --accent-color: #347aff;
-    --accent-hover: #246aef;
-    --accent-click: #044acf;
-    --bg-color: #ffffff;
-    --fg-color: #000000;
-    --err-bg: #f09090;
-    --input-color: #e0e0e0;
-    --link-color: #2e6dd3;
-    --th-color: #dadada;
+    --accent-color: #{$tc-blue};
+    --accent-hover: #{$accent-hover};
+    --accent-click: #{$accent-click};
+    --bg-color: #{$light-theme-bg};
+    --bg-hover-color: #{$light-theme-bg-hover};
+    --fg-color: #{$light-theme-fg};
+    --input-color: #{$light-theme-input};
+    --link-color: #{$light-theme-link};
+    --hr-color: #{$light-theme-hr};
+    --err-bg: #{$light-theme-err-bg};
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --bg-color: #202020;
-        --fg-color: #ffffff;
-        --err-bg: #500000;
-        --input-color: #505050;
-        --link-color: #80b1ff;
-        --th-color: #4a4a4a;
+        --bg-color: #{$dark-theme-bg};
+        --bg-hover-color: #{$dark-theme-bg-hover};
+        --fg-color: #{$dark-theme-fg};
+        --input-color: #{$dark-theme-input};
+        --link-color: #{$dark-theme-link};
+        --hr-color: #{$dark-theme-hr};
+        --err-bg: #{$dark-theme-err-bg};
     }
 }
 
 html {
     box-sizing: border-box;
     height: 100%;
+    font-family: sans-serif;
 }
 
 *,
@@ -57,13 +60,14 @@ body {
     overflow-y: scroll;
 }
 
+// Primary use is to override the height for the login screen since there is no navbar.
+.full-height {
+    height: 100% !important;
+}
+
 main#main-content {
     width: 100%;
     padding: 2em 4% 3.75em 4%;
-
-    @include bp.xs {
-        padding: 3.5em 0 3em 0;
-    }
 }
 
 footer {
@@ -84,6 +88,12 @@ h3 {
 
 a {
     color: var(--link-color);
+}
+
+hr {
+    border: 0;
+    border-bottom: 1px solid var(--hr-color);
+    margin: 20px 0;
 }
 
 select,
@@ -115,7 +125,7 @@ summary {
 
 details div:hover,
 summary:hover {
-    background: var(--th-color);
+    background: var(--bg-hover-color);
 }
 
 details div {
@@ -152,36 +162,4 @@ details:last-child:not([open]) summary {
 
 details div h5.datetime {
     float: right;
-}
-
-table {
-    border-collapse: collapse;
-    border-spacing: 0;
-    width: 100%;
-}
-
-th.due,
-th.subject {
-    width: 15%;
-}
-
-th.task,
-th.link {
-    width: 35%;
-}
-
-th,
-td {
-    border: 1px solid var(--fg-color);
-    padding: 5px 7px;
-}
-
-th {
-    background: var(--th-color);
-}
-
-hr {
-    border: 0;
-    border-bottom: 1px solid #aaaaaa;
-    margin: 20px 0;
 }

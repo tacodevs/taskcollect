@@ -1,8 +1,6 @@
 package main
 
-import (
-	"html/template"
-)
+import "html/template"
 
 // Primary (page, head, body)
 
@@ -143,10 +141,12 @@ type taskData struct {
 	Comment      template.HTML
 	TaskGrade    taskGrade
 }
+
 type taskGrade struct {
-	Grade string
-	Mark  string
-	Color string
+	Grade   string
+	Mark    string
+	Color   string
+	BGColor string
 }
 
 // Grades

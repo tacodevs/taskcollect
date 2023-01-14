@@ -80,12 +80,14 @@ def update_res_files():
     res_dst = Path.home().joinpath("res/taskcollect")
     tmpl_dst = res_dst.joinpath("templates")
 
+    print("Begin to copy assets...")
+
     # Copy over template files
     src = tmpl_src
     rel_path = Path.relative_to(src, tmpl_src)
     dst = tmpl_dst.joinpath(rel_path)
     copy_tree(str(src), str(dst))
-    print(f"Copied {src} -> {dst}")
+    print(f"  Copied {src} -> {dst}")
 
     # NOTE: shell=True must be set for the command to work on Windows systems.
     # This is due to the Sass program being invoked via `sass.bat` which is not recognised
@@ -95,14 +97,22 @@ def update_res_files():
         "sass ./src/styles/styles.scss ./res/styles.css --no-source-map",
         shell=True
     )
-    print("Compiled SCSS files to CSS file")
+    print("Compiled SCSS files into CSS file")
 
-    assets = ["styles.css", "script.js"]
+    res_dst.joinpath("icons").mkdir(exist_ok=True)
+
+    assets = [
+        "styles.css", "script.js",
+        "taskcollect-logo.svg", "taskcollect-wordmark.svg",
+        "icons/apple-touch-icon.png", "icons/favicon.ico",
+        "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg"
+    ]
+
     for asset in assets:
         src = res_src.joinpath(asset)
         dst = res_dst.joinpath(asset)
         shutil.copy(src, dst)
-        print(f"Copied {src} -> {dst}")
+        print(f"  Copied {src} -> {dst}")
 
 
 def print_help():
@@ -114,7 +124,7 @@ def print_help():
         "Supported OS and architectures:\n"
         "  - darwin  (amd64, arm64)\n"
         "  - linux   (386, amd64, arm, arm64)\n"
-        "  - windows (386, arm64)\n\n"
+        "  - windows (386, amd64)\n\n"
         "Invoke the script without any arguments to automatically build for your system.\n\n"
         "USAGE:\n"
         f"    {cmd} [<<OS>/<ARCH>> ...]\n" # - Provide a valid combination of OS and architecture. Several can be built at once
@@ -146,7 +156,7 @@ def main(argc: int, argv: list[str]):
             arch = "386"
         elif arch in ["x64", "x86_64"]:
             arch = "amd64"
-        print(f"Automatically building taskcollect for the host system: {os_name}/{arch}")
+        print(f"Automatically building TaskCollect for the host system: {os_name}/{arch}")
         print("See 'help' for more information")
         argv.append(f"{os_name}/{arch}")
         run(argv)
