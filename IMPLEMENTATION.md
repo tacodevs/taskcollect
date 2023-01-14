@@ -1,6 +1,32 @@
 # Implementation details
 This document outlines how features are implemented in TaskCollect. 
 
+## Public interface
+
+TaskCollect's public interface is stable as of v1.0.0 and is defined below, in this section of this document.
+
+TaskCollect is a web server that presents a web interface with a navigation bar and a body for each web page. Users must authenticate to TaskCollect to use this interface through a TaskCollect login page.
+
+The navigation bar allows switching between different tabs which provide access to different types of resources necessary for students.
+
+The **Timetable** tab provides the user an HTML timetable showing their lessons for the school week.
+
+The **Tasks** tab provides the user a list of their tasks separated into at least the following categories:
+  * Active tasks
+  * Tasks with no due date
+  * Overdue tasks
+  * Submitted tasks
+
+Links are provided on the Tasks tab to **individual task pages** which display information and provide any other necessary functionality for interacting with individual tasks.
+
+The **Resources** tab provides the user a list of educational resources available to them, organised by the class the educational resources were assigned for.
+
+Links are provided on the Resources tab to **individual resource pages** which display information and provide any other necessary functionality for interacting with individual resources.
+
+The **Grades** tab provides the user a list of all their graded tasks. Links are provided on the Grades tab which link to the corresponding individual task pages.
+
+The navigation bar shall also include a logout link which shall log the user out of an active TaskCollect session.
+
 ## Database
 
 TaskCollect uses Redis 7 as its primary user credentials database. 

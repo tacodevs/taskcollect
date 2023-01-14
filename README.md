@@ -52,12 +52,11 @@ From here, deployment is simple:
 
   4. If running for the first time, you will also need to set up a Redis server. You must ensure you are Redis 7 as no other version will work. If it is not the first time running TaskCollect or the credentials database has been imported from another TaskCollect session, then set up the Redis server as you normally would, then run TaskCollect.
 
+TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors. In particular, the firewall should prevent overly frequent requests to TaskCollect as some APIs that TaskCollect uses enforce a request rate limit.
 
-TaskCollect is ***not*** production-ready and should not be deployed to the public yet. When it is, TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors.
+As of v1.0.0, TaskCollect is considered production-ready and its public interface stable (see `IMPLEMENTATION.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases.
 
 ## Contribute
-
-TaskCollect, in its current state, is much like a newborn child and still needs to grow and develop into a secure, robust program. For that we need people testing TaskCollect, finding bugs/issues, and providing fixes and suggestions. If you have the time, please consider contributing, however small, to TaskCollect development.
 
 Issues can be reported on the Codeberg issue tracker. For discussions and questions regarding TaskCollect, there are two mediums:
 
@@ -70,7 +69,7 @@ Although the mailing list is public, the mailing list archives are not accessibl
 
 ## Future directions
 
-Currently, as TaskCollect is slowly heading to version 1.0.0, it is evident that many other useful features could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 is rather conservative to emphasise robustness, security, and stability. Though in the future, the following features could be added (potentially through a bounty program).
+Despite the v1.0.0 release, it is evident that many other useful features (and fixes) could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 has been rather conservative to emphasise robustness, security, and stability. In the future, the following features could be added (potentially through a bounty program).
 
 Support for:
 
