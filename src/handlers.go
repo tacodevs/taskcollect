@@ -152,13 +152,82 @@ func (h *handler) genPage(w http.ResponseWriter, data pageData) {
 	*/
 }
 
+// TODO: Make functions for accessing and dealing with files
+
 // Handle assets - CSS, JS, fonts, etc.
 func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 	res := strings.Replace(r.URL.EscapedPath(), "/assets", "", 1)
 
-	if res == "/styles.css" {
+	if strings.HasPrefix(res, "/icons") {
+		fileStr := ""
+
+		switch name := strings.Replace(res, "/icons", "", 1); name {
+		case "/apple-touch-icon.png":
+			w.Header().Set("Content-Type", `image/png, charset="utf-8"`)
+			fileStr = "apple-touch-icon.png"
+		case "/icon.svg":
+			w.Header().Set("Content-Type", `image/svg+xml, charset="utf-8"`)
+			fileStr = "icon.svg"
+		case "/icon-192":
+			w.Header().Set("Content-Type", `image/png, charset="utf-8"`)
+			fileStr = "icon-512.svg"
+		case "/icon-512":
+			w.Header().Set("Content-Type", `image/png, charset="utf-8"`)
+			fileStr = "icon-512.svg"
+		}
+
+		file, err := os.Open(fp.Join(h.database.path, "icons", fileStr))
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not open icon file", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+		defer file.Close()
+
+		_, err = io.Copy(w, file)
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of icon file", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+
+	} else if res == "/taskcollect-wordmark.svg" {
+		w.Header().Set("Content-Type", `image/svg+xml, charset="utf-8"`)
+
+		file, err := os.Open(fp.Join(h.database.path, "taskcollect-wordmark.svg"))
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not open svg file", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+		defer file.Close()
+
+		_, err = io.Copy(w, file)
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of svg file", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+	} else if res == "/manifest.webmanifest" {
+		w.Header().Set("Content-Type", `application/json, charset="utf-8"`)
+
+		file, err := os.Open(fp.Join(h.database.path, "manifest.webmanifest"))
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not open manifest file", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+		defer file.Close()
+
+		_, err = io.Copy(w, file)
+		if err != nil {
+			newErr := errors.NewError("main.assetHandler", "could not copy contents of manifest file", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+	} else if res == "/styles.css" {
 		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		w.Header().Add("Cache-Control", "max-age=3600")
+		//w.Header().Add("Cache-Control", "max-age=3600")
 
 		cssFile, err := os.Open(fp.Join(h.database.path, "styles.css"))
 		if err != nil {
@@ -529,6 +598,26 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/" {
 		invalidRes = true
+	}
+
+	if res == "/favicon.ico" {
+		w.Header().Set("Content-Type", `text/plain, charset="utf-8"`)
+		//w.Header().Add("Cache-Control", "max-age=3600")
+
+		file, err := os.Open(fp.Join(h.database.path, "/icons/favicon.ico"))
+		if err != nil {
+			newErr := errors.NewError("main.rootHandler", "could not open favicon.ico", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
+		defer file.Close()
+
+		_, err = io.Copy(w, file)
+		if err != nil {
+			newErr := errors.NewError("main.rootHandler", "could not copy contents of favicon.ico", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+		}
 	}
 
 	// User is not logged in (and is not on login page)
