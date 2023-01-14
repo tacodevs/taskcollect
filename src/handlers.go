@@ -134,8 +134,6 @@ func (h *handler) genPage(w http.ResponseWriter, data pageData) {
 	}
 
 	// TESTING CODE:
-	// NOTE: It seems that when fetching data (res or tasks) it fetches the data and writes to
-	// the file but that gets overridden by a 404 page instead.
 
 	/*
 		var processed bytes.Buffer
@@ -152,7 +150,25 @@ func (h *handler) genPage(w http.ResponseWriter, data pageData) {
 	*/
 }
 
-// TODO: Make functions for accessing and dealing with files
+// Responds to the client with the requested resources.
+func dispatchAsset(w http.ResponseWriter, fullPath string, mimeType string) {
+	w.Header().Set("Content-Type", mimeType+`, charset="utf-8"`)
+
+	file, err := os.Open(fullPath)
+	if err != nil {
+		newErr := errors.NewError("main.dispatchAsset", "could not open "+fullPath, err)
+		w.WriteHeader(500)
+		logger.Error(newErr)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		newErr := errors.NewError("main.dispatchAsset", "could not copy contents of "+fullPath, err)
+		w.WriteHeader(500)
+		logger.Error(newErr)
+	}
+}
 
 // Handle assets - CSS, JS, fonts, etc.
 func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,142 +176,70 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 
 	if strings.HasPrefix(res, "/icons") {
 		fileStr := ""
+		mimeType := ""
 
 		switch name := strings.Replace(res, "/icons", "", 1); name {
 		case "/apple-touch-icon.png":
-			w.Header().Set("Content-Type", `image/png, charset="utf-8"`)
+			mimeType = "image/png"
 			fileStr = "apple-touch-icon.png"
 		case "/icon.svg":
-			w.Header().Set("Content-Type", `image/svg+xml, charset="utf-8"`)
+			mimeType = "image/svg+xml"
 			fileStr = "icon.svg"
-		case "/icon-192":
-			w.Header().Set("Content-Type", `image/png, charset="utf-8"`)
-			fileStr = "icon-512.svg"
-		case "/icon-512":
-			w.Header().Set("Content-Type", `image/png, charset="utf-8"`)
-			fileStr = "icon-512.svg"
+		case "/icon-192.png":
+			mimeType = "image/png"
+			fileStr = "icon-512.png"
+		case "/icon-512.png":
+			mimeType = "image/png"
+			fileStr = "icon-512.png"
+		default:
+			if name == "/" {
+				w.WriteHeader(403)
+				h.genPage(w, statusForbiddenData)
+			} else {
+				w.WriteHeader(404)
+				h.genPage(w, statusNotFoundData)
+			}
+			return
 		}
 
-		file, err := os.Open(fp.Join(h.database.path, "icons", fileStr))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open icon file", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer file.Close()
-
-		_, err = io.Copy(w, file)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of icon file", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
+		fullPath := fp.Join(h.database.path, "icons", fileStr)
+		dispatchAsset(w, fullPath, mimeType)
 
 	} else if res == "/taskcollect-wordmark.svg" {
-		w.Header().Set("Content-Type", `image/svg+xml, charset="utf-8"`)
+		fullPath := fp.Join(h.database.path, "taskcollect-wordmark.svg")
+		dispatchAsset(w, fullPath, "image/svg+xml")
 
-		file, err := os.Open(fp.Join(h.database.path, "taskcollect-wordmark.svg"))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open svg file", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer file.Close()
-
-		_, err = io.Copy(w, file)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of svg file", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
 	} else if res == "/manifest.webmanifest" {
-		w.Header().Set("Content-Type", `application/json, charset="utf-8"`)
+		fullPath := fp.Join(h.database.path, "manifest.webmanifest")
+		dispatchAsset(w, fullPath, "application/json")
 
-		file, err := os.Open(fp.Join(h.database.path, "manifest.webmanifest"))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open manifest file", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer file.Close()
-
-		_, err = io.Copy(w, file)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of manifest file", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
 	} else if res == "/styles.css" {
-		w.Header().Set("Content-Type", `text/css, charset="utf-8"`)
-		//w.Header().Add("Cache-Control", "max-age=3600")
+		//w.Header().Set("Cache-Control", "max-age=3600")
+		fullPath := fp.Join(h.database.path, "styles.css")
+		dispatchAsset(w, fullPath, "text/css")
 
-		cssFile, err := os.Open(fp.Join(h.database.path, "styles.css"))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open cssFile", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer cssFile.Close()
-
-		_, err = io.Copy(w, cssFile)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of cssFile", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
 	} else if res == "/script.js" {
-		w.Header().Set("Content-Type", `text/javascript, charset="utf-8"`)
-		w.Header().Add("Cache-Control", "max-age=3600")
+		w.Header().Set("Cache-Control", "max-age=3600")
+		fullPath := fp.Join(h.database.path, "script.js")
+		dispatchAsset(w, fullPath, "text/javascript")
 
-		jsFile, err := os.Open(fp.Join(h.database.path, "script.js"))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open jsFile", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer jsFile.Close()
-
-		_, err = io.Copy(w, jsFile)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of jsFile", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
 	} else if res == "/mainfont.ttf" {
-		w.Header().Set("Content-Type", `font/ttf`)
-		w.Header().Add("Cache-Control", "max-age=259200")
+		w.Header().Set("Cache-Control", "max-age=259200")
+		fullPath := fp.Join(h.database.path, "mainfont.ttf")
+		dispatchAsset(w, fullPath, "font/ttf")
 
-		fontFile, err := os.Open(fp.Join(h.database.path, "mainfont.ttf"))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open mainfont.ttf", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer fontFile.Close()
-
-		_, err = io.Copy(w, fontFile)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of mainfont.ttf", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
 	} else if res == "/navfont.ttf" {
-		w.Header().Set("Content-Type", `font/ttf`)
-		w.Header().Add("Cache-Control", "max-age=259200")
+		w.Header().Set("Cache-Control", "max-age=259200")
+		fullPath := fp.Join(h.database.path, "navfont.ttf")
+		dispatchAsset(w, fullPath, "font/ttf")
 
-		fontFile, err := os.Open(fp.Join(h.database.path, "navfont.ttf"))
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not open navfont.ttf", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer fontFile.Close()
-
-		_, err = io.Copy(w, fontFile)
-		if err != nil {
-			newErr := errors.NewError("main.assetHandler", "could not copy contents of navfont.ttf", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
+	} else {
+		if res == "/" {
+			w.WriteHeader(403)
+			h.genPage(w, statusForbiddenData)
+		} else {
+			w.WriteHeader(404)
+			h.genPage(w, statusNotFoundData)
 		}
 	}
 }
@@ -534,7 +478,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
 		} else {
-			w.Header().Add("Cache-Control", "max-age=2400")
+			w.Header().Set("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
 		}
 	} else {
@@ -542,6 +486,80 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(302)
 	}
 }
+
+// Handle the "/timetable" page
+func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
+	validAuth := true
+	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
+
+	if errors.Is(err, errInvalidAuth) {
+		validAuth = false
+	} else if err != nil {
+		newErr := errors.NewError("main.timetableHandler", "failed to get creds", err)
+		logger.Error(newErr)
+		h.genPage(w, statusServerErrorData)
+		return
+	}
+
+	creds.GAuthID = h.database.gAuth
+
+	if validAuth {
+		webpageData, err := genRes(h.database.path, "/timetable", creds)
+		if errors.Is(err, errNotFound) {
+			w.WriteHeader(404)
+			h.genPage(w, statusNotFoundData)
+		} else if err != nil {
+			newErr := errors.NewError("main.timetableHandler", "failed to generate resources", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+			h.genPage(w, statusServerErrorData)
+		} else {
+			w.Header().Set("Cache-Control", "max-age=2400")
+			h.genPage(w, webpageData)
+		}
+	} else {
+		w.Header().Set("Location", "/login")
+		w.WriteHeader(302)
+	}
+}
+
+// Handle the "/grades" page
+func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
+	validAuth := true
+	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
+
+	if errors.Is(err, errInvalidAuth) {
+		validAuth = false
+	} else if err != nil {
+		newErr := errors.NewError("main.gradesHandler", "failed to get creds", err)
+		logger.Error(newErr)
+		h.genPage(w, statusServerErrorData)
+		return
+	}
+
+	creds.GAuthID = h.database.gAuth
+
+	if validAuth {
+		webpageData, err := genRes(h.database.path, "/grades", creds)
+		if errors.Is(err, errNotFound) {
+			w.WriteHeader(404)
+			h.genPage(w, statusNotFoundData)
+		} else if err != nil {
+			newErr := errors.NewError("main.gradesHandler", "failed to generate resources", err)
+			logger.Error(newErr)
+			w.WriteHeader(500)
+			h.genPage(w, statusServerErrorData)
+		} else {
+			w.Header().Set("Cache-Control", "max-age=2400")
+			h.genPage(w, webpageData)
+		}
+	} else {
+		w.Header().Set("Location", "/login")
+		w.WriteHeader(302)
+	}
+}
+
+// Handle the "/images"
 
 // Handle the "/res" page
 func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
@@ -570,7 +588,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			h.genPage(w, statusServerErrorData)
 		} else {
-			w.Header().Add("Cache-Control", "max-age=2400")
+			w.Header().Set("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
 		}
 	} else {
@@ -598,26 +616,10 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	if res == "/" {
 		invalidRes = true
-	}
-
-	if res == "/favicon.ico" {
-		w.Header().Set("Content-Type", `text/plain, charset="utf-8"`)
-		//w.Header().Add("Cache-Control", "max-age=3600")
-
-		file, err := os.Open(fp.Join(h.database.path, "/icons/favicon.ico"))
-		if err != nil {
-			newErr := errors.NewError("main.rootHandler", "could not open favicon.ico", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
-		defer file.Close()
-
-		_, err = io.Copy(w, file)
-		if err != nil {
-			newErr := errors.NewError("main.rootHandler", "could not copy contents of favicon.ico", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-		}
+	} else if res == "/favicon.ico" {
+		//w.Header().Set("Cache-Control", "max-age=3600")
+		fullPath := fp.Join(h.database.path, "/icons/favicon.ico")
+		dispatchAsset(w, fullPath, "text/plain")
 	}
 
 	// User is not logged in (and is not on login page)
@@ -645,21 +647,9 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
 
-		// Logged in, and the requested URL is valid
+		// Logged in, and the requested URL is not handled by anything else (it's a 404)
 	} else if validAuth && !invalidRes {
-		webpageData, err := genRes(h.database.path, res, creds)
-
-		if errors.Is(err, errNotFound) {
-			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
-		} else if err != nil {
-			newErr := errors.NewError("main.rootHandler", "failed to generate resources", err)
-			logger.Error(newErr)
-			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
-		} else {
-			w.Header().Add("Cache-Control", "max-age=2400")
-			h.genPage(w, webpageData)
-		}
+		w.WriteHeader(404)
+		h.genPage(w, statusNotFoundData)
 	}
 }
