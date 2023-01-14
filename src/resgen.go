@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"image/color"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,13 @@ import (
 	"main/errors"
 	"main/plat"
 )
+
+var gradeColors = []color.RGBA{
+	{0xc9, 0x16, 0x14, 0xff}, // Red, #c91614
+	{0xd9, 0x6b, 0x0a, 0xff}, // Amber/Orange, #d96b0a
+	{0xf6, 0xde, 0x0a, 0xff}, // Yellow, #f6de0a
+	{0x03, 0x6e, 0x05, 0xff}, // Green, #036e05
+}
 
 func genDueStr(due time.Time, creds User) string {
 	var dueDate string
@@ -151,21 +159,32 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 	} else {
 		data.Body.TaskData.TaskGrade.Grade = "N/A"
 	}
+
+	bgColor := color.RGBA{0x00, 0x00, 0x00, 0x00}
+	data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+
 	if assignment.Result.Mark != 0.0 {
-		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
 		if assignment.Result.Mark < 50 {
-			data.Body.TaskData.TaskGrade.Color = "#c91614" //RED
+			bgColor = gradeColors[0] // Red
 		} else if (50 <= assignment.Result.Mark) && (assignment.Result.Mark < 70) {
-			data.Body.TaskData.TaskGrade.Color = "#d96b0a" //AMBER/ORANGE
+			bgColor = gradeColors[1] // Amber/Orange
 		} else if (70 <= assignment.Result.Mark) && (assignment.Result.Mark < 85) {
-			data.Body.TaskData.TaskGrade.Color = "#f6de0a" //YELLOW
+			bgColor = gradeColors[2] // Yellow
 		} else if assignment.Result.Mark >= 85 {
-			data.Body.TaskData.TaskGrade.Color = "#036e05" //GREEN
+			bgColor = gradeColors[3] // Green
 		}
+		textColor := "#ffffff"
+		luminance := (0.299*float32(bgColor.R) + 0.587*float32(bgColor.G) + 0.114*float32(bgColor.B)) / 255
+		if luminance > 0.5 {
+			textColor = "#000000"
+		}
+		data.Body.TaskData.TaskGrade.Color = textColor
 	} else {
-		data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
-		data.Body.TaskData.TaskGrade.Color = "" //Blank string so it will default to the correct color
+		data.Body.TaskData.TaskGrade.Color = "" // Blank string so it will default to the correct color
 	}
+
+	data.Body.TaskData.TaskGrade.BGColor = fmt.Sprintf("#%02x%02x%02x%02x", bgColor.R, bgColor.G, bgColor.B, bgColor.A)
+
 	if assignment.Comment != "" {
 		taskCmt := assignment.Comment
 		// Escape strings since it will be converted to safe HTML after
