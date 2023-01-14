@@ -3,11 +3,12 @@ package daymap
 import (
 	"fmt"
 	"io"
-	"main/errors"
-	"main/plat"
 	"net/http"
 	"strings"
 	"sync"
+
+	"main/errors"
+	"main/plat"
 )
 
 // Get a file resource from DayMap for a user.

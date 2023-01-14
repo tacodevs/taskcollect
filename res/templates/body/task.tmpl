@@ -3,15 +3,18 @@
 
 <div id="root">
 <main id="main-content">
-    <div class="topright">
-        <a href="{{.Body.TaskData.URL}}">View task in original platform</a> 
-    </div>
-    <div class="wide">
-        <h1>{{.Body.TaskData.Name}}</h1>
-        <h3>{{.Body.TaskData.Class}}</h3>
+
+    <div class="task-header">
+        <div class="task-title">
+            <h1>{{.Body.TaskData.Name}}</h1>
+            <h3>{{.Body.TaskData.Class}}</h3>
+        </div>
+        <div class="topright">
+            <a href="{{.Body.TaskData.URL}}">View task in original platform</a> 
+        </div>
     </div>
 
-    <div class="grid-container">
+    <div class="task-container">
 
         <div class="grid-element">
 
@@ -42,21 +45,20 @@
                 {{$id := .Body.TaskData.Id}}
 
                 <h4>Upload file</h4>
-                <form method="POST" enctype="multipart/form-data" action="/tasks/{{$plat}}/{{$id}}/upload">
+                <form class="task-form" method="POST" enctype="multipart/form-data" action="/tasks/{{$plat}}/{{$id}}/upload">
                     <label for="file">Select file:</label>
-                    <input id="select" type="file" name="file"><br>
+                    <input type="file" name="file">
                     <input class="secondary" type="submit" value="Upload file">
                 </form>
 
                 <h4>Remove file(s)</h4>
-                <form action="/tasks/{{$plat}}/{{$id}}/remove">
+                <form class="task-form" action="/tasks/{{$plat}}/{{$id}}/remove">
                     {{range $name, $url := .Body.TaskData.WorkLinks}}
                     
                     <label for="{{$name}}" class="form-control">
                         <input type="checkbox" name="{{$name}}" class="left">
                         <a href="{{$url}}" class="left">{{$name}}</a>
                     </label>
-                    <br>
                     {{end}}
                     <input class="secondary" type="submit" value="Remove selected file(s)">
                 </form>
@@ -67,22 +69,23 @@
             {{end}}
             <div class="linebreak"></div>
         </div>
-   
-        <div class="centered">
-            <h3>Grade: </h3>
-            <div id="grade" style = "color: {{.Body.TaskData.TaskGrade.Color}}">
+
+        <div class="task-grade">
+            {{$taskGrade := .Body.TaskData.TaskGrade}}
+            <h3>Grade</h3>
+            <div id="grade" style="color: {{$taskGrade.Color}}; background-color: {{$taskGrade.BGColor}};">
                 {{if ne .Body.TaskData.TaskGrade.Grade ""}}
-                    <h1>{{.Body.TaskData.TaskGrade.Grade}}</h1> 
+                    <h1>{{$taskGrade.Grade}}</h1> 
                 {{end}}
-                {{if ne .Body.TaskData.TaskGrade.Mark ""}}
-                    <h2>{{.Body.TaskData.TaskGrade.Mark}}</h2>
+                {{if ne $taskGrade.Mark ""}}
+                    <h2>{{$taskGrade.Mark}}</h2>
                 {{end}}
             </div>
             {{if ne .Body.TaskData.Comment ""}}
                 <h4>Teacher comment:</h4>
-                <p id="comment">{{.Body.TaskData.Comment}}</p>
+                <p id="teacher-comment">{{.Body.TaskData.Comment}}</p>
             {{end}}
-        </div>    
+        </div>
     </div>
 </main>
 <footer></footer>

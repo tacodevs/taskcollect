@@ -6,25 +6,58 @@
     width: 100%;
 }
 
+#login {
+    margin: auto;
+    max-width: 26%;
+    text-align: left;
+
+    @include bp.xs {
+        max-width: 86%;
+    }
+
+    @include bp.sm {
+        max-width: 72%;
+    }
+
+    @include bp.md {
+        max-width: 50%;
+    }
+
+    @include bp.lg {
+        max-width: 38%;
+    }
+
+    @include bp.xl {
+        max-width: 26%;
+    }
+}
+
+#login-logo {
+    width: 100%;
+    margin-top: 1em;
+
+    >img {
+        width: 100%;
+    }
+}
+
 form[action="/auth"] {
     margin: auto;
-    max-width: 25%;
+    width: 100%;
     text-align: left;
 
     h1 {
         text-align: center;
-    }
-
-    h3 {
-        text-align: center;
-        font-size: 1.25em;
+        font-size: 1.5em;
     }
 
     // TODO: use an ID for h4
     h4 {
         padding: 9px 13px;
         background: var(--err-bg);
-        border: 1px solid red;
+        color: #ffffff;
+        //border: 1px solid #ee0000;
+        text-align: center;
         @include -box;
         @include forms.styling-1;
     }
@@ -33,39 +66,22 @@ form[action="/auth"] {
     input#pwd,
     select#school {
         margin: 10px 0;
-        padding: 5px 10px;
+        padding: 6px 10px;
+        border: none;
         @include -box;
         @include forms.styling-1;
     }
 
-    select#school {
-        padding: 5px 5px !important;
-    }
-
     input[type="submit"] {
-        @include forms.styling-1;
         margin-top: 14px;
         padding: 10px 20px !important;
         width: 100%;
-    }
+        border: none;
+        transition: 0.2s;
 
-    @include bp.xs {
-        max-width: 90%;
-    }
-
-    @include bp.sm {
-        max-width: 80%;
-    }
-
-    @include bp.md {
-        max-width: 60%;
-    }
-
-    @include bp.lg {
-        max-width: 40%;
-    }
-
-    @include bp.xl {
-        max-width: 25%;
+        //&:hover {
+        //    transition: 0.2s;
+        //    background-color: var(--accent-hover);
+        //}
     }
 }

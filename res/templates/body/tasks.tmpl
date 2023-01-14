@@ -3,6 +3,7 @@
 
 <div id="root">
 <main id="main-content">
+    <div id="tasks">
     <h1>{{.Body.TasksData.Heading}}</h1>
 
     {{range $index, $taskType := .Body.TasksData.TaskTypes}}
@@ -24,6 +25,8 @@
         {{end}}
     </details>
     {{end}}
+
+    </div>
 </main>
 <footer></footer>
 </div>

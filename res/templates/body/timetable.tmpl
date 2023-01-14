@@ -11,9 +11,17 @@
     {{range $index, $day := .Body.TimetableData.Days}}
         {{$weekday := (add $index 1)}}
         {{if eq $currentDay $weekday}}
-            <div class="day" style="background: #c2cdfc;">
+            {{if eq $weekday 1}}
+                <div class="day" style="background: #c2cdfc; border-left: none;">
+            {{else}}
+                <div class="day" style="background: #c2cdfc;">
+            {{end}}
         {{else}}
-            <div class="day">
+            {{if eq $weekday 1}}
+                <div class="day" style="border-left: none;">
+            {{else}}
+                <div class="day">
+            {{end}}
         {{end}}
                 <h2>{{$day.Day}}</h2>
                 <div class="lessons">

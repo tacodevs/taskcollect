@@ -441,7 +441,7 @@ func genTimetable(creds User) (timetableData, error) {
 			duration := endMins - startMins
 
 			c := colorList[day[j].Class]
-			rgb := fmt.Sprintf("%02x%02x%02x", c.R, c.G, c.B)
+			hexColor := fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 
 			textColor := "#ffffff"
 			luminance := (0.299*float32(c.R) + 0.587*float32(c.G) + 0.114*float32(c.B)) / 255
@@ -461,7 +461,7 @@ func genTimetable(creds User) (timetableData, error) {
 				Teacher:       day[j].Teacher,
 				Notice:        day[j].Notice,
 				Color:         textColor,
-				BGColor:       "#" + rgb,
+				BGColor:       hexColor,
 			}
 
 			d.Lessons = append(d.Lessons, lesson)
