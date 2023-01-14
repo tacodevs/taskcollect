@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"sort"
 	"time"
@@ -283,10 +285,43 @@ func submitTask(creds User, platform, taskId string) error {
 	return err
 }
 
+// Return a slice of plat.File from a multipart MIME file upload request.
+func reqFiles(r *http.Request) ([]plat.File, error) {
+	defer r.Body.Close()
+	files := []plat.File{}
+	reader, err := r.MultipartReader()
+	if err != nil {
+		return nil, err
+	}
+
+	part, err := reader.NextPart()
+
+	for err == nil {
+		file := plat.File{
+			Name:     part.FileName(),
+			MimeType: part.Header.Get("Content-Type"),
+			Reader:   part,
+		}
+		files = append(files, file)
+		part, err = reader.NextPart()
+	}
+
+	if err == io.EOF {
+		return files, nil
+	} else {
+		fmt.Println(err)
+		return nil, errors.NewError("main.reqFiles", "failed parsing files from multipart MIME request", err)
+	}
+}
+
 // Upload work to a given platform.
 func uploadWork(creds User, platform string, id string, r *http.Request) error {
-	err := errNoPlatform.AsError()
+	files, err := reqFiles(r)
+	if err != nil {
+		return err
+	}
 
+	err = errNoPlatform.AsError()
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
@@ -294,13 +329,13 @@ func uploadWork(creds User, platform string, id string, r *http.Request) error {
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
-		err = gclass.UploadWork(gcCreds, id, r)
+		err = gclass.UploadWork(gcCreds, id, files)
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["daymap"],
 		}
-		err = daymap.UploadWork(dmCreds, id, r)
+		err = daymap.UploadWork(dmCreds, id, files)
 	}
 
 	return err

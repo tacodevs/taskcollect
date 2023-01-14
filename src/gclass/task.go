@@ -2,7 +2,6 @@ package gclass
 
 import (
 	"image/color"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -250,7 +249,7 @@ func SubmitTask(creds User, id string) error {
 }
 
 // Upload a file as a user's work for a Google Classroom task.
-func UploadWork(creds User, id string, r *http.Request) error {
+func UploadWork(creds User, id string, files []plat.File) error {
 	// Upload a file as a submission.
 	return nil
 }

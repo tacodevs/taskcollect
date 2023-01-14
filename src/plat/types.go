@@ -1,6 +1,7 @@
 package plat
 
 import (
+	"io"
 	"image/color"
 	"time"
 )
@@ -21,11 +22,19 @@ type Task struct {
 	Platform  string
 	Id        string
 }
+
 type TaskGrade struct {
 	Grade string
 	Mark  float64
 	Color color.Color
 }
+
+type File struct {
+	Name     string
+	MimeType string
+	Reader   io.Reader
+}
+
 type Lesson struct {
 	Start   time.Time
 	End     time.Time
