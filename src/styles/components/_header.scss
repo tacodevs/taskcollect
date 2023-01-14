@@ -21,6 +21,7 @@ header {
         padding-right: 0.8em;
 
         font-family: var(--nav-font);
+        color: #ffffff;
         font-weight: bold;
         font-size: 1.2em;
     }
@@ -68,6 +69,7 @@ nav {
 
     .mobile-menu {
         display: flex !important;
+        z-index: 9999;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
