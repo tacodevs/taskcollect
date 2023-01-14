@@ -6,54 +6,10 @@
     width: 100%;
 }
 
-form[action="/auth"] {
+#login {
     margin: auto;
-    max-width: 25%;
+    max-width: 26%;
     text-align: left;
-
-    h1 {
-        text-align: center;
-    }
-
-    h3 {
-        text-align: center;
-        font-size: 1.25em;
-    }
-
-    // TODO: use an ID for h4
-    h4 {
-        padding: 9px 13px;
-        background: var(--err-bg);
-        color: #ffffff;
-        //border: 1px solid #ee0000;
-        text-align: center;
-        @include -box;
-        @include forms.styling-1;
-    }
-
-    input#usr,
-    input#pwd,
-    select#school {
-        margin: 10px 0;
-        padding: 8px 10px;
-        border: none;
-        @include -box;
-        @include forms.styling-1;
-    }
-
-    input[type="submit"] {
-        margin-top: 14px;
-        padding: 12px 20px !important;
-        width: 100%;
-        border: none;
-        transition: 0.2s;
-
-        //&:hover {
-        //    transition: 0.2s;
-        //    background-color: var(--accent-hover);
-        //}
-
-    }
 
     @include bp.xs {
         max-width: 86%;
@@ -73,5 +29,59 @@ form[action="/auth"] {
 
     @include bp.xl {
         max-width: 26%;
+    }
+}
+
+#login-logo {
+    width: 100%;
+    margin-top: 1em;
+
+    >img {
+        width: 100%;
+    }
+}
+
+form[action="/auth"] {
+    margin: auto;
+    width: 100%;
+    text-align: left;
+
+    h1 {
+        text-align: center;
+        font-size: 1.5em;
+    }
+
+    // TODO: use an ID for h4
+    h4 {
+        padding: 9px 13px;
+        background: var(--err-bg);
+        color: #ffffff;
+        //border: 1px solid #ee0000;
+        text-align: center;
+        @include -box;
+        @include forms.styling-1;
+    }
+
+    input#usr,
+    input#pwd,
+    select#school {
+        margin: 10px 0;
+        padding: 6px 10px;
+        border: none;
+        @include -box;
+        @include forms.styling-1;
+    }
+
+    input[type="submit"] {
+        margin-top: 14px;
+        padding: 10px 20px !important;
+        width: 100%;
+        border: none;
+        transition: 0.2s;
+
+        //&:hover {
+        //    transition: 0.2s;
+        //    background-color: var(--accent-hover);
+        //}
     }
 }

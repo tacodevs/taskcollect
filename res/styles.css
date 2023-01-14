@@ -326,17 +326,53 @@ select:focus {
   outline-color: var(--accent-color);
 }
 
+#login {
+  margin: auto;
+  max-width: 26%;
+  text-align: left;
+}
+@media (min-width: 0) and (max-width: 479px) {
+  #login {
+    max-width: 86%;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  #login {
+    max-width: 72%;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  #login {
+    max-width: 50%;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  #login {
+    max-width: 38%;
+  }
+}
+@media (min-width: 1200px) {
+  #login {
+    max-width: 26%;
+  }
+}
+
+#login-logo {
+  width: 100%;
+  margin-top: 1em;
+}
+#login-logo > img {
+  width: 100%;
+}
+
 form[action="/auth"] {
   margin: auto;
-  max-width: 25%;
+  width: 100%;
   text-align: left;
 }
 form[action="/auth"] h1 {
   text-align: center;
-}
-form[action="/auth"] h3 {
-  text-align: center;
-  font-size: 1.25em;
+  font-size: 1.5em;
 }
 form[action="/auth"] h4 {
   padding: 9px 13px;
@@ -353,7 +389,7 @@ form[action="/auth"] input#usr,
 form[action="/auth"] input#pwd,
 form[action="/auth"] select#school {
   margin: 10px 0;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border: none;
   box-sizing: border-box;
   width: 100%;
@@ -363,35 +399,10 @@ form[action="/auth"] select#school {
 }
 form[action="/auth"] input[type=submit] {
   margin-top: 14px;
-  padding: 12px 20px !important;
+  padding: 10px 20px !important;
   width: 100%;
   border: none;
   transition: 0.2s;
-}
-@media (min-width: 0) and (max-width: 479px) {
-  form[action="/auth"] {
-    max-width: 86%;
-  }
-}
-@media (min-width: 480px) and (max-width: 767px) {
-  form[action="/auth"] {
-    max-width: 72%;
-  }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-  form[action="/auth"] {
-    max-width: 50%;
-  }
-}
-@media (min-width: 1024px) and (max-width: 1199px) {
-  form[action="/auth"] {
-    max-width: 38%;
-  }
-}
-@media (min-width: 1200px) {
-  form[action="/auth"] {
-    max-width: 26%;
-  }
 }
 
 #timetable-img {
