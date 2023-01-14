@@ -102,7 +102,7 @@ def update_res_files():
     res_dst.joinpath("icons").mkdir(exist_ok=True)
 
     assets = [
-        "styles.css", "script.js", "manifest.webmanifest",
+        "styles.css", "script.js",
         "taskcollect-logo.svg", "taskcollect-wordmark.svg",
         "icons/apple-touch-icon.png", "icons/favicon.ico",
         "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg"
