@@ -35,8 +35,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	tmplPath := fp.Join(resPath, "templates")
 	err := os.MkdirAll(tmplPath, os.ModePerm)
 	if err != nil {
-		newErr := errors.NewError("main.initTemplates", "could not make 'templates' directory", err)
-		return nil, newErr
+		return nil, errors.NewError("main.initTemplates", "could not make 'templates' directory", err)
 	}
 
 	tmplResPath := tmplPath
@@ -145,34 +144,29 @@ func getConfig(cfgPath string) (config, error) {
 
 	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
-		newErr := errors.NewError("main.getConfig", "failed to open config.json", err)
-		return result, newErr
+		return result, errors.NewError("main.getConfig", "failed to open config.json", err)
 	}
 
 	b, err := io.ReadAll(jsonFile)
 	if err != nil {
-		newErr := errors.NewError("main.getConfig", "failed to read config.json", err)
-		return result, newErr
+		return result, errors.NewError("main.getConfig", "failed to read config.json", err)
 	}
 
 	err = jsonFile.Close()
 	if err != nil {
-		newErr := errors.NewError("main.getConfig", "failed to close config.json", err)
-		return result, newErr
+		return result, errors.NewError("main.getConfig", "failed to close config.json", err)
 	}
 
 	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
 	if err != nil {
-		newErr := errors.NewError("main.getConfig", "failed to open config.json", err)
-		return result, newErr
+		return result, errors.NewError("main.getConfig", "failed to open config.json", err)
 	}
 	defer jsonFile.Close()
 
 	if len(b) > 0 {
 		err = json.Unmarshal(b, &result)
 		if err != nil {
-			newErr := errors.NewError("main.getConfig", "failed to unmarshal config.json", err)
-			return result, newErr
+			return result, errors.NewError("main.getConfig", "failed to unmarshal config.json", err)
 		}
 	} else {
 		logger.Info("Using default configuration settings. These can be edited in the config.json file")
@@ -180,14 +174,12 @@ func getConfig(cfgPath string) (config, error) {
 
 	rawJson, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
-		newErr := errors.NewError("main.getConfig", "failed to marshal config.json", err)
-		return config{}, newErr
+		return config{}, errors.NewError("main.getConfig", "failed to marshal config.json", err)
 	}
 
 	_, err = jsonFile.Write(rawJson)
 	if err != nil {
-		newErr := errors.NewError("main.getConfig", "failed to write to config.json", err)
-		return result, newErr
+		return result, errors.NewError("main.getConfig", "failed to write to config.json", err)
 	}
 
 	return result, nil
@@ -221,8 +213,7 @@ func main() {
 
 	result, err := getConfig(configFile)
 	if err != nil {
-		newErr := errors.NewError("main", "unable to read config file", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main", "unable to read config file", err))
 		logger.Warn("Resorting to default configuration settings")
 	}
 
@@ -231,8 +222,7 @@ func main() {
 		logPath := fp.Join(resPath, "logs")
 		err = logger.UseConfigFile(logPath)
 		if err != nil {
-			newErr := errors.NewError("main", "Log file was not set up successfully", err)
-			logger.Error(newErr)
+			logger.Error(errors.NewError("main", "Log file was not set up successfully", err))
 		} else {
 			logger.Info("Log file set up successfully")
 		}
@@ -244,8 +234,7 @@ func main() {
 	fmt.Print("Password to Redis database: ")
 	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
-		newErr := errors.NewError("main", "could not get password input", err)
-		logger.Fatal(newErr)
+		logger.Fatal(errors.NewError("main", "could not get password input", err))
 	}
 	fmt.Println()
 
@@ -257,14 +246,12 @@ func main() {
 
 	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
-		newErr := errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err)
-		logger.Fatal(newErr)
+		logger.Fatal(errors.NewError("main", "Google client ID "+errors.ErrFileRead.Error(), err))
 	}
 
 	templates, err := initTemplates(resPath)
 	if err != nil {
-		newErr := errors.NewError("main", errors.ErrInitFailed.Error()+" for HTML templates", err)
-		logger.Fatal(newErr)
+		logger.Fatal(errors.NewError("main", errors.ErrInitFailed.Error()+" for HTML templates", err))
 	}
 	logger.Info("Successfully initialized HTML templates")
 

@@ -39,8 +39,7 @@ func initDB(addr string, pwd string, idx int) *redis.Client {
 	ctx := context.Background()
 	res := redisDB.Ping(ctx)
 	if res.Err() != nil {
-		newErr := errors.NewError("redis", "incorrect password", res.Err())
-		logger.Fatal(newErr)
+		logger.Fatal(errors.NewError("redis", "incorrect password", res.Err()))
 	}
 
 	return redisDB
@@ -90,8 +89,6 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 	res, err := studentID.Result()
 	if err != nil {
 		logger.Debug("studentID result ERROR: %v", studentID.Err().Error())
-		//newErr := errors.NewError("main.getCreds", "resulting data could not be read", err)
-		//return creds, newErr
 		return creds, errInvalidAuth
 	}
 
@@ -103,8 +100,7 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 	}
 	result, err := studentData.Result()
 	if err != nil {
-		newErr := errors.NewError("main.getCreds", "resulting data could not be read", err)
-		return creds, newErr
+		return creds, errors.NewError("main.getCreds", "resulting data could not be read", err)
 	}
 
 	creds.Token = token // equivalent to result["token"]
@@ -115,8 +111,7 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 	if creds.School == "gihs" {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
-			newErr := errors.NewError("main.getCreds", "could not load timezone location data", err)
-			return User{}, newErr
+			return User{}, errors.NewError("main.getCreds", "could not load timezone location data", err)
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -124,8 +119,7 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 			"gclass": result["gclass"],
 		}
 	} else {
-		//newErr := errors.NewError("main.getCreds", "invalid school", errInvalidAuth)
-		return User{}, errInvalidAuth
+		return User{}, errors.NewError("main.getCreds", "invalid school", errInvalidAuth)
 	}
 
 	return creds, nil
@@ -145,15 +139,13 @@ func (db *authDB) getGTok(school, user, pwd string) (string, error) {
 
 	result, err := data.Result()
 	if err != nil {
-		newErr := errors.NewError("main.getGTok", "resulting data could not be read", err)
-		return "", newErr
+		return "", errors.NewError("main.getGTok", "resulting data could not be read", err)
 	}
 
 	res := db.client.HExists(ctx, key, "gclass")
 	exists, err := res.Result()
 	if err != nil {
-		newErr := errors.NewError("main.getGTok", "could not fetch user's gclass data", err)
-		return "", newErr
+		return "", errors.NewError("main.getGTok", "could not fetch user's gclass data", err)
 	}
 	if !exists {
 		return "", nil
@@ -180,8 +172,7 @@ func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 
 	result, err := data.Result()
 	if err != nil {
-		newErr := errors.NewError("main.findUser", "resulting data could not be read", err)
-		return exists, newErr
+		return exists, errors.NewError("main.findUser", "resulting data could not be read", err)
 	}
 
 	if result["password"] == pwd {
@@ -254,8 +245,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	gTok, err := db.getGTok(school, user, pwd)
 	if err != nil {
-		newErr := errors.NewError("main.auth", "gclass token was not found", err)
-		return "", newErr
+		return "", errors.NewError("main.auth", "gclass token was not found", err)
 	}
 
 	gTestErr := make(chan error)
@@ -268,12 +258,10 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	if err != nil {
 		userExists, err := db.findUser(school, user, pwd)
 		if err != nil {
-			newErr := errors.NewError("main.auth", "could not determine if user exists", err)
-			return "", newErr
+			return "", errors.NewError("main.auth", "could not determine if user exists", err)
 		}
 		if !userExists {
-			newErr := errors.NewError("main.auth", "user was not found", errAuthFailed)
-			return "", newErr
+			return "", errors.NewError("main.auth", "user was not found", errAuthFailed)
 		}
 	}
 
@@ -315,8 +303,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	err = db.writeCreds(creds)
 	if err != nil {
-		newErr := errors.NewError("main.auth", "error writing creds", err)
-		return "", newErr
+		return "", errors.NewError("main.auth", "error writing creds", err)
 	}
 
 	return cookie, gAuthStatus
@@ -326,14 +313,12 @@ func (db *authDB) auth(query url.Values) (string, error) {
 func (db *authDB) gAuthEndpoint() (string, error) {
 	gcid, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
 	if err != nil {
-		newErr := errors.NewError("main.gAuthEndpoint", "failed to read gauth.json", err)
-		return "", newErr.AsError()
+		return "", errors.NewError("main.gAuthEndpoint", "failed to read gauth.json", err)
 	}
 
 	gAuthConfig, err := gclass.AuthConfig(gcid)
 	if err != nil {
-		newErr := errors.NewError("main.gAuthEndpoint", "creation of config failed", err)
-		return "", newErr.AsError()
+		return "", errors.NewError("main.gAuthEndpoint", "creation of config failed", err)
 	}
 
 	gAuthLoc := gAuthConfig.AuthCodeURL(
@@ -351,33 +336,28 @@ func (db *authDB) runGAuth(creds User, query url.Values) error {
 
 	clientId, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
 	if err != nil {
-		newErr := errors.NewError("main.runGAuth", errors.ErrFileRead.Error(), err)
-		return newErr.AsError()
+		return errors.NewError("main.runGAuth", errors.ErrFileRead.Error(), err)
 	}
 
 	gAuthConfig, err := gclass.AuthConfig(clientId)
 	if err != nil {
-		newErr := errors.NewError("main.runGAuth", "failed to get config from JSON", err)
-		return newErr
+		return errors.NewError("main.runGAuth", "failed to get config from JSON", err)
 	}
 
 	gTok, err := gAuthConfig.Exchange(context.TODO(), authCode)
 	if err != nil {
-		newErr := errors.NewError("main.runGAuth", "failed to convert auth code into token", err)
-		return newErr
+		return errors.NewError("main.runGAuth", "failed to convert auth code into token", err)
 	}
 
 	token, err := json.Marshal(gTok)
 	if err != nil {
-		newErr := errors.NewError("main.runGAuth", "failed to encode into JSON", err)
-		return newErr
+		return errors.NewError("main.runGAuth", "failed to encode into JSON", err)
 	}
 
 	creds.SiteTokens["gclass"] = string(token)
 	err = db.writeCreds(creds)
 	if err != nil {
-		newErr := errors.NewError("main.runGAuth", "failed to write creds", err)
-		return newErr
+		return errors.NewError("main.runGAuth", "failed to write creds", err)
 	}
 
 	return nil
@@ -395,8 +375,7 @@ func (db *authDB) logout(creds User) error {
 
 	err := db.writeCreds(creds)
 	if err != nil {
-		newErr := errors.NewError("main.logout", "could not write to database", err)
-		return newErr
+		return errors.NewError("main.logout", "could not write to database", err)
 	}
 
 	// NOTE: The student token needs to be deleted from the token list on logout

@@ -27,8 +27,7 @@ func resFromMaterials(materials []*classroom.Material) ([][2]string, error) {
 			if strings.Contains(link, "://drive.google.com/") {
 				link, err = getDirectDriveLink(m.DriveFile.DriveFile.AlternateLink)
 				if err != nil {
-					newErr := errors.NewError("gclass.resFromMaterials", "failed to get direct drive link", err)
-					return nil, newErr
+					return nil, errors.NewError("gclass.resFromMaterials", "failed to get direct drive link", err)
 				}
 			}
 			name = m.DriveFile.DriveFile.Title
@@ -71,8 +70,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass.GetResource", "Google auth failed", err)
-		return plat.Resource{}, newErr
+		return plat.Resource{}, errors.NewError("gclass.GetResource", "Google auth failed", err)
 	}
 
 	classChan := make(chan string)
@@ -81,10 +79,8 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 
 	if isAnn {
 		r, err := svc.Courses.Announcements.Get(idSlice[0], idSlice[1]).Do()
-
 		if err != nil {
-			newErr := errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
-			return plat.Resource{}, newErr
+			return plat.Resource{}, errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
 		}
 
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
@@ -108,8 +104,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 		resource.ResLinks, err = resFromMaterials(r.Materials)
 
 		if err != nil {
-			newErr := errors.NewError("gclass.GetResource", "failed getting resource links from gclass announcement", err)
-			return plat.Resource{}, newErr
+			return plat.Resource{}, errors.NewError("gclass.GetResource", "failed getting resource links from gclass announcement", err)
 		}
 	} else {
 		r, err := svc.Courses.CourseWorkMaterials.Get(
@@ -117,8 +112,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 		).Fields("title", "alternateLink", "creationTime", "description", "materials").Do()
 
 		if err != nil {
-			newErr := errors.NewError("gclass.classResources", "failed to get coursework materials", err)
-			return plat.Resource{}, newErr
+			return plat.Resource{}, errors.NewError("gclass.classResources", "failed to get coursework materials", err)
 		}
 
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
@@ -135,15 +129,13 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 		resource.ResLinks, err = resFromMaterials(r.Materials)
 
 		if err != nil {
-			newErr := errors.NewError("gclass.GetResource", "failed getting resource links from gclass resource", err)
-			return plat.Resource{}, newErr
+			return plat.Resource{}, errors.NewError("gclass.GetResource", "failed getting resource links from gclass resource", err)
 		}
 	}
 
 	resource.Class, err = <-classChan, <-classErrChan
 	if err != nil {
-		newErr := errors.NewError("gclass.GetResource", "failed to get class name from ID", err)
-		return plat.Resource{}, newErr
+		return plat.Resource{}, errors.NewError("gclass.GetResource", "failed to get class name from ID", err)
 	}
 
 	return resource, nil

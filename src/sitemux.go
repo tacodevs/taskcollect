@@ -74,14 +74,12 @@ func getTasks(creds User) (map[string][]plat.Task, error) {
 
 	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
-		newErr := errors.NewError("main.getTasks", "failed to get list of tasks from gclass", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.getTasks", "failed to get list of tasks from gclass", err))
 	}
 
 	dmTasks, err := <-dmChan, <-dmErr
 	if err != nil {
-		newErr := errors.NewError("main.getTasks", "failed to get list of tasks from daymap", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.getTasks", "failed to get list of tasks from daymap", err))
 	}
 
 	for c, taskList := range gcTasks {
@@ -163,14 +161,12 @@ func getResources(creds User) ([]string, map[string][]plat.Resource, error) {
 
 	gcResLinks, err := <-gResChan, <-gErrChan
 	if err != nil {
-		newErr := errors.NewError("main.getResources", "failed to get list of resources from gclass", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.getResources", "failed to get list of resources from gclass", err))
 	}
 
 	dmResLinks, err := <-dmResChan, <-dmErrChan
 	if err != nil {
-		newErr := errors.NewError("main.getResources", "failed to get list of resources from daymap", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.getResources", "failed to get list of resources from daymap", err))
 	}
 
 	for _, r := range gcResLinks {
@@ -391,14 +387,12 @@ func gradedTasks(creds User) ([]plat.Task, error) {
 
 	gcTasks, err := <-gcChan, <-gcErr
 	if err != nil {
-		newErr := errors.NewError("main.gradedTasks", "failed to get graded tasks from gclass", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.gradedTasks", "failed to get graded tasks from gclass", err))
 	}
 
 	dmTasks, err := <-dmChan, <-dmErr
 	if err != nil {
-		newErr := errors.NewError("main.gradedTasks", "failed to get graded tasks from daymap", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.gradedTasks", "failed to get graded tasks from daymap", err))
 	}
 
 	for _, gcTask := range gcTasks {

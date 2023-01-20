@@ -16,8 +16,7 @@ import (
 func getDirectDriveLink(inputUrl string) (string, error) {
 	urlResult, err := url.Parse(inputUrl)
 	if err != nil {
-		newErr := errors.NewError("gclass.getDirectDriveLink", "URL parse error", err)
-		return "", newErr
+		return "", errors.NewError("gclass.getDirectDriveLink", "URL parse error", err)
 	}
 
 	// NOTE: urlResult.Path contains a leading "/": "/file/d/1234567890/view"
@@ -25,8 +24,7 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 
 	splitUrl := strings.Split(urlResult.Path, "/")
 	if len(splitUrl) < 4 {
-		newErr := errors.NewError("gclass.getDirectDriveLink", "split URL does not contain enough elements", nil)
-		return "", newErr
+		return "", errors.NewError("gclass.getDirectDriveLink", "split URL does not contain enough elements", nil)
 	}
 
 	finalUrl := "https://drive.google.com/uc?export=download&confirm=t&id=" + splitUrl[3]
@@ -37,12 +35,10 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan error) {
 	course, err := svc.Courses.Get(courseId).Fields("name").Do()
 	if err != nil {
-		newErr := errors.NewError("gclass.getClass", "failed to get class", err)
 		classChan <- ""
-		classErrChan <- newErr
+		classErrChan <- errors.NewError("gclass.getClass", "failed to get class", err)
 		return
 	}
-
 	classChan <- course.Name
 	classErrChan <- nil
 }
@@ -61,9 +57,8 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.getGCTask", "failed to get task information", err)
 		taskChan <- classroom.CourseWork{}
-		taskErrChan <- newErr
+		taskErrChan <- errors.NewError("gclass.getGCTask", "failed to get task information", err)
 		return
 	}
 
@@ -81,8 +76,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass.GetTask", "Google auth failed", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("gclass.GetTask", "Google auth failed", err)
 	}
 
 	classChan := make(chan string)
@@ -97,20 +91,17 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		cid[0], cid[1], cid[2],
 	).Fields("state", "assignedGrade", "assignmentSubmission").Do()
 	if err != nil {
-		newErr := errors.NewError("gclass.GetTask", "failed to get student submission", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("gclass.GetTask", "failed to get student submission", err)
 	}
 
 	gc, err := <-taskChan, <-taskErrChan
 	if err != nil {
-		newErr := errors.NewError("gclass.GetTask", "from taskErrChan", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("gclass.GetTask", "from taskErrChan", err)
 	}
 
 	class, err := <-classChan, <-classErrChan
 	if err != nil {
-		newErr := errors.NewError("gclass.GetTask", "from classErrChan", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("gclass.GetTask", "from classErrChan", err)
 	}
 
 	task := plat.Task{
@@ -136,8 +127,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 				if strings.Contains(link, "://drive.google.com/") {
 					link, err = getDirectDriveLink(w.DriveFile.AlternateLink)
 					if err != nil {
-						newErr := errors.NewError("gclass.GetTask", "failed to get direct drive link", err)
-						return plat.Task{}, newErr
+						return plat.Task{}, errors.NewError("gclass.GetTask", "failed to get direct drive link", err)
 					}
 				}
 				name = w.DriveFile.Title
@@ -165,8 +155,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	task.ResLinks, err = resFromMaterials(gc.Materials)
 	if err != nil {
-		newErr := errors.NewError("gclass.GetTask", "failed getting resource links from task", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("gclass.GetTask", "failed getting resource links from task", err)
 	}
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {
@@ -230,8 +219,7 @@ https://codeberg.org/kvo/taskcollect/issues/3
 func SubmitTask(creds User, id string) error {
 	/*svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass.SubmitTask", "Google auth failed", err)
-		e <- newErr
+		e <- errors.NewError("gclass.SubmitTask", "Google auth failed", err)
 		return
 	}
 
@@ -241,8 +229,7 @@ func SubmitTask(creds User, id string) error {
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.SubmitTask", "error turning in task", err)
-		return newErr
+		return errors.NewError("gclass.SubmitTask", "error turning in task", err)
 	}*/
 
 	return nil

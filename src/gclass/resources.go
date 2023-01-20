@@ -25,8 +25,7 @@ func classAnnouncements(
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
-		errChan <- newErr
+		errChan <- errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
 		return
 	}
 
@@ -79,8 +78,7 @@ func classResources(
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.classResources", "failed to get coursework materials", err)
-		gErrChan <- newErr
+		gErrChan <- errors.NewError("gclass.classResources", "failed to get coursework materials", err)
 		return
 	}
 
@@ -120,9 +118,8 @@ func classResources(
 func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass.ListRes", "Google auth failed", err)
 		r <- nil
-		e <- newErr
+		e <- errors.NewError("gclass.ListRes", "Google auth failed", err)
 		return
 	}
 
@@ -132,9 +129,8 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.ListRes", "failed to get response", err)
 		r <- nil
-		e <- newErr
+		e <- errors.NewError("gclass.ListRes", "failed to get response", err)
 		return
 	}
 
@@ -147,12 +143,10 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	unordered := make([][]plat.Resource, len(resp.Courses))
 	gErrChan := make(chan error)
 	var resWG sync.WaitGroup
-	i := 0
 
-	for _, course := range resp.Courses {
+	for i, course := range resp.Courses {
 		resWG.Add(1)
 		go classResources(course, svc, &unordered[i], &resWG, gErrChan)
-		i++
 	}
 
 	resWG.Wait()

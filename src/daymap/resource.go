@@ -55,21 +55,18 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", res.Link, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap.planRes", "GET request failed", err)
-		return plat.Resource{}, newErr
+		return plat.Resource{}, errors.NewError("daymap.planRes", "GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap.planRes", "failed to get resp", err)
-		return plat.Resource{}, newErr
+		return plat.Resource{}, errors.NewError("daymap.planRes", "failed to get resp", err)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap.planRes", "failed to read resp.Body", err)
-		return plat.Resource{}, newErr
+		return plat.Resource{}, errors.NewError("daymap.planRes", "failed to read resp.Body", err)
 	}
 
 	page := string(respBody)
