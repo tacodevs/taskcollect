@@ -1,7 +1,7 @@
 # Implementation details
 This document outlines how features are implemented in TaskCollect.
 
-## Public Interface
+## Public interface
 
 TaskCollect's public interface is stable as of v1.0.0 and is defined below, in this section of this document.
 
@@ -74,8 +74,8 @@ Logging levels:
 - `ERROR`
 - `FATAL`
 
-## Error Handling
+## Error handling
 
-Error logging is another important aspect in ensuring the TaskCollect server runs smoothly and if an error were to occur, that it will be reported. The `errors` package adds new functionality to suit the needs of the projects such as a custom error wrapper that has the ability to provide more context about where the error originated, what the error type is, and allow for better management of tracing errors.
+Error logging is another important aspect in ensuring the TaskCollect server runs smoothly and if an error were to occur, that it will be reported. The `errors` package adds new functionality to suit the needs of the project such as a custom error wrapper that has the ability to provide more context about where the error originated, what the error type is, and allow for better management of tracing errors.
 
 To prevent the need for two error library imports, Go's standard error library has been implemented right into our own library. 
