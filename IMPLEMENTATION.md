@@ -1,5 +1,5 @@
 # Implementation details
-This document outlines how features are implemented in TaskCollect. 
+This document outlines how features are implemented in TaskCollect.
 
 ## Public interface
 
@@ -12,10 +12,10 @@ The navigation bar allows switching between different tabs which provide access 
 The **Timetable** tab provides the user an HTML timetable showing their lessons for the school week.
 
 The **Tasks** tab provides the user a list of their tasks separated into at least the following categories:
-  * Active tasks
-  * Tasks with no due date
-  * Overdue tasks
-  * Submitted tasks
+* Active tasks
+* Tasks with no due date
+* Overdue tasks
+* Submitted tasks
 
 Links are provided on the Tasks tab to **individual task pages** which display information and provide any other necessary functionality for interacting with individual tasks.
 
@@ -25,7 +25,7 @@ Links are provided on the Resources tab to **individual resource pages** which d
 
 The **Grades** tab provides the user a list of all their graded tasks. Links are provided on the Grades tab which link to the corresponding individual task pages.
 
-The navigation bar shall also include a logout link which shall log the user out of an active TaskCollect session.
+The navigation bar also includes a logout link which shall log the user out of an active TaskCollect session.
 
 ## Database
 
@@ -62,3 +62,20 @@ Currently, TaskCollect's session tokens last for 3 days and by extension, this d
 By using this index rather than `school:<school>:studentID:<ID>`, it allows for faster look-ups using the TaskCollect token as a reference, rather than the alternative of looping through each student ID in an attempt to fetch the session token.
 
 A list of students per school is also stored via `school:<school>:studentList`, which is a Redis set containing the unique student IDs for each school. Currently, it is not used for anything, although it may be useful in the future.
+
+## Logging
+
+Due to the limitations of Go's standard library logger, a custom solution has been implemented. One of the limitations was that the datetime formatting could not even be done in ISO 8601 format. Hence, in the `logger` package, `logger/log.go` is a partial reimplementation of Go's built-in logging library. From this, loggers in `logger/logger.go` are able to be created with different logging levels.
+
+Logging levels:
+- `INFO`
+- `DEBUG`
+- `WARN`
+- `ERROR`
+- `FATAL`
+
+## Error handling
+
+Error logging is another important aspect in ensuring the TaskCollect server runs smoothly and if an error were to occur, that it will be reported. The `errors` package adds new functionality to suit the needs of the project such as a custom error wrapper that has the ability to provide more context about where the error originated, what the error type is, and allow for better management of tracing errors.
+
+To prevent the need for two error library imports, Go's standard error library has been implemented right into our own library. 
