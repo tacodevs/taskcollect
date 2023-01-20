@@ -30,8 +30,7 @@ func getTask(
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.getTask", "failed to get coursework", err)
-		gErrChan <- newErr
+		gErrChan <- errors.NewError("gclass.getTask", "failed to get coursework", err)
 		return
 	}
 
@@ -111,8 +110,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.getSubmissions", "failed to get student submissions", err)
-		gErrChan <- newErr
+		gErrChan <- errors.NewError("gclass.getSubmissions", "failed to get student submissions", err)
 		return
 	}
 
@@ -134,8 +132,7 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		newErr := errors.NewError("gclass.ListTasks", "Google auth failed", err)
-		e <- newErr
+		e <- errors.NewError("gclass.ListTasks", "Google auth failed", err)
 		return
 	}
 
@@ -145,9 +142,8 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 	).Do()
 
 	if err != nil {
-		newErr := errors.NewError("gclass.ListTasks", "failed to get response", err)
 		t <- nil
-		e <- newErr
+		e <- errors.NewError("gclass.ListTasks", "failed to get response", err)
 		return
 	}
 
@@ -160,12 +156,10 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 	gErrChan := make(chan error)
 	tasks := make([][]plat.Task, len(resp.Courses))
 	var swg sync.WaitGroup
-	i := 0
 
-	for _, c := range resp.Courses {
+	for i, c := range resp.Courses {
 		swg.Add(1)
 		go getSubmissions(c, svc, &tasks[i], &swg, gErrChan)
-		i++
 	}
 
 	swg.Wait()

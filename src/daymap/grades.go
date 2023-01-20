@@ -210,9 +210,8 @@ func GradedTasks(creds User, t chan []plat.Task, e chan error) {
 
 		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
-			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
 			t <- nil
-			e <- newErr
+			e <- errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
 			return
 		}
 
@@ -241,9 +240,8 @@ func GradedTasks(creds User, t chan []plat.Task, e chan error) {
 
 		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
-			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
 			t <- nil
-			e <- newErr
+			e <- errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
 			return
 		}
 

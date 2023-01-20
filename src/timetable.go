@@ -68,8 +68,7 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 
 	boldFont, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
-		newErr := errors.NewError("main.genLessonImg", "font (bold) parsing failed", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.genLessonImg", "font (bold) parsing failed", err))
 		*img = canvas
 		daymapWG.Done()
 		return
@@ -77,8 +76,7 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 
 	regFont, err := freetype.ParseFont(goregular.TTF)
 	if err != nil {
-		newErr := errors.NewError("main.genLessonImg", "font (reg) parsing failed", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.genLessonImg", "font (reg) parsing failed", err))
 		*img = canvas
 		daymapWG.Done()
 		return
@@ -222,8 +220,7 @@ func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA,
 func genTimetableImg(creds User, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {
-		newErr := errors.NewError("main.genTimetableImg", "failed to get lessons", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.genTimetableImg", "failed to get lessons", err))
 		w.WriteHeader(500)
 		return
 	}
@@ -322,8 +319,7 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 
 	boldFont, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
-		newErr := errors.NewError("main.genTimetableImg", "font (bold) parsing failed", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.genTimetableImg", "font (bold) parsing failed", err))
 		w.WriteHeader(500)
 		return
 	}
@@ -379,8 +375,7 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 	}
 
 	if err := png.Encode(w, canvas); err != nil {
-		newErr := errors.NewError("main.genTimetableImg", "timetable image encoding failed", err)
-		logger.Error(newErr)
+		logger.Error(errors.NewError("main.genTimetableImg", "timetable image encoding failed", err))
 		w.WriteHeader(500)
 		return
 	}
@@ -392,8 +387,7 @@ func genTimetable(creds User) (timetableData, error) {
 
 	lessons, err := getLessons(creds)
 	if err != nil {
-		newErr := errors.NewError("main.genTimetable", "failed to get lessons", err)
-		return data, newErr
+		return data, errors.NewError("main.genTimetable", "failed to get lessons", err)
 	}
 
 	const numOfDays = 5

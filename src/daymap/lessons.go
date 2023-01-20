@@ -54,24 +54,21 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 	req, err := http.NewRequest("GET", lessonsUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap.GetLessons", "GET request for lessonsUrl failed", err)
-		return nil, newErr
+		return nil, errors.NewError("daymap.GetLessons", "GET request for lessonsUrl failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap.GetLessons", "failed to get resp", err)
-		return nil, newErr
+		return nil, errors.NewError("daymap.GetLessons", "failed to get resp", err)
 	}
 
 	dmJson := []dmJsonEntry{}
 
 	err = json.NewDecoder(resp.Body).Decode(&dmJson)
 	if err != nil {
-		newErr := errors.NewError("daymap.GetLessons", "failed to decode JSON", err)
-		return nil, newErr
+		return nil, errors.NewError("daymap.GetLessons", "failed to decode JSON", err)
 	}
 
 	lessons := make([][]plat.Lesson, 5)
@@ -91,8 +88,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			startStr := l.Start[startIdx:endIdx]
 			startInt, err := strconv.Atoi(startStr)
 			if err != nil {
-				newErr := errors.NewError("daymap.GetLessons", "(1) string -> int conversion failed", err)
-				return nil, newErr
+				return nil, errors.NewError("daymap.GetLessons", "(1) string -> int conversion failed", err)
 			}
 
 			lesson.Start = time.Unix(int64(startInt), 0)
@@ -107,16 +103,14 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			finishStr := l.Finish[startIdx:endIdx]
 			finishInt, err := strconv.Atoi(finishStr)
 			if err != nil {
-				newErr := errors.NewError("daymap.GetLessons", "(2) string -> int conversion failed", err)
-				return nil, newErr
+				return nil, errors.NewError("daymap.GetLessons", "(2) string -> int conversion failed", err)
 			}
 
 			lesson.End = time.Unix(int64(finishInt), 0)
 		} else {
 			lesson.End, err = time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
 			if err != nil {
-				newErr := errors.NewError("daymap.GetLessons", "failed to parse time", err)
-				return nil, newErr
+				return nil, errors.NewError("daymap.GetLessons", "failed to parse time", err)
 			}
 		}
 
@@ -128,8 +122,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
 		if err != nil {
-			newErr := errors.NewError("daymap.GetLessons", "failed to compile regex", err)
-			return nil, newErr
+			return nil, errors.NewError("daymap.GetLessons", "failed to compile regex", err)
 		}
 
 		lesson.Room = re.FindString(class)

@@ -37,22 +37,19 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap.GetTask", "GET request failed", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("daymap.GetTask", "GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap.GetTask", "failed to get resp", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("daymap.GetTask", "failed to get resp", err)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
-		return plat.Task{}, newErr
+		return plat.Task{}, errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
 	}
 
 	b := string(respBody)
@@ -141,8 +138,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		}
 
 		if err != nil {
-			newErr := errors.NewError("daymap.GetTask", "failed to parse time", err)
-			return plat.Task{}, newErr
+			return plat.Task{}, errors.NewError("daymap.GetTask", "failed to parse time", err)
 		}
 
 		task.Due = time.Date(
@@ -327,8 +323,7 @@ func UploadWork(creds User, id string, files []plat.File) error {
 		blobId := fmt.Sprintf("%s-%s-%s-%s-%s", randStr(8), randStr(4), randStr(4), randStr(4), randStr(12))
 		utc, err := time.LoadLocation("UTC")
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to load timezone 'UTC'", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to load timezone 'UTC'", err)
 		}
 		timestamp := fmt.Sprintf("%d", time.Now().In(utc).UnixMilli())
 	
@@ -342,8 +337,7 @@ func UploadWork(creds User, id string, files []plat.File) error {
 		locUrl += "?" + locForm.Encode()
 		locReq, err := http.NewRequest("GET", locUrl, nil)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "GET request failed", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "GET request failed", err)
 		}
 	
 		locReq.Header.Set("Accept", "application/json")
@@ -352,14 +346,12 @@ func UploadWork(creds User, id string, files []plat.File) error {
 	
 		locResp, err := client.Do(locReq)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to get resp", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to get resp", err)
 		}
 	
 		locBody, err := io.ReadAll(locResp.Body)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to read resp.Body", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to read resp.Body", err)
 		}
 	
 		// Stage 2: Request the creation of a file on the DayMap file upload server.
@@ -367,8 +359,7 @@ func UploadWork(creds User, id string, files []plat.File) error {
 		optsUrl := string(locBody)
 		optsReq, err := http.NewRequest("OPTIONS", optsUrl, nil)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "OPTIONS request failed", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "OPTIONS request failed", err)
 		}
 
 		optsReq.Header.Set("Accept", "*/*")
@@ -380,16 +371,14 @@ func UploadWork(creds User, id string, files []plat.File) error {
 	
 		_, err = client.Do(optsReq)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to get resp", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to get resp", err)
 		}
 	
 		// Stage 3: Give the DayMap file upload server information on the file to upload.
 	
 		putReq, err := http.NewRequest("PUT", optsUrl, nil)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "PUT request failed", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "PUT request failed", err)
 		}
 	
 		putReq.Header.Set("Accept", "*/*")
@@ -402,8 +391,7 @@ func UploadWork(creds User, id string, files []plat.File) error {
 	
 		_, err = client.Do(putReq)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to get resp", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to get resp", err)
 		}
 	
 		// Stage 4: Create the file on the DayMap file upload server.
@@ -421,8 +409,7 @@ func UploadWork(creds User, id string, files []plat.File) error {
 	
 		chkReq, err := http.NewRequest("POST", chkUrl, chkData)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "POST request failed", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "POST request failed", err)
 		}
 	
 		chkReq.Header.Set("Accept", "application/json")
@@ -434,26 +421,22 @@ func UploadWork(creds User, id string, files []plat.File) error {
 	
 		chkResp, err := client.Do(chkReq)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to get resp", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to get resp", err)
 		}
 	
 		chkBody, err := io.ReadAll(chkResp.Body)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to read resp.Body", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to read resp.Body", err)
 		}
 	
 		jsonResp := chkJson{}
 		err = json.Unmarshal(chkBody, &jsonResp)
 		if err != nil {
-			newErr := errors.NewError("daymap.UploadWork", "failed to unmarshal JSON", err)
-			return newErr
+			return errors.NewError("daymap.UploadWork", "failed to unmarshal JSON", err)
 		}
 	
 		if !jsonResp.Success || jsonResp.Error != "" {
-			newErr := errors.NewError("daymap.UploadWork", "DayMap returned error", errors.New(jsonResp.Error))
-			return newErr
+			return errors.NewError("daymap.UploadWork", "DayMap returned error", errors.New(jsonResp.Error))
 		}
 	}
 
@@ -468,22 +451,19 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	req, err := http.NewRequest("GET", removeUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap.RemoveWork", "GET request failed", err)
-		return newErr
+		return errors.NewError("daymap.RemoveWork", "GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap.RemoveWork", "failed to get resp", err)
-		return newErr
+		return errors.NewError("daymap.RemoveWork", "failed to get resp", err)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap.RemoveWork", "failed to read resp.Body", err)
-		return newErr
+		return errors.NewError("daymap.RemoveWork", "failed to read resp.Body", err)
 	}
 
 	b := string(respBody)
@@ -615,8 +595,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	rwfurl := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]
 	post, err := http.NewRequest("POST", rwfurl, rwData)
 	if err != nil {
-		newErr := errors.NewError("daymap.RemoveWork", "POST request failed", err)
-		return newErr
+		return errors.NewError("daymap.RemoveWork", "POST request failed", err)
 	}
 
 	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -624,8 +603,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 
 	_, err = client.Do(post)
 	if err != nil {
-		newErr := errors.NewError("daymap.RemoveWork", "error returning response body", err)
-		return newErr
+		return errors.NewError("daymap.RemoveWork", "error returning response body", err)
 	}
 
 	return nil

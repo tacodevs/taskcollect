@@ -18,21 +18,18 @@ func tasksPage(creds User) (string, error) {
 
 	req, err := http.NewRequest("GET", tasksUrl, nil)
 	if err != nil {
-		newErr := errors.NewError("daymap.ListTasks", "GET request failed", err)
-		return "", newErr
+		return "", errors.NewError("daymap.ListTasks", "GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		newErr := errors.NewError("daymap.ListTasks", "failed to get resp", err)
-		return "", newErr
+		return "", errors.NewError("daymap.ListTasks", "failed to get resp", err)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap.ListTasks", "failed to read resp.Body", err)
-		return "", newErr
+		return "", errors.NewError("daymap.ListTasks", "failed to read resp.Body", err)
 	}
 
 	taskForm := url.Values{}
@@ -112,8 +109,7 @@ func tasksPage(creds User) (string, error) {
 
 	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
 	if err != nil {
-		newErr := errors.NewError("daymap.ListTasks", "POST request failed", err)
-		return "", newErr
+		return "", errors.NewError("daymap.ListTasks", "POST request failed", err)
 	}
 
 	fullReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -121,14 +117,12 @@ func tasksPage(creds User) (string, error) {
 
 	full, err := client.Do(fullReq)
 	if err != nil {
-		newErr := errors.NewError("daymap.ListTasks", "failed to get full resp", err)
-		return "", newErr
+		return "", errors.NewError("daymap.ListTasks", "failed to get full resp", err)
 	}
 
 	fullBody, err := io.ReadAll(full.Body)
 	if err != nil {
-		newErr := errors.NewError("daymap.ListTasks", "failed to real full.Body", err)
-		return "", newErr
+		return "", errors.NewError("daymap.ListTasks", "failed to real full.Body", err)
 	}
 
 	return string(fullBody), nil
@@ -218,9 +212,8 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
-			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
 			t <- nil
-			e <- newErr
+			e <- errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
 			return
 		}
 
@@ -249,9 +242,8 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
-			newErr := errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
 			t <- nil
-			e <- newErr
+			e <- errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
 			return
 		}
 
