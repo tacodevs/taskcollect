@@ -129,15 +129,15 @@ func tasksPage(creds User) (string, error) {
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
-		e <- err
+		*e = [][]error{{errors.NewError("daymap.ListTasks", "failed retrieving tasks page", err)}}
 		return
 	}
 
-	unsortedTasks := []plat.Task{}
+	unsorted := []plat.Task{}
 	i := strings.Index(b, `href="javascript:ViewAssignment(`)
 
 	for i != -1 {
@@ -151,7 +151,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -162,7 +162,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -172,7 +172,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -183,7 +183,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -193,7 +193,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -204,7 +204,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -213,7 +213,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
 			t <- nil
-			e <- errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)
+			*e = [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)}}
 			return
 		}
 
@@ -234,7 +234,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -243,7 +243,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
 			t <- nil
-			e <- errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)
+			*e = [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)}}
 			return
 		}
 
@@ -262,7 +262,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i == -1 {
 			t <- nil
-			e <- errInvalidResp
+			*e = [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -271,6 +271,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 		if i != -1 {
 			task.Submitted = true
+			task.Result.Exists = true
 		}
 
 		i = strings.Index(taskLine, `Your work has been received`)
@@ -279,7 +280,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 			task.Submitted = true
 		}
 
-		unsortedTasks = append(unsortedTasks, task)
+		unsorted = append(unsorted, task)
 		i = strings.Index(b, `href="javascript:ViewAssignment(`)
 	}
 
@@ -290,25 +291,17 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 		"submitted": {},
 	}
 
-	for x := 0; x < len(unsortedTasks); x++ {
-		if unsortedTasks[x].Submitted {
-			tasks["submitted"] = append(
-				tasks["submitted"],
-				unsortedTasks[x],
-			)
-		} else if unsortedTasks[x].Due.Before(time.Now()) {
-			tasks["overdue"] = append(
-				tasks["overdue"],
-				unsortedTasks[x],
-			)
+	for _, utask := range unsorted {
+		if utask.Result.Exists {
+			continue
+		} else if utask.Submitted {
+			tasks["submitted"] = append(tasks["submitted"], utask)
+		} else if utask.Due.Before(time.Now()) {
+			tasks["overdue"] = append(tasks["overdue"], utask)
 		} else {
-			tasks["active"] = append(
-				tasks["active"],
-				unsortedTasks[x],
-			)
+			tasks["active"] = append(tasks["active"], utask)
 		}
 	}
 
 	t <- tasks
-	e <- nil
 }
