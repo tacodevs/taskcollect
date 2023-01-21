@@ -1,7 +1,6 @@
 package gclass
 
 import (
-	"image/color"
 	"sync"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 // Retrieve Google Classroom task information using a workload submission point ID.
 func getTask(
 	studSub *classroom.StudentSubmission, svc *classroom.Service, class string,
-	task *plat.Task, taskWG *sync.WaitGroup, gErrChan chan error,
+	task *plat.Task, e *error, taskWG *sync.WaitGroup,
 ) {
 	defer taskWG.Done()
 
@@ -30,7 +29,7 @@ func getTask(
 	).Do()
 
 	if err != nil {
-		gErrChan <- errors.NewError("gclass.getTask", "failed to get coursework", err)
+		*e = errors.NewError("gclass.getTask", "failed to get coursework", err)
 		return
 	}
 
@@ -38,7 +37,6 @@ func getTask(
 	task.Id = studSub.CourseId + "-" + studSub.CourseWorkId + "-" + studSub.Id
 
 	posted, err := time.Parse(time.RFC3339Nano, gcTask.CreationTime)
-
 	if err != nil {
 		task.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 	} else {
@@ -72,22 +70,8 @@ func getTask(
 	}
 
 	if studSub.AssignedGrade != 0 && gcTask.MaxPoints != 0 {
-		percent := studSub.AssignedGrade / gcTask.MaxPoints * 100
-		task.Result.Grade = "-"
-		task.Result.Mark = percent
-		if percent < 50 {
-			task.Result.Color = color.RGBA{0xc9, 0x16, 0x14, 0xff} //RED
-		} else if (50 <= percent) && (percent < 70) {
-			task.Result.Color = color.RGBA{0xd9, 0x6b, 0x0a, 0xff} //AMBER/ORANGE
-		} else if (70 <= percent) && (percent < 85) {
-			task.Result.Color = color.RGBA{0xf6, 0xde, 0x0a, 0xff} //YELLOW
-		} else if percent >= 85 {
-			task.Result.Color = color.RGBA{0x03, 0x6e, 0x05, 0xff} //GREEN
-		}
-	} else {
-		task.Result.Grade = "-"
-		task.Result.Mark = 0.0
-		task.Result.Color = color.RGBA{0xff, 0xff, 0xff, 0xff}
+		task.Result.Exists = true
+		task.Result.Mark = studSub.AssignedGrade / gcTask.MaxPoints * 100
 	}
 
 	task.Name = gcTask.Title
@@ -97,7 +81,7 @@ func getTask(
 }
 
 // Get a list of work submission points for a Google Classroom class.
-func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.Task, swg *sync.WaitGroup, gErrChan chan error) {
+func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.Task, e *[]error, swg *sync.WaitGroup) {
 	defer swg.Done()
 	resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
 		c.Id, "-",
@@ -110,29 +94,29 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 	).Do()
 
 	if err != nil {
-		gErrChan <- errors.NewError("gclass.getSubmissions", "failed to get student submissions", err)
+		*e = []error{errors.NewError("gclass.getSubmissions", "failed to get student submissions", err)}
 		return
 	}
 
 	submissions := make([]plat.Task, len(resp.StudentSubmissions))
+	errs := make([]error, len(resp.StudentSubmissions))
 	var taskWG sync.WaitGroup
-	i := 0
 
-	for _, studSub := range resp.StudentSubmissions {
+	for i, studSub := range resp.StudentSubmissions {
 		taskWG.Add(1)
-		go getTask(studSub, svc, c.Name, &submissions[i], &taskWG, gErrChan)
-		i++
+		go getTask(studSub, svc, c.Name, &submissions[i], &errs[i], &taskWG)
 	}
 
 	taskWG.Wait()
 	*tasks = submissions
+	*e = errs
 }
 
 // Retrieve a list of tasks from Google Classroom for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		e <- errors.NewError("gclass.ListTasks", "Google auth failed", err)
+		*e = [][]error{{errors.NewError("gclass.ListTasks", "Google auth failed", err)}}
 		return
 	}
 
@@ -143,34 +127,32 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 	if err != nil {
 		t <- nil
-		e <- errors.NewError("gclass.ListTasks", "failed to get response", err)
+		*e = [][]error{{errors.NewError("gclass.ListTasks", "failed to get response", err)}}
 		return
 	}
 
 	if len(resp.Courses) == 0 {
 		t <- nil
-		e <- nil
 		return
 	}
 
-	gErrChan := make(chan error)
 	tasks := make([][]plat.Task, len(resp.Courses))
+	errs := make([][]error, len(resp.Courses))
 	var swg sync.WaitGroup
 
 	for i, c := range resp.Courses {
 		swg.Add(1)
-		go getSubmissions(c, svc, &tasks[i], &swg, gErrChan)
+		go getSubmissions(c, svc, &tasks[i], &errs[i], &swg)
 	}
 
 	swg.Wait()
 
-	select {
-	case gcErr := <-gErrChan:
-		t <- nil
-		e <- gcErr
-		return
-	default:
-		break
+	for _, classErrs := range errs {
+		if !errors.HasOnly(classErrs, nil) {
+			t <- nil
+			*e = errs
+			return
+		}
 	}
 
 	gcTasks := map[string][]plat.Task{
@@ -183,7 +165,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 
 	for x := 0; x < len(tasks); x++ {
 		for y := 0; y < len(tasks[x]); y++ {
-			if tasks[x][y].Result.Grade != "-" {
+			if (tasks[x][y].Result != plat.TaskGrade{}) {
 				gcTasks["graded"] = append(
 					gcTasks["graded"],
 					tasks[x][y],
@@ -213,5 +195,4 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan error) {
 	}
 
 	t <- gcTasks
-	e <- nil
 }

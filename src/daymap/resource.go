@@ -19,17 +19,13 @@ func fileRes(creds User, courseId, id string) (plat.Resource, error) {
 	res.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + id
 
 	var resources []plat.Resource
-	errChan := make(chan error)
+	var err error
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go getClassRes(creds, courseId, &resources, &wg, errChan)
+	go getClassRes(creds, courseId, &resources, &err, &wg)
 	wg.Wait()
-
-	select {
-	case err := <-errChan:
-		return plat.Resource{}, err
-	default:
-		break
+	if err != nil {
+		return plat.Resource{}, errors.NewError("daymap.fileRes", "failed retrieving class resources", err)
 	}
 
 	for _, r := range resources {
@@ -136,17 +132,12 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	res.Desc = page[:i]
 
 	var resources []plat.Resource
-	errChan := make(chan error)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go getClassRes(creds, courseId, &resources, &wg, errChan)
+	go getClassRes(creds, courseId, &resources, &err, &wg)
 	wg.Wait()
-
-	select {
-	case err := <-errChan:
-		return plat.Resource{}, err
-	default:
-		break
+	if err != nil {
+		return plat.Resource{}, errors.NewError("daymap.planRes", "failed retrieving class resources", err)
 	}
 
 	for _, r := range resources {

@@ -85,6 +85,11 @@ func genTask(assignment plat.Task, noteType string, creds User) taskItem {
 		task.Posted = genDueStr(assignment.Posted, creds)
 	case "grade":
 		task.Grade = assignment.Result.Grade
+		if task.Grade != "" && assignment.Result.Mark != 0.0 {
+			task.Grade += fmt.Sprintf(" (%.f%%)", assignment.Result.Mark)
+		} else if assignment.Result.Mark != 0.0 {
+			task.Grade = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+		}
 	}
 
 	return task
@@ -279,11 +284,7 @@ func genRes(resPath string, resURL string, creds User) (pageData, error) {
 		data.Head.Title = "Tasks"
 		data.Body.TasksData.Heading = "Tasks"
 
-		tasks, err := getTasks(creds)
-		if err != nil {
-			return data, errors.NewError("main.genRes", "failed to get tasks", err)
-		}
-
+		tasks := getTasks(creds)
 		activeTasks := taskType{
 			Name:     "Active tasks",
 			NoteType: "dueDate",
@@ -341,11 +342,7 @@ func genRes(resPath string, resURL string, creds User) (pageData, error) {
 		data.Head.Title = "Resources"
 		data.Body.ResData.Heading = "Resources"
 
-		classes, resources, err := getResources(creds)
-		if err != nil {
-			return data, errors.NewError("main.genRes", "failed to get resources", err)
-		}
-
+		classes, resources := getResources(creds)
 		for _, class := range classes {
 			data.Body.ResData.Classes = append(data.Body.ResData.Classes, genHtmlResLink(
 				class,
@@ -358,11 +355,7 @@ func genRes(resPath string, resURL string, creds User) (pageData, error) {
 		data.PageType = "grades"
 		data.Head.Title = "Grades"
 
-		tasks, err := gradedTasks(creds)
-		if err != nil {
-			return data, errors.NewError("main.genRes", "failed to get graded tasks", err)
-		}
-
+		tasks := gradedTasks(creds)
 		for _, task := range tasks {
 			data.Body.GradesData.Tasks = append(
 				data.Body.GradesData.Tasks,

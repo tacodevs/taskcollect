@@ -63,7 +63,7 @@ func classAnnouncements(
 // Get a list of resources for a Google Classroom class.
 func classResources(
 	course *classroom.Course, svc *classroom.Service, res *[]plat.Resource,
-	resWG *sync.WaitGroup, gErrChan chan error,
+	e *error, resWG *sync.WaitGroup,
 ) {
 	defer resWG.Done()
 	annChan := make(chan []plat.Resource)
@@ -78,7 +78,7 @@ func classResources(
 	).Do()
 
 	if err != nil {
-		gErrChan <- errors.NewError("gclass.classResources", "failed to get coursework materials", err)
+		*e = errors.NewError("gclass.classResources", "failed to get coursework materials", err)
 		return
 	}
 
@@ -105,7 +105,7 @@ func classResources(
 	announcements, err := <-annChan, <-annErrors
 
 	if err != nil {
-		gErrChan <- err
+		*e = err
 		return
 	}
 
@@ -115,11 +115,11 @@ func classResources(
 }
 
 // Get a list of resources from Google Classroom for a user.
-func ListRes(creds User, r chan []plat.Resource, e chan error) {
+func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 	svc, err := Auth(creds)
 	if err != nil {
 		r <- nil
-		e <- errors.NewError("gclass.ListRes", "Google auth failed", err)
+		e <- []error{errors.NewError("gclass.ListRes", "Google auth failed", err)}
 		return
 	}
 
@@ -130,7 +130,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 
 	if err != nil {
 		r <- nil
-		e <- errors.NewError("gclass.ListRes", "failed to get response", err)
+		e <- []error{errors.NewError("gclass.ListRes", "failed to get response", err)}
 		return
 	}
 
@@ -141,24 +141,20 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	}
 
 	unordered := make([][]plat.Resource, len(resp.Courses))
-	gErrChan := make(chan error)
+	errs := make([]error, len(resp.Courses))
 	var resWG sync.WaitGroup
 
 	for i, course := range resp.Courses {
 		resWG.Add(1)
-		go classResources(course, svc, &unordered[i], &resWG, gErrChan)
+		go classResources(course, svc, &unordered[i], &errs[i], &resWG)
 	}
 
 	resWG.Wait()
 
-	// See issue #45
-	select {
-	case err = <-gErrChan:
+	if !errors.HasOnly(errs, nil) {
 		r <- nil
-		e <- err
+		e <- errs
 		return
-	default:
-		break
 	}
 
 	resources := []plat.Resource{}
@@ -168,5 +164,5 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	}
 
 	r <- resources
-	e <- err
+	e <- errs
 }

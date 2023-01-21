@@ -2,7 +2,6 @@ package plat
 
 import (
 	"io"
-	"image/color"
 	"time"
 )
 
@@ -24,9 +23,9 @@ type Task struct {
 }
 
 type TaskGrade struct {
-	Grade string
-	Mark  float64
-	Color color.Color
+	Exists bool
+	Grade  string
+	Mark   float64
 }
 
 type File struct {

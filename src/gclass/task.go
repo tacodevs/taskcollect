@@ -1,7 +1,6 @@
 package gclass
 
 import (
-	"image/color"
 	"net/url"
 	"strings"
 	"time"
@@ -159,9 +158,8 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	}
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {
-		percent := studSub.AssignedGrade / gc.MaxPoints * 100
-		task.Result.Mark = percent
-		task.Result.Color = color.RGBA{}
+		task.Result.Exists = true
+		task.Result.Mark = studSub.AssignedGrade / gc.MaxPoints * 100
 	}
 
 	if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {

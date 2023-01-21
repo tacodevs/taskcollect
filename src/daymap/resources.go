@@ -78,14 +78,14 @@ func auxClassInfo(creds User, link string) (string, string, error) {
 }
 
 // Get a list of resources for a DayMap class.
-func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup, e chan error) {
+func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	resUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx/InitialiseResources"
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
 
 	class, courseId, err := auxClassInfo(creds, classUrl)
 	if err != nil {
-		e <- errors.NewError("daymap.getClassRes", "failed retrieving secondary class ID", err)
+		*e = errors.NewError("daymap.getClassRes", "failed retrieving secondary class ID", err)
 		return
 	}
 
@@ -94,7 +94,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 
 	req, err := http.NewRequest("POST", resUrl, strings.NewReader(jsonReq))
 	if err != nil {
-		e <- errors.NewError("daymap.getClassRes", "GET request failed", err)
+		*e = errors.NewError("daymap.getClassRes", "GET request failed", err)
 		return
 	}
 
@@ -104,27 +104,26 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 	req.Header.Set("Referer", classUrl)
 	resp, err := client.Do(req)
 	if err != nil {
-		e <- errors.NewError("daymap.getClassRes", "failed to get resp", err)
+		*e = errors.NewError("daymap.getClassRes", "failed to get resp", err)
 		return
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		e <- errors.NewError("daymap.getClassRes", "failed to read resp.Body", err)
+		*e = errors.NewError("daymap.getClassRes", "failed to read resp.Body", err)
 		return
 	}
 
 	re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
-
 	if err != nil {
-		e <- errors.NewError("daymap.getClassRes", "failed to compile regex", err)
+		*e = errors.NewError("daymap.getClassRes", "failed to compile regex", err)
 		return
 	}
 
 	var data resJson
 	err = json.Unmarshal(respBody, &data)
 	if err != nil {
-		e <- errors.NewError("daymap.getClassRes", "failed to unmarshal JSON", err)
+		*e = errors.NewError("daymap.getClassRes", "failed to unmarshal JSON", err)
 		return
 	}
 
@@ -144,13 +143,13 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 		dates := re.FindAllString(dateRegion, -1)
 
 		if dates == nil && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
-			e <- errNoDateFound
+			*e = errNoDateFound
 			return
 		} else if dates != nil {
 			postStr := dates[len(dates)-1]
 			posted, err = time.Parse("2/01/2006", postStr)
 			if err != nil {
-				e <- errors.NewError("daymap.getClassRes", "failed to parse time", err)
+				*e = errors.NewError("daymap.getClassRes", "failed to parse time", err)
 				return
 			}
 		} else {
@@ -171,7 +170,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 		i = strings.Index(b, ");")
 
 		if i == -1 {
-			e <- errInvalidResp
+			*e = errInvalidResp
 			return
 		}
 
@@ -180,7 +179,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 		if div == fileDiv {
 			i = strings.Index(b, "&nbsp;")
 			if i == -1 {
-				e <- errInvalidResp
+				*e = errInvalidResp
 				return
 			}
 
@@ -188,16 +187,15 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 			b = b[i:]
 			i = strings.Index(b, "</a>")
 			if i == -1 {
-				e <- errInvalidResp
+				*e = errInvalidResp
 				return
 			}
 		} else {
 			i += len(`);;"><div class='lpTitle'>`)
 			b = b[i:]
 			i = strings.Index(b, "</div>")
-
 			if i == -1 {
-				e <- errInvalidResp
+				*e = errInvalidResp
 				return
 			}
 		}
@@ -219,14 +217,14 @@ func getClassRes(creds User, id string, res *[]plat.Resource, wg *sync.WaitGroup
 }
 
 // Get a list of resources from DayMap for a user.
-func ListRes(creds User, r chan []plat.Resource, e chan error) {
+func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", homeUrl, nil)
 	if err != nil {
-		e <- errors.NewError("daymap.ListRes", "GET request failed", err)
 		r <- nil
+		e <- []error{errors.NewError("daymap.ListRes", "GET request failed", err)}
 		return
 	}
 
@@ -234,15 +232,15 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		e <- errors.NewError("daymap.ListRes", "failed to get resp", err)
 		r <- nil
+		e <- []error{errors.NewError("daymap.ListRes", "failed to get resp", err)}
 		return
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		e <- errors.NewError("daymap.ListRes", "failed to read resp.Body", err)
 		r <- nil
+		e <- []error{errors.NewError("daymap.ListRes", "failed to read resp.Body", err)}
 		return
 	}
 
@@ -258,7 +256,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 
 		if i == -1 {
 			r <- nil
-			e <- errInvalidResp
+			e <- []error{errInvalidResp}
 			return
 		}
 
@@ -268,7 +266,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 
 		if i == -1 {
 			r <- nil
-			e <- errInvalidResp
+			e <- []error{errInvalidResp}
 			return
 		}
 
@@ -279,25 +277,22 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	}
 
 	unordered := make([][]plat.Resource, len(classes))
-	errChan := make(chan error)
+	errs := make([]error, len(classes))
 	var wg sync.WaitGroup
 	x := 0
 
 	for _, id := range classes {
 		wg.Add(1)
-		go getClassRes(creds, id, &unordered[x], &wg, errChan)
+		go getClassRes(creds, id, &unordered[x], &errs[x], &wg)
 		x++
 	}
 
 	wg.Wait()
 
-	select {
-	case err = <-errChan:
+	if !errors.HasOnly(errs, nil) {
 		r <- nil
-		e <- err
+		e <- errs
 		return
-	default:
-		break
 	}
 
 	resources := []plat.Resource{}
@@ -307,5 +302,5 @@ func ListRes(creds User, r chan []plat.Resource, e chan error) {
 	}
 
 	r <- resources
-	e <- err
+	e <- nil
 }
