@@ -13,51 +13,51 @@ import (
 )
 
 // Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(page *string) (plat.TaskGrade, error) {
+func findGrade(webpage *string) (plat.TaskGrade, error) {
 	var grade string
 	var percent float64
-	i := strings.Index(*page, "Grade:")
+	i := strings.Index(*webpage, "Grade:")
 
 	if i != -1 {
-		i = strings.Index(*page, "TaskGrade'>")
+		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
 			return plat.TaskGrade{}, errInvalidTaskResp
 		}
 
-		*page = (*page)[i:]
+		*webpage = (*webpage)[i:]
 		i = len("TaskGrade'>")
-		*page = (*page)[i:]
-		i = strings.Index(*page, "</div>")
+		*webpage = (*webpage)[i:]
+		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
 			return plat.TaskGrade{}, errInvalidTaskResp
 		}
 
-		grade = (*page)[:i]
-		*page = (*page)[i:]
+		grade = (*webpage)[:i]
+		*webpage = (*webpage)[i:]
 	}
 
-	i = strings.Index(*page, "Mark:")
+	i = strings.Index(*webpage, "Mark:")
 
 	if i != -1 {
-		i = strings.Index(*page, "TaskGrade'>")
+		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
 			return plat.TaskGrade{}, errInvalidTaskResp
 		}
 
-		*page = (*page)[i:]
+		*webpage = (*webpage)[i:]
 		i = len("TaskGrade'>")
-		*page = (*page)[i:]
-		i = strings.Index(*page, "</div>")
+		*webpage = (*webpage)[i:]
+		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
 			return plat.TaskGrade{}, errInvalidTaskResp
 		}
 
-		markStr := (*page)[:i]
-		*page = (*page)[i:]
+		markStr := (*webpage)[:i]
+		*webpage = (*webpage)[i:]
 
 		x := strings.Index(markStr, " / ")
 
@@ -115,159 +115,99 @@ func taskGrade(creds User, id string, result *plat.TaskGrade, e *error, wg *sync
 
 // Retrieve a list of graded tasks from DayMap for a user.
 func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
-	b, err := tasksPage(creds)
+	webpage, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
 		*e = [][]error{{err}}
 		return
 	}
 
+	page := Page(webpage)
 	unsorted := []plat.Task{}
-	i := strings.Index(b, `href="javascript:ViewAssignment(`)
 	graded := []string{}
+	strErr := ""
+	err = page.Advance(`href="javascript:ViewAssignment(`)
 
-	for i != -1 {
+	for err == nil {
 		task := plat.Task{
 			Platform: "daymap",
 		}
 
-		i += len(`href="javascript:ViewAssignment(`)
-		b = b[i:]
-		i = strings.Index(b, `)">`)
-
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
-
-		task.Id = b[:i]
-		b = b[i:]
+		task.Id, err = page.UpTo(`)">`)
+			if err != nil { strErr = "failed getting task ID"; break }
 		task.Link = "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + task.Id
-		i = strings.Index(b, `<td>`)
 
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
+		err = page.Advance(`<td>`)
+			if err != nil { strErr = "failed advancing past task ID"; break }
 
-		i += len(`<td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td>`)
+		task.Class, err = page.UpTo(`</td>`)
+			if err != nil { strErr = "failed getting class name"; break }
 
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
+		err = page.Advance(`</td>`)
+			if err != nil { strErr = "failed advancing past class name"; break }
 
-		task.Class = b[:i]
-		i += len(`</td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		err = page.Advance(`</td><td>`)
+			if err != nil { strErr = "failed advancing past summative/formative info"; break }
 
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
+		task.Name, err = page.UpTo(`</td><td>`)
+			if err != nil { strErr = "failed getting task name"; break }
 
-		i += len(`</td><td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		err = page.Advance(`</td><td>`)
+			if err != nil { strErr ="failed advancing to post date"; break }
 
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
-
-		task.Name = b[:i]
-		i += len(`</td><td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
-
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
-
-		postedString := b[:i]
-
-		postedNoTimezone, err := time.Parse("2/01/06", postedString)
-		if err != nil {
-			t <- nil
-			*e = [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)}}
-			return
-		}
-
+		postStr, err := page.UpTo(`</td><td>`)
+		local, err := time.Parse("2/01/06", postStr)
+			if err != nil { strErr = "failed to parse post date"; break }
 		task.Posted = time.Date(
-			postedNoTimezone.Year(),
-			postedNoTimezone.Month(),
-			postedNoTimezone.Day(),
-			postedNoTimezone.Hour(),
-			postedNoTimezone.Minute(),
-			postedNoTimezone.Second(),
-			postedNoTimezone.Nanosecond(),
+			local.Year(),
+			local.Month(),
+			local.Day(),
+			local.Hour(),
+			local.Minute(),
+			local.Second(),
+			local.Nanosecond(),
 			creds.Timezone,
 		)
 
-		i += len(`</td><td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		err = page.Advance(`</td><td>`)
+			if err != nil { strErr = "failed advancing to due date" ; break }
 
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
-
-		dueString := b[:i]
-
-		dueNoTimezone, err := time.Parse("2/01/06", dueString)
-		if err != nil {
-			t <- nil
-			*e = [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)}}
-			return
-		}
-
+		dueStr, err := page.UpTo(`</td><td>`)
+		local, err = time.Parse("2/01/06", dueStr)
+			if err != nil { strErr = "failed to parse due date"; break }
 		task.Due = time.Date(
-			dueNoTimezone.Year(),
-			dueNoTimezone.Month(),
-			dueNoTimezone.Day(),
-			dueNoTimezone.Hour(),
-			dueNoTimezone.Minute(),
-			dueNoTimezone.Second(),
-			dueNoTimezone.Nanosecond(),
+			local.Year(),
+			local.Month(),
+			local.Day(),
+			local.Hour(),
+			local.Minute(),
+			local.Second(),
+			local.Nanosecond(),
 			creds.Timezone,
 		)
 
-		i = strings.Index(b, "\n")
+		taskLine, err := page.UpTo("\n")
+			if err != nil { strErr = "failed getting task info line"; break }
 
-		if i == -1 {
-			t <- nil
-			*e = [][]error{{errInvalidResp}}
-			return
-		}
-
-		taskLine := b[:i]
-		i = strings.Index(taskLine, `Results have been published`)
-
+		i := strings.Index(taskLine, `Results have been published`)
 		if i != -1 {
 			task.Submitted = true
 			graded = append(graded, task.Id)
 		}
 
 		i = strings.Index(taskLine, `Your work has been received`)
-
 		if i != -1 && !task.Submitted {
 			task.Submitted = true
 		}
 
 		unsorted = append(unsorted, task)
-		i = strings.Index(b, `href="javascript:ViewAssignment(`)
+		err = page.Advance(`href="javascript:ViewAssignment(`)
+	}
+
+	if strErr != "" {
+		t <- nil
+		*e = [][]error{{errors.NewError("daymap.GradedTasks", strErr, err)}}
+		return
 	}
 
 	wg := sync.WaitGroup{}

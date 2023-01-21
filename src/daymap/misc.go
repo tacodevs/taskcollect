@@ -1,7 +1,13 @@
 package daymap
 
-// Arbitrary strings generation mandatory for DayMap fetching.
-// I hope the DayMap developers reconsider their choices.
+import (
+	"strings"
+
+	"main/errors"
+)
+
+// Arbitrary strings generation mandatory for Daymap fetching.
+// I hope the Daymap developers reconsider their choices.
 
 var auxClient = []string{
 	`ctl00_ctl00_cp_cp_grdAssignments_ctl00_`,
@@ -19,9 +25,9 @@ var auxPage = []string{
 	`$ctl00$ctl03$ctl01$PageSizeComboBox`,
 }
 
-// DayMap tasks page size.
+// Daymap tasks page size.
 // Must be extremely high so that all tasks can be retrieved.
-// NOTE: DayMap has an upper bound to how many tasks can be retrieved.
+// NOTE: Daymap has an (unknown) upper bound to how many tasks can be retrieved.
 var auxSize = []string{
 	`1000000`,
 }
@@ -94,4 +100,38 @@ func parseAux(auxStructs [][2][]string) map[string]string {
 	}
 
 	return auxValues
+}
+
+// Helper types and functions for substring extraction.
+
+type Page string
+
+type Extractor interface {
+	Advance(bound string) error
+	UpTo(bound string) (string, error)
+}
+
+// Advance advances page past the substring bound in page, discarding the
+// contents of page before the substring bound. If bound does not exist in page,
+// an error is returned.
+func (page *Page) Advance(bound string) error {
+	strPage := string(*page)
+	i := strings.Index(strPage, bound)
+	if i == -1 {
+		return errors.New("can't find substring")
+	}
+	i += len(bound)
+	*page = Page(strPage[i:])
+	return nil
+}
+
+// UpTo extracts substring sub (which starts from the beginning of page and
+// is enclosed by substring bound on the right) from page. If bound does not
+// exist in page, an error is returned.
+func (page Page) UpTo(bound string) (string, error) {
+	i := strings.Index(string(page), bound)
+	if i == -1 {
+		return "", errors.New("can't find substring")
+	}
+	return string(page)[:i], nil
 }
