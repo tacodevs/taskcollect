@@ -19,9 +19,9 @@ def build(os_name: str, arch: str):
         version = subprocess.check_output("git describe --tags --abbrev=0", shell=True, stderr=subprocess.DEVNULL)
         version = str(version)[3:-3]
     except subprocess.CalledProcessError:
-        version = "0.1.0"
+        version = "0.0.0"
     commit = subprocess.check_output("git rev-parse HEAD", shell=True, stderr=subprocess.DEVNULL)
-    version_line = version_line.replace("0.1.0", str(version)).replace("{0}", str(commit)[2:-3])
+    version_line = version_line.replace("0.0.0", str(version)).replace("{0}", str(commit)[2:-3])
     with open("src/version.go", "w") as f:
         f.write("package main\n\n" + version_line)
 

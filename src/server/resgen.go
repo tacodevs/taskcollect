@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -276,7 +276,7 @@ func genRes(resPath string, resURL string, creds User) (pageData, error) {
 
 		timetable, err := genTimetable(creds)
 		if err != nil {
-			return data, errors.NewError("main.genRes", "failed to generate timetable", err)
+			return data, errors.NewError("server.genRes", "failed to generate timetable", err)
 		}
 
 		data.Body.TimetableData = timetable
