@@ -129,11 +129,11 @@ func tasksPage(creds User) (string, error) {
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
-		*e = [][]error{{errors.NewError("daymap.ListTasks", "failed retrieving tasks page", err)}}
+		e <- [][]error{{errors.NewError("daymap.ListTasks", "failed retrieving tasks page", err)}}
 		return
 	}
 
@@ -151,7 +151,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -162,7 +162,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -172,7 +172,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -183,7 +183,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -193,7 +193,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -204,7 +204,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -213,7 +213,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 		postedNoTimezone, err := time.Parse("2/01/06", postedString)
 		if err != nil {
 			t <- nil
-			*e = [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)}}
+			e <- [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)}}
 			return
 		}
 
@@ -234,7 +234,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -243,7 +243,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 		dueNoTimezone, err := time.Parse("2/01/06", dueString)
 		if err != nil {
 			t <- nil
-			*e = [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)}}
+			e <- [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)}}
 			return
 		}
 
@@ -262,7 +262,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 		if i == -1 {
 			t <- nil
-			*e = [][]error{{errInvalidResp}}
+			e <- [][]error{{errInvalidResp}}
 			return
 		}
 
@@ -304,4 +304,5 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 	}
 
 	t <- tasks
+	e <- nil
 }

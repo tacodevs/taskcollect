@@ -49,7 +49,7 @@ func getLessons(creds User) ([][]plat.Lesson, error) {
 
 func getTasks(creds User) (map[string][]plat.Task) {
 	gcChan := make(chan map[string][]plat.Task)
-	var gcErrs [][]error
+	gcErrChan := make(chan [][]error)
 
 	gcCreds := gclass.User{
 		ClientID: creds.GAuthID,
@@ -57,22 +57,22 @@ func getTasks(creds User) (map[string][]plat.Task) {
 		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ListTasks(gcCreds, gcChan, &gcErrs)
+	go gclass.ListTasks(gcCreds, gcChan, gcErrChan)
 
 	dmChan := make(chan map[string][]plat.Task)
-	var dmErrs [][]error
+	dmErrChan := make(chan [][]error)
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["daymap"],
 	}
 
-	go daymap.ListTasks(dmCreds, dmChan, &dmErrs)
+	go daymap.ListTasks(dmCreds, dmChan, dmErrChan)
 
 	t := map[string][]plat.Task{}
 	tasks := map[string][]plat.Task{}
 
-	gcTasks := <-gcChan
+	gcTasks, gcErrs := <-gcChan, <-gcErrChan
 	for _, classErrs := range gcErrs {
 		for _, err := range classErrs {
 			if err != nil {
@@ -81,7 +81,7 @@ func getTasks(creds User) (map[string][]plat.Task) {
 		}
 	}
 
-	dmTasks := <-dmChan
+	dmTasks, dmErrs := <-dmChan, <-dmErrChan
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
@@ -375,7 +375,7 @@ func removeWork(creds User, platform, taskId string, filenames []string) error {
 // Return graded tasks from all supported platforms.
 func gradedTasks(creds User) ([]plat.Task) {
 	gcChan := make(chan []plat.Task)
-	var gcErrs [][]error
+	gcErrChan := make(chan [][]error)
 
 	gcCreds := gclass.User{
 		ClientID: creds.GAuthID,
@@ -383,21 +383,21 @@ func gradedTasks(creds User) ([]plat.Task) {
 		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.GradedTasks(gcCreds, gcChan, &gcErrs)
+	go gclass.GradedTasks(gcCreds, gcChan, gcErrChan)
 
 	dmChan := make(chan []plat.Task)
-	var dmErrs [][]error
+	dmErrChan := make(chan [][]error)
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["daymap"],
 	}
 
-	go daymap.GradedTasks(dmCreds, dmChan, &dmErrs)
+	go daymap.GradedTasks(dmCreds, dmChan, dmErrChan)
 
 	unordered := []plat.Task{}
 
-	gcTasks := <-gcChan
+	gcTasks, gcErrs := <-gcChan, <-gcErrChan
 	for _, classErrs := range gcErrs {
 		for _, err := range classErrs {
 			if err != nil {
@@ -406,7 +406,7 @@ func gradedTasks(creds User) ([]plat.Task) {
 		}
 	}
 
-	dmTasks := <-dmChan
+	dmTasks, dmErrs := <-dmChan, <-dmErrChan
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
