@@ -114,11 +114,11 @@ func taskGrade(creds User, id string, result *plat.TaskGrade, e *error, wg *sync
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
+func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 	webpage, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
-		*e = [][]error{{err}}
+		e <- [][]error{{err}}
 		return
 	}
 
@@ -129,6 +129,9 @@ func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
 	err = page.Advance(`href="javascript:ViewAssignment(`)
 
 	for err == nil {
+		var postStr, dueStr, taskLine string
+		var local time.Time
+
 		task := plat.Task{
 			Platform: "daymap",
 		}
@@ -155,8 +158,8 @@ func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
 		err = page.Advance(`</td><td>`)
 			if err != nil { strErr ="failed advancing to post date"; break }
 
-		postStr, err := page.UpTo(`</td><td>`)
-		local, err := time.Parse("2/01/06", postStr)
+		postStr, err = page.UpTo(`</td><td>`)
+		local, err = time.Parse("2/01/06", postStr)
 			if err != nil { strErr = "failed to parse post date"; break }
 		task.Posted = time.Date(
 			local.Year(),
@@ -172,7 +175,7 @@ func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
 		err = page.Advance(`</td><td>`)
 			if err != nil { strErr = "failed advancing to due date" ; break }
 
-		dueStr, err := page.UpTo(`</td><td>`)
+		dueStr, err = page.UpTo(`</td><td>`)
 		local, err = time.Parse("2/01/06", dueStr)
 			if err != nil { strErr = "failed to parse due date"; break }
 		task.Due = time.Date(
@@ -186,7 +189,7 @@ func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
 			creds.Timezone,
 		)
 
-		taskLine, err := page.UpTo("\n")
+		taskLine, err = page.UpTo("\n")
 			if err != nil { strErr = "failed getting task info line"; break }
 
 		i := strings.Index(taskLine, `Results have been published`)
@@ -206,32 +209,31 @@ func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
 
 	if strErr != "" {
 		t <- nil
-		*e = [][]error{{errors.NewError("daymap.GradedTasks", strErr, err)}}
+		e <- [][]error{{errors.NewError("daymap.GradedTasks", strErr, err)}}
 		return
 	}
 
 	wg := sync.WaitGroup{}
-	result := make([]plat.TaskGrade, len(graded))
+	results := make([]plat.TaskGrade, len(graded))
 	errs := make([]error, len(graded))
 
 	for i, id := range graded {
 		wg.Add(1)
-		go taskGrade(creds, id, &result[i], &errs[i], &wg)
+		taskGrade(creds, id, &results[i], &errs[i], &wg)
 	}
 
 	wg.Wait()
 
 	if !errors.HasOnly(errs, nil) {
 		t <- nil
-		*e = [][]error{errs}
+		e <- [][]error{errs}
 		return
 	}
 
 	for i, task := range unsorted {
 		for j, id := range graded {
 			if task.Id == id {
-				unsorted[i].Result.Grade = result[j].Grade
-				unsorted[i].Result.Mark = result[j].Mark
+				unsorted[i].Result = results[j]
 			}
 		}
 	}
@@ -245,4 +247,5 @@ func GradedTasks(creds User, t chan []plat.Task, e *[][]error) {
 	}
 
 	t <- tasks
+	e <- nil
 }

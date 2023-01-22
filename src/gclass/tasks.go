@@ -113,10 +113,10 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 }
 
 // Retrieve a list of tasks from Google Classroom for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		*e = [][]error{{errors.NewError("gclass.ListTasks", "Google auth failed", err)}}
+		e <- [][]error{{errors.NewError("gclass.ListTasks", "Google auth failed", err)}}
 		return
 	}
 
@@ -127,12 +127,13 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 
 	if err != nil {
 		t <- nil
-		*e = [][]error{{errors.NewError("gclass.ListTasks", "failed to get response", err)}}
+		e <- [][]error{{errors.NewError("gclass.ListTasks", "failed to get response", err)}}
 		return
 	}
 
 	if len(resp.Courses) == 0 {
 		t <- nil
+		e <- nil
 		return
 	}
 
@@ -150,7 +151,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 	for _, classErrs := range errs {
 		if !errors.HasOnly(classErrs, nil) {
 			t <- nil
-			*e = errs
+			e <- errs
 			return
 		}
 	}
@@ -195,4 +196,5 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e *[][]error) {
 	}
 
 	t <- gcTasks
+	e <- nil
 }
