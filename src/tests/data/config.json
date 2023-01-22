@@ -1,0 +1,9 @@
+{
+    "logging": {
+        "useLogFile": true
+    },
+    "database": {
+        "address": "localhost:6379",
+        "index": 0
+    }
+}

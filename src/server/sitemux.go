@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -47,7 +47,7 @@ func getLessons(creds User) ([][]plat.Lesson, error) {
 	return lessons, err
 }
 
-func getTasks(creds User) (map[string][]plat.Task) {
+func getTasks(creds User) map[string][]plat.Task {
 	gcChan := make(chan map[string][]plat.Task)
 	gcErrChan := make(chan [][]error)
 
@@ -76,7 +76,7 @@ func getTasks(creds User) (map[string][]plat.Task) {
 	for _, classErrs := range gcErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("main.getTasks", "failed to get task list from gclass", err))
+				logger.Error(errors.NewError("server.getTasks", "failed to get task list from gclass", err))
 			}
 		}
 	}
@@ -85,7 +85,7 @@ func getTasks(creds User) (map[string][]plat.Task) {
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("main.getTasks", "failed to get task list from daymap", err))
+				logger.Error(errors.NewError("server.getTasks", "failed to get task list from daymap", err))
 			}
 		}
 	}
@@ -170,14 +170,14 @@ func getResources(creds User) ([]string, map[string][]plat.Resource) {
 	gcResLinks, errs := <-gResChan, <-gErrChan
 	for _, err := range errs {
 		if err != nil {
-			logger.Error(errors.NewError("main.getResources", "failed to get list of resources from gclass", err))
+			logger.Error(errors.NewError("server.getResources", "failed to get list of resources from gclass", err))
 		}
 	}
 
 	dmResLinks, errs := <-dmResChan, <-dmErrChan
 	for _, err := range errs {
 		if err != nil {
-			logger.Error(errors.NewError("main.getResources", "failed to get list of resources from daymap", err))
+			logger.Error(errors.NewError("server.getResources", "failed to get list of resources from daymap", err))
 		}
 	}
 
@@ -318,7 +318,7 @@ func reqFiles(r *http.Request) ([]plat.File, error) {
 		return files, nil
 	} else {
 		fmt.Println(err)
-		return nil, errors.NewError("main.reqFiles", "failed parsing files from multipart MIME request", err)
+		return nil, errors.NewError("server.reqFiles", "failed parsing files from multipart MIME request", err)
 	}
 }
 
@@ -373,7 +373,7 @@ func removeWork(creds User, platform, taskId string, filenames []string) error {
 }
 
 // Return graded tasks from all supported platforms.
-func gradedTasks(creds User) ([]plat.Task) {
+func gradedTasks(creds User) []plat.Task {
 	gcChan := make(chan []plat.Task)
 	gcErrChan := make(chan [][]error)
 
@@ -401,7 +401,7 @@ func gradedTasks(creds User) ([]plat.Task) {
 	for _, classErrs := range gcErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("main.gradedTasks", "failed to get graded tasks from gclass", err))
+				logger.Error(errors.NewError("server.gradedTasks", "failed to get graded tasks from gclass", err))
 			}
 		}
 	}
@@ -410,7 +410,7 @@ func gradedTasks(creds User) ([]plat.Task) {
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("main.gradedTasks", "failed to get graded list from daymap", err))
+				logger.Error(errors.NewError("server.gradedTasks", "failed to get graded list from daymap", err))
 			}
 		}
 	}

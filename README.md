@@ -52,13 +52,17 @@ From here, deployment is simple:
 
   4. If running for the first time, you will also need to set up a Redis server. You must ensure you are Redis 7 as no other version will work. Ensure that the Redis server is running and unexposed to the network before you run TaskCollect.
 
-  5. TaskCollect will ask you for a passphrase to the running Redis server. If you have not set up a password for Redis, it is simply enough to press enter/return at this prompt, and the TaskCollect web server will start. Otherwise, enter the password you configured for Redis to start the web server.
+  5. TaskCollect will ask you for a passphrase to the running Redis server. If you have not set up a password for Redis, it is sufficient to press enter/return at this prompt, and the TaskCollect web server will start. Otherwise, enter the password you configured for Redis to start the web server.
 
-TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors. In particular, the firewall should prevent overly frequent requests to TaskCollect as some APIs that TaskCollect uses enforce a stringent request rate limit. Those deploying TaskCollect should additionally request higher request rate limits for the Google Classroom API to avoid having "ratelimit exceeded" errors.
+TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors. In particular, the firewall should prevent overly frequent requests to TaskCollect, as some APIs that TaskCollect uses enforce a stringent request rate limit. Those deploying TaskCollect should additionally request higher request rate limits for the Google Classroom API to avoid having "ratelimit exceeded" errors.
 
-As of v1.0.0, TaskCollect is considered production-ready and its public interface stable (see `IMPLEMENTATION.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases. Where possible, select the latest available release in order to ensure you are running the most secure and issue-free version available.
+As of v1.0.0, TaskCollect is considered production-ready and its public interface is stable (see `IMPLEMENTATION.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases. Where possible, select the latest available release in order to ensure you are running the most secure and issue-free version available.
 
 Easier installation and update mechanisms for TaskCollect will be developed in the near future to make these processes easier and smoother for deployers.
+
+## Testing
+
+Tests can be run using `test.py`. Invoke this script without any arguments to test all packages automatically. For more information, use `python3 test.py help` (`py test.py help` on Windows).
 
 ## Contribute
 
