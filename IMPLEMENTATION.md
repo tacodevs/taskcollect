@@ -68,11 +68,13 @@ A list of students per school is also stored via `school:<school>:studentList`, 
 Due to the limitations of Go's standard library logger, a custom solution has been implemented. One of the limitations was that the datetime formatting could not even be done in ISO 8601 format. Hence, in the `logger` package, `logger/log.go` is a partial reimplementation of Go's built-in logging library. From this, loggers in `logger/logger.go` are able to be created with different logging levels.
 
 Logging levels:
-- `INFO`
-- `DEBUG`
-- `WARN`
-- `ERROR`
-- `FATAL`
+- **FATAL**: A problem is unable to be resolved and as such, the application cannot continue. Results in the termination of the application.
+- **ERROR**: A problem has occurred which prevents normal program execution, although the application may be allowed to continue running.
+- **WARN**: A potential problem has occurred or has been noticed which is worth noting. However, the application is able to continue running.
+- **INFO**: Provides useful information on what the application is doing.
+- **DEBUG**: Used by developers to log diagnostic information which is often more verbose than other logging levels. End-users should not be exposed to debug statements.
+
+Logs are always printed to standard output. However, logging to a file can be optionally enabled in the `config.json` file by setting `useLogFile` to `true`. To account for the possibility of opening or writing to the log file resulting in an error, a fail-safe that stops logging to the file after a certain number of errors has been put in place. It is referred to as the `logFileFailLimit` and this is currently set to 20.
 
 ## Error handling
 
