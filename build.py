@@ -14,7 +14,7 @@ platforms = {
 }
 
 def build(os_name: str, arch: str):
-    version_line = 'const tcVersion = "TaskCollect 0.1.0 (build {0})"\n'
+    version_line = 'const tcVersion = "TaskCollect 0.0.0 (build {0})"\n'
     try:
         version = subprocess.check_output("git describe --tags --abbrev=0", shell=True, stderr=subprocess.DEVNULL)
         version = str(version)[3:-3]
