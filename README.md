@@ -8,10 +8,10 @@ There is a great number of schools around the world that provide educational res
 The solution to this is TaskCollect: a web server that multiplexes functionality from educational web platforms, providing a clean, simple, intuitive web interface for students.
 
 At the moment, TaskCollect acts as a multiplexed interface for the following platforms:
-  * DayMap
+  * Daymap
   * Google Classroom
 
-Unfortunately, some of the platforms in use by schools (e.g. DayMap) are school-dependent. To counter this, TaskCollect ensures each user is associated with a particular school.
+Unfortunately, some of the platforms in use by schools (e.g. Daymap) are school-dependent. To counter this, TaskCollect ensures each user is associated with a particular school.
 
 TaskCollect currently supports users from the following schools:
   * Glenunga International High School
@@ -66,13 +66,13 @@ Tests can be run using `test.py`. Invoke this script without any arguments to te
 
 ## Contribute
 
-Issues can be reported on the Codeberg issue tracker. You can ask detailed questions (including those that might reveal school-specific information) on the public mailing list (the archives are private to ensure school privacy). For discussion regarding TaskCollect development, a Matrix room is also available.
+Issues can be reported on the Codeberg issue tracker. You can ask detailed questions (including those that might reveal school-specific information) on the public mailing list (the archives are private to ensure school privacy). For discussion regarding TaskCollect development, an IRC channel is also available.
 
 The links to these mediums are provided below:
 
   * Codeberg issue tracker (https://codeberg.org/kvo/taskcollect/issues)
   * Public mailing list (~kvo/taskcollect@lists.sr.ht)
-  * Matrix (#taskcollect:matrix.org)
+  * IRC (#taskcollect on irc.libera.chat)
 
 It should be noted that the issue tracker is for issues and feature requests *only*, and neither the public mailing list nor the Matrix room are places for general discourse. The purpose of the Matrix room is **only for technical discussion** about the development of TaskCollect. **All general queries should be sent to the mailing list.** Questions about technical matters are also welcome on the mailing list, but general enquiries are not welcome in the Matrix room.
 
@@ -91,7 +91,6 @@ Support for:
 
 Additional feature tabs to TaskCollect:
 
-  * Dashboard (e.g. a brief overview of recent tasks, grades, and lessons for the day)
   * Organisation (calendar-oriented organisation space)
   * Communication (emails, messages, etc.)
   * Grades (grade summaries per term, with a graph)
