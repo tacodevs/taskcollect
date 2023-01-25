@@ -16,14 +16,15 @@
             {{else}}
                 <div class="day" style="background: #c2cdfc;">
             {{end}}
+            <h2 style="background: var(--accent-hover);">{{$day.Day}}</h2>
         {{else}}
             {{if eq $weekday 1}}
                 <div class="day" style="border-left: none;">
             {{else}}
                 <div class="day">
             {{end}}
+            <h2>{{$day.Day}}</h2>
         {{end}}
-                <h2>{{$day.Day}}</h2>
                 <div class="lessons">
                     {{range $i, $lesson := $day.Lessons}}
                         <div class="lesson" style="min-height: {{$lesson.Height}}px; top: {{$lesson.TopOffset}}px; color: {{$lesson.Color}}; background-color: {{$lesson.BGColor}};">
