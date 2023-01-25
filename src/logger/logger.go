@@ -16,16 +16,16 @@ var errInvalidInterfaceType = errors.NewError("logger", errors.ErrInvalidInterfa
 var buf bytes.Buffer
 
 var useLogFile = false
-var logFileOpenFailCount = 0
-var logFileOpenFailLimit = 20
+var logFileFailCount = 0
+var logFileFailLimit = 20
 var logFileName string
 
 var (
+	fatalLogger = newLogger(&buf, "FATAL: ")
+	errorLogger = newLogger(&buf, "ERROR: ")
+	warnLogger  = newLogger(&buf, "WARN: ")
 	infoLogger  = newLogger(&buf, "INFO: ")
 	debugLogger = newLogger(&buf, "DEBUG: ")
-	warnLogger  = newLogger(&buf, "WARN: ")
-	errorLogger = newLogger(&buf, "ERROR: ")
-	fatalLogger = newLogger(&buf, "FATAL: ")
 )
 
 // Set up the logger to use a config file. Invoking it will start logging to file as well as console.
@@ -50,21 +50,25 @@ func UseConfigFile(logPath string) error {
 
 // Write the log to console, or console and log file. Buffer is reset automatically.
 func write() {
-	if logFileOpenFailCount > logFileOpenFailLimit {
+	if useLogFile && logFileFailCount > logFileFailLimit {
 		useLogFile = false
-		Warn("Log file failed to open too many times. Logging to file has been disabled to prevent further errors")
+		Warn("Operations with the log file failed too many times. Logging to file has been disabled to prevent further errors")
 	}
 
 	if useLogFile {
 		logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
+			logFileFailCount += 1
 			Error(errors.NewError("logger.write", "could not open log file", err))
-			logFileOpenFailCount += 1
 		}
 		defer logFile.Close()
 
 		f := bufio.NewWriter(logFile)
-		f.WriteString(buf.String())
+		_, err = f.WriteString(buf.String())
+		if err != nil {
+			logFileFailCount += 1
+			Error(errors.NewError("logger.write", "could not write to log file", err))
+		}
 		f.Flush()
 
 		fmt.Print(buf.String())
