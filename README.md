@@ -74,7 +74,7 @@ The links to these mediums are provided below:
   * Public mailing list (~kvo/taskcollect@lists.sr.ht)
   * IRC (#taskcollect on irc.libera.chat)
 
-It should be noted that the issue tracker is for issues and feature requests *only*, and neither the public mailing list nor the Matrix room are places for general discourse. The purpose of the Matrix room is **only for technical discussion** about the development of TaskCollect. **All general queries should be sent to the mailing list.** Questions about technical matters are also welcome on the mailing list, but general enquiries are not welcome in the Matrix room.
+It should be noted that the issue tracker is for issues and feature requests *only*, and neither the public mailing list nor the IRC channel are places for general discourse. The purpose of the IRC channel is **only for technical discussion** about the development of TaskCollect. **All general queries should be sent to the mailing list.** Questions about technical matters are also welcome on the mailing list, but general enquiries are not welcome in the IRC channel.
 
 Although the mailing list is public, the mailing list archives are not accessible to the general public as schools and those who work, teach, or learn therein may potentially ask school-specific questions about TaskCollect.
 
