@@ -8,6 +8,7 @@ type pageData struct {
 	PageType string
 	Head     headData
 	Body     bodyData
+	User     userData
 }
 
 type headData struct {
@@ -24,6 +25,10 @@ type bodyData struct {
 	ResData       resData
 	TasksData     tasksData
 	TaskData      taskData
+}
+
+type userData struct {
+	Name string
 }
 
 // Error Page

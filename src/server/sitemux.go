@@ -17,6 +17,7 @@ import (
 type User struct {
 	Timezone   *time.Location
 	School     string
+	DispName   string
 	Username   string
 	Password   string
 	Token      string
