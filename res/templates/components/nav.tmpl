@@ -10,7 +10,7 @@
     </div>
     <div id="right-nav">
         <ul>
-            <li><a href="/logout">Logout</a></li>
+            <li><span class="dispname">{{.User.Name}} — </span><a href="/logout">Logout</a></li>
         </ul>
     </div>
 </nav>
@@ -23,7 +23,9 @@
         <li><a href="/tasks">Tasks</a></li>
         <li><a href="/res">Resources</a></li>
         <li><a href="/grades">Grades</a></li>
+        <hr id="logout">
         <li><a href="/logout">Logout</a></li>
+		<li class="mobile-dispname"><span class="unbold">Logged in as </span>{{.User.Name}}</li>
     </ul>
 </div>
 {{end}}

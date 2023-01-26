@@ -105,8 +105,14 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 
 	creds.Token = token // equivalent to result["token"]
 	creds.School = result["school"]
-	creds.Username = result["username"] // i.e. the student ID
+	creds.Username = result["username"]
 	creds.Password = result["password"]
+
+	if creds.School == "gihs" {
+		creds.DispName = strings.TrimPrefix(creds.Username, `CURRIC\`)
+	} else {
+		creds.DispName = creds.Username
+	}
 
 	if creds.School == "gihs" {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")

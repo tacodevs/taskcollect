@@ -163,3 +163,21 @@ details:last-child:not([open]) summary {
 details div h5.datetime {
     float: right;
 }
+
+.dispname, .mobile-dispname {
+    font-family: var(--main-font);
+}
+
+.mobile-dispname {
+    font-size: 80%;
+    margin-top: 0 !important;
+}
+
+.unbold {
+    font-weight: normal;
+}
+
+hr#logout {
+    margin: 20px;
+    width: 85%;
+}

@@ -156,6 +156,24 @@ details div h5.datetime {
   float: right;
 }
 
+.dispname, .mobile-dispname {
+  font-family: var(--main-font);
+}
+
+.mobile-dispname {
+  font-size: 80%;
+  margin-top: 0 !important;
+}
+
+.unbold {
+  font-weight: normal;
+}
+
+hr#logout {
+  margin: 20px;
+  width: 85%;
+}
+
 @font-face {
   font-family: "Lato";
   font-style: normal;
@@ -248,7 +266,7 @@ nav #right-nav {
   position: absolute;
   top: 50px;
   left: 0;
-  height: calc(40vh - 50px);
+  height: calc(45vh - 50px);
   width: 100%;
   padding: 20px 0 30px 0;
 }

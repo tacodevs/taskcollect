@@ -118,6 +118,9 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 				HasResLinks: false,
 			},
 		},
+		User: userData{
+			Name: creds.DispName,
+		},
 	}
 
 	if !assignment.Due.IsZero() {
@@ -223,6 +226,9 @@ func genResPage(res plat.Resource, creds User) pageData {
 				HasResLinks: false,
 			},
 		},
+		User: userData{
+			Name: creds.DispName,
+		},
 	}
 
 	if res.Desc != "" {
@@ -269,6 +275,7 @@ func genHtmlResLink(className string, res []plat.Resource, creds User) resClass 
 // Generate resources and components for the webpage
 func genRes(resPath string, resURL string, creds User) (pageData, error) {
 	var data pageData
+	data.User.Name = creds.DispName
 
 	if resURL == "/timetable" {
 		data.PageType = "timetable"
