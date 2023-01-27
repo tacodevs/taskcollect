@@ -3,10 +3,11 @@
 
 <div id="root">
 <main id="main-content">
+    <div>
+    <a style="float: right;" href="{{.Body.ResourceData.URL}}">View resource in source platform</a>
     <h1>{{.Body.ResourceData.Name}}</h1>
     <h3>{{.Body.ResourceData.Class}}</h3>
-
-    <a href="{{.Body.ResourceData.URL}}">View task in original platform</a>
+    </div>
     <hr>
     <h4>Posted {{.Body.ResourceData.Posted}}</h4>
 
