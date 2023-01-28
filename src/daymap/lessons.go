@@ -129,6 +129,8 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 		roomIdx := re.FindStringIndex(class)
 		if len(class) > 0 && len(roomIdx) > 0 && roomIdx[0] > 0 {
 			lesson.Class = class[:roomIdx[0]-1]
+		} else {
+			lesson.Class = class
 		}
 
 		if !strings.HasPrefix(l.Text, "<div") && len(l.Text) > 0 {
