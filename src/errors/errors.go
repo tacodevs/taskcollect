@@ -6,13 +6,14 @@ import (
 )
 
 var (
-	ErrAuthFailed      = errors.New("authentication failed")
-	ErrCorruptMIME     = errors.New("corrupt MIME request")
-	ErrIncompleteCreds = errors.New("user has incomplete credentials")
-	ErrInvalidAuth     = errors.New("invalid session token")
-	ErrNoPlatform      = errors.New("unsupported platform")
-	ErrNotFound        = errors.New("cannot find resource")
-	ErrNeedsGAuth      = errors.New("Google auth required")
+	ErrAuthFailed           = errors.New("authentication failed")
+	ErrCorruptMIME          = errors.New("corrupt MIME request")
+	ErrGclassApiRestriction = errors.New("Google Classroom API restriction")
+	ErrIncompleteCreds      = errors.New("user has incomplete credentials")
+	ErrInvalidAuth          = errors.New("invalid session token")
+	ErrNoPlatform           = errors.New("unsupported platform")
+	ErrNotFound             = errors.New("cannot find resource")
+	ErrNeedsGAuth           = errors.New("Google auth required")
 
 	ErrInitFailed = errors.New("initialization failed")
 
