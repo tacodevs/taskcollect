@@ -127,7 +127,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 		lesson.Room = re.FindString(class)
 		roomIdx := re.FindStringIndex(class)
-		if len(class) > 0 && roomIdx[0] > 0 {
+		if len(class) > 0 && len(roomIdx) > 0 && roomIdx[0] > 0 {
 			lesson.Class = class[:roomIdx[0]-1]
 		}
 
