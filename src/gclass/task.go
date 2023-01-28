@@ -194,7 +194,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 }
 
 /*
-ISSUE(#3): All functions relating to submitting, uploading, and removing work do
+ISSUE #3: All functions relating to submitting, uploading, and removing work do
 *not* work!
 
 Google has a requirement that "the only service that can submit assignments
@@ -229,18 +229,17 @@ func SubmitTask(creds User, id string) error {
 	if err != nil {
 		return errors.NewError("gclass.SubmitTask", "error turning in task", err)
 	}*/
-
-	return nil
+	return errors.ErrGclassApiRestriction
 }
 
 // Upload a file as a user's work for a Google Classroom task.
 func UploadWork(creds User, id string, files []plat.File) error {
 	// Upload a file as a submission.
-	return nil
+	return errors.ErrGclassApiRestriction
 }
 
 // Remove a file (a user's work) from a Google Classroom task.
 func RemoveWork(creds User, id string, filenames []string) error {
 	// Remove file submission.
-	return nil
+	return errors.ErrGclassApiRestriction
 }

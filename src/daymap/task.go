@@ -305,6 +305,9 @@ func randStr(n int) string {
 
 // Upload files from an HTTP request as student file submissions for a DayMap task.
 func UploadWork(creds User, id string, files []plat.File) error {
+	// TODO: Fix issue #68.
+	return errors.New("DayMap task file uploads don't work (issue #68)")
+
 	selectUrl := "https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID="
 	selectUrl += id
 	client := &http.Client{}
