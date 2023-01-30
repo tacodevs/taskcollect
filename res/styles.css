@@ -295,8 +295,9 @@ nav ul,
   background-color: black;
   padding: 0;
 }
-nav ul a,
-#hamburger-icon ul a {
+nav ul li, nav ul li a,
+#hamburger-icon ul li,
+#hamburger-icon ul li a {
   color: white;
 }
 nav ul li,
