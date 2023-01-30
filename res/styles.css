@@ -456,7 +456,8 @@ form[action="/auth"] input[type=submit] {
   padding: 1em 0;
   text-align: center;
   font-size: 1.3em;
-  background-color: #ABABC3;
+  background-color: #37373E;
+  color: white;
   border-bottom: 2px solid var(--bg-color);
 }
 @media (prefers-color-scheme: dark) {
