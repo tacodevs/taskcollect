@@ -3,9 +3,7 @@
 
 <div id="root">
 <main id="main-content">
-    <!-- <img id="timetable" src="/timetable.png" alt="timetable.png"> -->
-    <!-- <button id="timetable-img" src="/timetable.png" alt="timetable.png">Download timetable</button> -->
-
+    <a style="float: right; margin-bottom: 20px;" href="/timetable.png" download>Download timetable</a>
     <div id="timetable">
     {{$currentDay := .Body.TimetableData.CurrentDay}}
     {{range $index, $day := .Body.TimetableData.Days}}
