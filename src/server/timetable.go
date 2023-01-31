@@ -88,12 +88,6 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 		Hinting: font.HintingNone,
 	})
 
-	boldface := truetype.NewFace(boldFont, &truetype.Options{
-		Size:    12.0,
-		DPI:     72,
-		Hinting: font.HintingNone,
-	})
-
 	regFace := truetype.NewFace(regFont, &truetype.Options{
 		Size:    12.0,
 		DPI:     72,
@@ -112,25 +106,12 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 	}
 
 	d.DrawString(l.Class)
-	d.Face = boldface
-	offset := 0
-
-	if l.Notice != "" {
-		d.Dot = fixed.Point26_6{
-			X: fixed.I(5),
-			Y: fixed.I(35),
-		}
-
-		d.DrawString(l.Notice)
-		offset = 15
-	}
-
 	d.Src = image.White
 	d.Face = regFace
 
 	d.Dot = fixed.Point26_6{
 		X: fixed.I(5),
-		Y: fixed.I(35 + offset),
+		Y: fixed.I(35),
 	}
 
 	s := l.Start.Format("15:04") + "–" + l.End.Format("15:04")
@@ -139,7 +120,7 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 
 	d.Dot = fixed.Point26_6{
 		X: fixed.I(5),
-		Y: fixed.I(50 + offset),
+		Y: fixed.I(50),
 	}
 
 	d.DrawString(l.Teacher)
@@ -234,8 +215,6 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 	const numOfDays = 5
 	const dayWidth = 1135 / numOfDays
 
-	weekday := int(time.Now().Weekday())
-	dayOffset := (weekday - 1) * dayWidth
 	classes := []string{}
 
 	for i := 0; i < len(lessons); i++ {
@@ -258,10 +237,7 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 
 	for i := 0; i < numOfDays; i++ {
 		c := color.RGBA{0xe0, 0xe0, 0xe0, 0xff} // #e0e0e0 = very light grey
-
-		if i == weekday-1 {
-			c = color.RGBA{0xc2, 0xcd, 0xfc, 0xff} // #c2cdfc = very light blue
-		} else if i%2 == 0 {
+		if i%2 == 0 {
 			c = color.RGBA{0xff, 0xff, 0xff, 0xff} // white
 		}
 
@@ -289,10 +265,6 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 		for x := 0; x < width; x++ {
 			canvas.Set(x, y, color.RGBA{0x30, 0x30, 0x30, 0xff}) // #303030 = grey
 		}
-
-		for x := dayOffset; x < (dayWidth + dayOffset); x++ {
-			canvas.Set(x, y, color.RGBA{0x32, 0x57, 0xad, 0xff})
-		}
 	}
 
 	for y := 40; y < height; y++ {
@@ -304,10 +276,6 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 					0xe0, 0xe0, 0xe0, 0xff,
 				})
 			}
-		}
-
-		for x := dayOffset; x < (dayWidth + dayOffset); x++ {
-			canvas.Set(x, y, color.RGBA{0xc2, 0xcd, 0xfc, 0xff})
 		}
 	}
 
