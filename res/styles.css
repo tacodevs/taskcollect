@@ -3,26 +3,26 @@
   --main-font: "Lato", sans-serif;
   --nav-font: "Red Hat Display", sans-serif;
   --login-font-size: 15px;
-  --accent-color: #0094F2;
-  --accent-hover: #165FD2;
-  --accent-click: #043BCF;
-  --bg-color: #EAEAF6;
+  --accent-color: #0094f2;
+  --accent-hover: #165fd2;
+  --accent-click: #043bcf;
+  --bg-color: #e8e8ed;
   --bg-hover-color: #d3d3de;
   --fg-color: #000000;
-  --input-color: #AAAAB8;
-  --link-color: #2E6DD3;
+  --input-color: #bdbdcc;
+  --link-color: #2e6dd3;
   --hr-color: #494953;
-  --err-bg: #A30F04;
+  --err-bg: #cf0808;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: #2A2A2F;
+    --bg-color: #2a2a2f;
     --bg-hover-color: #3f3f46;
     --fg-color: #ffffff;
     --input-color: #494953;
-    --link-color: #619EFF;
-    --hr-color: #AAAAB8;
+    --link-color: #619eff;
+    --hr-color: #aaaab8;
     --err-bg: #590000;
   }
 }
@@ -105,6 +105,10 @@ input {
   background: var(--input-color);
   color: var(--fg-color);
   font-family: var(--main-font);
+}
+
+input[type=submit] {
+  color: white;
 }
 
 summary:hover {
@@ -316,7 +320,7 @@ input[type=file]::file-selector-button {
   font-size: 0.9em;
   background: var(--accent-color);
   border: none;
-  color: var(--fg-color);
+  color: white;
   outline: 0 !important;
   padding: 7px 15px;
 }
@@ -397,6 +401,7 @@ form[action="/auth"] h4 {
   padding: 9px 13px;
   background: var(--err-bg);
   color: #ffffff;
+  border: 1px solid red;
   text-align: center;
   box-sizing: border-box;
   width: 100%;
@@ -530,7 +535,7 @@ form[action="/auth"] input[type=submit] {
   flex: 1;
   flex-wrap: wrap;
   background-color: var(--bg-color);
-  padding: 0px 0px 1em 30px;
+  padding: 2em 0px 1em 30px;
 }
 .task-header .task-title > h1 {
   margin-top: 0;

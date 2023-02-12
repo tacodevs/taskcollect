@@ -56,7 +56,7 @@ form[action="/auth"] {
         padding: 9px 13px;
         background: var(--err-bg);
         color: #ffffff;
-        //border: 1px solid #ee0000;
+        border: 1px solid red;
         text-align: center;
         @include -box;
         @include forms.styling-1;
