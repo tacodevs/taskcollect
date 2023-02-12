@@ -1,9 +1,7 @@
 {{define "task"}}
 {{template "header" . -}}
-
 <div id="root">
 <main id="main-content">
-
     <div class="task-header">
         <div class="task-title">
             <h1>{{.Body.TaskData.Name}}</h1>
@@ -13,20 +11,15 @@
             <a href="{{.Body.TaskData.URL}}">View task in source platform</a> 
         </div>
     </div>
-
     <div class="task-container">
-
         <div class="grid-element">
-
             {{if ne .Body.TaskData.Desc ""}}
                 <h4>Task description</h4>
                 <p>{{.Body.TaskData.Desc}}</p>
             {{end}}
-
             {{if eq .Body.TaskData.IsDue true}}
                 <h4>Due {{.Body.TaskData.DueDate}}</h4>
             {{end}}
-
             {{if eq .Body.TaskData.HasResLinks true}}
                 <h4>Linked resources</h4>
                 <ul>
@@ -38,23 +31,19 @@
                 </ul>
             {{end}}
         </div>
-
         <div class="grid-element">
             {{if eq .Body.TaskData.HasUpload true}}
                 {{$plat := .Body.TaskData.Platform}}
                 {{$id := .Body.TaskData.Id}}
-
                 <h4>Upload file</h4>
                 <form class="task-form" method="POST" enctype="multipart/form-data" action="/tasks/{{$plat}}/{{$id}}/upload">
                     <label for="file">Select file:</label>
                     <input type="file" name="file">
                     <input class="secondary" type="submit" value="Upload file">
                 </form>
-
                 <h4>Remove file(s)</h4>
                 <form class="task-form" action="/tasks/{{$plat}}/{{$id}}/remove">
                     {{range $name, $url := .Body.TaskData.WorkLinks}}
-                    
                     <label for="{{$name}}" class="form-control">
                         <input type="checkbox" name="{{$name}}" class="left">
                         <a href="{{$url}}" class="left">{{$name}}</a>
@@ -69,7 +58,6 @@
             {{end}}
             <div class="linebreak"></div>
         </div>
-
         <div class="task-grade">
             {{$taskGrade := .Body.TaskData.TaskGrade}}
             <h3>Grade</h3>

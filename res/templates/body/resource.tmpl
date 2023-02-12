@@ -1,6 +1,5 @@
 {{define "resource"}}
 {{template "header" . -}}
-
 <div id="root">
 <main id="main-content">
     <div>
@@ -10,13 +9,11 @@
     </div>
     <hr>
     <h4>Posted {{.Body.ResourceData.Posted}}</h4>
-
     {{if ne .Body.ResourceData.Desc ""}}
         <hr>
         <h4>Resource information</h4>
         <p>{{.Body.ResourceData.Desc}}</p>
     {{end}}
-
     {{if eq .Body.ResourceData.HasResLinks true}}
         <hr>
         <h4>Linked resources</h4>

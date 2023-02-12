@@ -2,27 +2,22 @@
 <div id="root" class="full-height">
 <main id="main-content">
     <div id="login">
-
-    <div id="login-logo">
-            <img src="/assets/taskcollect-wordmark.svg" alt="TaskCollect logo">
-    </div>
-
-    <form method="POST" enctype="application/x-www-form-urlencoded" action="/auth">
-        <h1>Login</h1>
-        {{if eq .Body.LoginData.Failed true}}
-        <h4>Authentication failed</h4>
-        {{end}}
-        <label for="school">School:</label><br>
-        <select id="school" name="school">
-            <option value="gihs">Glenunga International High School</option>
-        </select><br>
-        <label for="usr">Username:</label><br>
-        <input type="text" id="usr" name="usr" required><br>
-        <label for="pwd">Password:</label><br>
-        <input type="password" id="pwd" name="pwd" required><br>
-        <input type="submit" value="Login">
-    </form>
-
+        <div id="login-logo"><img src="/assets/taskcollect-wordmark.svg" alt="TaskCollect logo"></div>
+        <form method="POST" enctype="application/x-www-form-urlencoded" action="/auth">
+            <h1>Login</h1>
+            {{if eq .Body.LoginData.Failed true}}
+            <h4>Authentication failed</h4>
+            {{end}}
+            <label for="school">School:</label><br>
+            <select id="school" name="school">
+                <option value="gihs">Glenunga International High School</option>
+            </select><br>
+            <label for="usr">Username:</label><br>
+            <input type="text" id="usr" name="usr" required><br>
+            <label for="pwd">Password:</label><br>
+            <input type="password" id="pwd" name="pwd" required><br>
+            <input type="submit" value="Login">
+        </form>
     </div>
 </main>
 <footer></footer>

@@ -113,6 +113,10 @@ input {
     font-family: var(--main-font);
 }
 
+input[type="submit"] {
+    color: white;
+}
+
 summary:hover {
     cursor: pointer;
 }
