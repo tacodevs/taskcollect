@@ -13,12 +13,12 @@
     </div>
     <div class="task-container">
         <div class="grid-element">
+            {{if eq .Body.TaskData.IsDue true}}
+                <h4>Due {{.Body.TaskData.DueDate}}</h4><hr>
+            {{end}}
             {{if ne .Body.TaskData.Desc ""}}
                 <h4>Task description</h4>
                 <p>{{.Body.TaskData.Desc}}</p>
-            {{end}}
-            {{if eq .Body.TaskData.IsDue true}}
-                <h4>Due {{.Body.TaskData.DueDate}}</h4>
             {{end}}
             {{if eq .Body.TaskData.HasResLinks true}}
                 <h4>Linked resources</h4>
