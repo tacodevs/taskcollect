@@ -150,7 +150,7 @@ $checkbox-dim: 1.2em;
     #submission {
         position: relative;
         background-color: var(--accent-color);
-        color: white;
+        color: #ffffff;
         text-decoration: none;
         padding: 10px 20px;
         border-radius: 5px;
@@ -202,7 +202,7 @@ $checkbox-dim: 1.2em;
             margin: 0px 10px;
             left: 15px;
         }
-        
+
         .left[type="checkbox"] {
             margin-top: 5px;
             min-width: $checkbox-dim;

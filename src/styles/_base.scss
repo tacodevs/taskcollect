@@ -114,7 +114,7 @@ input {
 }
 
 input[type="submit"] {
-    color: white;
+    color: #ffffff;
 }
 
 summary:hover {
@@ -168,7 +168,8 @@ details div h5.datetime {
     float: right;
 }
 
-.dispname, .mobile-dispname {
+.dispname,
+.mobile-dispname {
     font-family: var(--main-font);
 }
 
