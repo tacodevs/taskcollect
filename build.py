@@ -113,6 +113,10 @@ def update_res_files():
         shutil.copy(src, dst)
         print(f"  Copied {src} -> {dst}")
 
+    # Transfer fonts
+    shutil.copy(res_src.joinpath("fonts/Lato/mainfont.ttf"), res_dst.joinpath("mainfont.ttf"))
+    shutil.copy(res_src.joinpath("fonts/Red_Hat_Display/navfont.ttf"), res_dst.joinpath("navfont.ttf"))
+
 
 def print_help():
     cmd = "python3 build.py"
