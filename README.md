@@ -3,7 +3,7 @@ A web server that multiplexes functionality from educational web platforms for s
 
 ## Description
 
-There is a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to several different factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to wade their way through all the platforms in use by their school to retrieve their homework and available educational resources.
+There are a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to several different factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to wade their way through all the platforms in use by their school to retrieve their homework and available educational resources.
 
 The solution to this is TaskCollect: a web server that multiplexes functionality from educational web platforms, providing a clean, simple, intuitive web interface for students.
 
@@ -22,10 +22,12 @@ TaskCollect currently supports users from the following schools:
 Build dependencies:
   * Git
   * Go 1.18+
-  * Python 3.9+ (for the build script)
+  * Python 3.9+ (build script)
   * Sass 1.57+
 
-TaskCollect has very simple build and deployment mechanisms. Simply clone this Git repository and run `python3 build.py -u` (or `py build.py -u` on Windows):
+TaskCollect has very simple build and deployment mechanisms. To build everything automatically across multiple platforms (including managing resource dependencies), a Python build script is used.
+
+Simply clone this Git repository and run `python3 build.py -u` (or `py build.py -u` on Windows):
 
 ```
 git clone https://codeberg.org/kvo/taskcollect.git
