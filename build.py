@@ -70,7 +70,6 @@ def run(argv: list[str]):
 
 
 def update_res_files():
-    from distutils.dir_util import copy_tree
     import shutil
 
     res_src = Path.cwd().joinpath("res")
@@ -86,7 +85,7 @@ def update_res_files():
     src = tmpl_src
     rel_path = Path.relative_to(src, tmpl_src)
     dst = tmpl_dst.joinpath(rel_path)
-    copy_tree(str(src), str(dst))
+    shutil.copy_tree(str(src), str(dst))
     print(f"  Copied {src} -> {dst}")
 
     # NOTE: shell=True must be set for the command to work on Windows systems.
