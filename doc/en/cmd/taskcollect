@@ -51,8 +51,8 @@ FILES
     $home/res/taskcollect/config.json               Configuration file
     $home/res/taskcollect/gauth.json                Google OAuth 2.0 client ID
     $home/res/taskcollect/key.pem                   TLS private key
-    $home/res/taskcollect/mainfont.woff2              Main web interface font (Lato)
-    $home/res/taskcollect/navfont.woff2               Navigation bar font (Red Hat Display)
+    $home/res/taskcollect/mainfont.woff2            Main web interface font (Lato)
+    $home/res/taskcollect/navfont.woff2             Navigation bar font (Red Hat Display)
     $home/res/taskcollect/styles.css                Web style rules
     $home/res/taskcollect/taskcollect-logo.svg      TaskCollect logo
     $home/res/taskcollect/taskcollect-wordmark.svg  TaskCollect wordmark
