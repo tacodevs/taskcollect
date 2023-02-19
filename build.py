@@ -85,7 +85,7 @@ def update_res_files():
     src = tmpl_src
     rel_path = Path.relative_to(src, tmpl_src)
     dst = tmpl_dst.joinpath(rel_path)
-    shutil.copytree(str(src), str(dst))
+    shutil.copytree(str(src), str(dst), dirs_exist_ok=True)
     print(f"  Copied {src} -> {dst}")
 
     # NOTE: shell=True must be set for the command to work on Windows systems.
@@ -96,7 +96,7 @@ def update_res_files():
         "sass ./src/styles/styles.scss ./res/styles.css --no-source-map",
         shell=True
     )
-    print("Compiled SCSS files into CSS file")
+    print("  Compiled SCSS files into CSS file")
 
     res_dst.joinpath("icons").mkdir(exist_ok=True)
 
@@ -114,8 +114,9 @@ def update_res_files():
         print(f"  Copied {src} -> {dst}")
 
     # Transfer fonts
-    shutil.copy(res_src.joinpath("fonts/Lato/mainfont.ttf"), res_dst.joinpath("mainfont.ttf"))
-    shutil.copy(res_src.joinpath("fonts/Red_Hat_Display/navfont.ttf"), res_dst.joinpath("navfont.ttf"))
+    shutil.copy(res_src.joinpath("fonts/Lato/mainfont.woff2"), res_dst.joinpath("mainfont.woff2"))
+    shutil.copy(res_src.joinpath("fonts/Red_Hat_Display/navfont.woff2"), res_dst.joinpath("navfont.woff2"))
+    print("  Copied font files")
 
 
 def print_help():

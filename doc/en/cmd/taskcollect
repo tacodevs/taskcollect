@@ -32,9 +32,9 @@ DESCRIPTION
     URL(s) (e.g. "https://taskcollect.io") and the redirect URL set to the
     server URL(s) with "/gauth" appended (e.g. "https://taskcollect.io/gauth").
 
-    TaskCollect requires two TTF font files, "mainfont.ttf" and "navfont.ttf". 
-    The main interface font (mainfont.ttf) is Lato Regular, while the navigation 
-    bar font (navbar.ttf) is Red Hat Display Medium. Both of these fonts must be 
+    TaskCollect requires two WOFF2 font files, "mainfont.woff2" and "navfont.woff2". 
+    The main interface font (mainfont.woff2) is Lato Regular, while the navigation 
+    bar font (navbar.woff2) is Red Hat Display Medium. Both of these fonts must be 
     present in the resources folder.
 
 OPTIONS
@@ -51,8 +51,8 @@ FILES
     $home/res/taskcollect/config.json               Configuration file
     $home/res/taskcollect/gauth.json                Google OAuth 2.0 client ID
     $home/res/taskcollect/key.pem                   TLS private key
-    $home/res/taskcollect/mainfont.ttf              Main web interface font (Lato)
-    $home/res/taskcollect/navfont.ttf               Navigation bar font (Red Hat Display)
+    $home/res/taskcollect/mainfont.woff2            Main web interface font (Lato)
+    $home/res/taskcollect/navfont.woff2             Navigation bar font (Red Hat Display)
     $home/res/taskcollect/styles.css                Web style rules
     $home/res/taskcollect/taskcollect-logo.svg      TaskCollect logo
     $home/res/taskcollect/taskcollect-wordmark.svg  TaskCollect wordmark
