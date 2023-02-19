@@ -32,10 +32,10 @@ DESCRIPTION
     URL(s) (e.g. "https://taskcollect.io") and the redirect URL set to the
     server URL(s) with "/gauth" appended (e.g. "https://taskcollect.io/gauth").
 
-    TaskCollect requires two TTF font files (for the "Lato" and "Red Hat
-    Display" fonts to be present in its resources folder. Due to licensing
-    issues, these cannot be distributed together with TaskCollect and must be
-    downloaded manually.
+    TaskCollect requires two TTF font files, "mainfont.ttf" and "navfont.ttf". 
+    The main interface font (mainfont.ttf) is Lato Regular, while the navigation 
+    bar font (navbar.ttf) is Red Hat Display Medium. Both of these fonts must be 
+    present in the resources folder.
 
 OPTIONS
 

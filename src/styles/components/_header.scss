@@ -9,7 +9,7 @@ header {
     z-index: 9999;
 
     padding: 0 20px;
-    background: black;
+    background: #000000;
 
     a {
         text-decoration: none;
@@ -23,7 +23,7 @@ header {
         font-family: var(--nav-font);
         color: #ffffff;
         font-weight: bold;
-        font-size: 1.2em;
+        font-size: 1.2rem;
     }
 }
 
@@ -84,7 +84,7 @@ nav {
     div {
         width: 27px;
         height: 3px;
-        background-color: white;
+        background-color: #ffffff;
         margin: 6px 0;
         transition: 0.4s;
     }
@@ -120,12 +120,13 @@ nav,
         align-items: center;
         justify-content: flex-start;
         margin: 0;
-        background-color: black;
+        background-color: #000000;
         padding: 0;
     }
 
-    ul li, ul li a {
-        color: white;
+    ul li,
+    ul li a {
+        color: #ffffff;
     }
 
     ul li {

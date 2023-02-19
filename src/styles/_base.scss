@@ -5,7 +5,7 @@
     --font-size: 16px;
     --main-font: "Lato", sans-serif;
     --nav-font: "Red Hat Display", sans-serif;
-    --login-font-size: 15px;
+    --login-font-size: 1rem;
 
     --accent-color: #{$tc-blue};
     --accent-hover: #{$accent-hover};
@@ -34,6 +34,7 @@
 html {
     box-sizing: border-box;
     height: 100%;
+    font-size: var(--font-size);
     font-family: sans-serif;
 }
 
@@ -47,9 +48,9 @@ body {
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: var(--bg-color);
-    font-family: var(--main-font);
     font-size: var(--font-size);
+    font-family: var(--main-font);
+    background: var(--bg-color);
     color: var(--fg-color);
 }
 
@@ -75,15 +76,15 @@ footer {
 }
 
 h1 {
-    font-size: 2em;
+    font-size: 2rem;
 }
 
 h2 {
-    font-size: 1.5em;
+    font-size: 1.5rem;
 }
 
 h3 {
-    font-size: 1.2em;
+    font-size: 1.2rem;
 }
 
 a {
@@ -114,7 +115,7 @@ input {
 }
 
 input[type="submit"] {
-    color: white;
+    color: #ffffff;
 }
 
 summary:hover {
@@ -168,7 +169,8 @@ details div h5.datetime {
     float: right;
 }
 
-.dispname, .mobile-dispname {
+.dispname,
+.mobile-dispname {
     font-family: var(--main-font);
 }
 
