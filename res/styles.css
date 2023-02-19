@@ -184,13 +184,13 @@ hr#logout {
   font-family: "Lato";
   font-style: normal;
   font-weight: 400;
-  src: url(/assets/mainfont.ttf);
+  src: url("/assets/mainfont.woff2");
 }
 @font-face {
   font-family: "Red Hat Display";
   font-style: normal;
   font-weight: 500;
-  src: url(/assets/navfont.ttf);
+  src: url("/assets/navfont.woff2");
 }
 header {
   display: flex;
