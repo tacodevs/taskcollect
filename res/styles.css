@@ -2,7 +2,7 @@
   --font-size: 16px;
   --main-font: "Lato", sans-serif;
   --nav-font: "Red Hat Display", sans-serif;
-  --login-font-size: 15px;
+  --login-font-size: 1rem;
   --accent-color: #0094f2;
   --accent-hover: #165fd2;
   --accent-click: #043bcf;
@@ -29,6 +29,7 @@
 html {
   box-sizing: border-box;
   height: 100%;
+  font-size: var(--font-size);
   font-family: sans-serif;
 }
 
@@ -42,9 +43,9 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: var(--bg-color);
-  font-family: var(--main-font);
   font-size: var(--font-size);
+  font-family: var(--main-font);
+  background: var(--bg-color);
   color: var(--fg-color);
 }
 
@@ -69,15 +70,15 @@ footer {
 }
 
 h1 {
-  font-size: 2em;
+  font-size: 2rem;
 }
 
 h2 {
-  font-size: 1.5em;
+  font-size: 1.5rem;
 }
 
 h3 {
-  font-size: 1.2em;
+  font-size: 1.2rem;
 }
 
 a {
@@ -108,7 +109,7 @@ input {
 }
 
 input[type=submit] {
-  color: white;
+  color: #ffffff;
 }
 
 summary:hover {
@@ -160,7 +161,8 @@ details div h5.datetime {
   float: right;
 }
 
-.dispname, .mobile-dispname {
+.dispname,
+.mobile-dispname {
   font-family: var(--main-font);
 }
 
@@ -197,7 +199,7 @@ header {
   width: 100%;
   z-index: 9999;
   padding: 0 20px;
-  background: black;
+  background: #000000;
 }
 header a {
   text-decoration: none;
@@ -209,7 +211,7 @@ header #logo {
   font-family: var(--nav-font);
   color: #ffffff;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1.2rem;
 }
 
 nav {
@@ -261,7 +263,7 @@ nav #right-nav {
 #hamburger-icon div {
   width: 27px;
   height: 3px;
-  background-color: white;
+  background-color: #ffffff;
   margin: 6px 0;
   transition: 0.4s;
 }
@@ -296,13 +298,14 @@ nav ul,
   align-items: center;
   justify-content: flex-start;
   margin: 0;
-  background-color: black;
+  background-color: #000000;
   padding: 0;
 }
-nav ul li, nav ul li a,
+nav ul li,
+nav ul li a,
 #hamburger-icon ul li,
 #hamburger-icon ul li a {
-  color: white;
+  color: #ffffff;
 }
 nav ul li,
 #hamburger-icon ul li {
@@ -317,10 +320,10 @@ input[type=submit],
 input[type=file]::file-selector-button {
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 0.9em;
+  font-size: 0.9rem;
   background: var(--accent-color);
   border: none;
-  color: white;
+  color: #ffffff;
   outline: 0 !important;
   padding: 7px 15px;
 }
@@ -341,7 +344,7 @@ input[type=file] {
   background: var(--bg-color);
   border: none;
   font-family: var(--main-font);
-  font-size: 0.9em;
+  font-size: 0.9rem;
 }
 
 input:focus,
@@ -395,7 +398,7 @@ form[action="/auth"] {
 }
 form[action="/auth"] h1 {
   text-align: center;
-  font-size: 1.5em;
+  font-size: 1.5rem;
 }
 form[action="/auth"] h4 {
   padding: 9px 13px;
@@ -407,7 +410,7 @@ form[action="/auth"] h4 {
   width: 100%;
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 0.9em;
+  font-size: 0.9rem;
 }
 form[action="/auth"] input#usr,
 form[action="/auth"] input#pwd,
@@ -419,7 +422,7 @@ form[action="/auth"] select#school {
   width: 100%;
   border-radius: 5px;
   font-family: var(--main-font);
-  font-size: 0.9em;
+  font-size: 0.9rem;
 }
 form[action="/auth"] input[type=submit] {
   margin-top: 14px;
@@ -461,7 +464,7 @@ form[action="/auth"] input[type=submit] {
   margin: 0;
   padding: 1em 0;
   text-align: center;
-  font-size: 1.3em;
+  font-size: 1.3rem;
   background-color: #37373E;
   color: white;
   border-bottom: 2px solid var(--bg-color);
@@ -488,7 +491,7 @@ form[action="/auth"] input[type=submit] {
 #timetable .day .lessons > .lesson .class-name {
   margin-top: 2px;
   margin-bottom: 5px;
-  font-size: 1.1em;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 #timetable .day .lessons > .lesson .notice,
@@ -652,23 +655,23 @@ form[action="/auth"] input[type=submit] {
   padding: 0 !important;
   border: 2px solid var(--fg-color);
   border-radius: 10px;
-  font-size: 30px;
+  font-size: 2rem;
 }
 #grade:hover {
   background: var(--bg-color);
 }
 #grade h1 {
-  font-size: 50px;
-  line-height: 60px;
+  font-size: 3rem;
+  line-height: 3.75rem;
 }
 #grade h2 {
-  font-size: 25px;
-  line-height: 20px;
+  font-size: 1.5rem;
+  line-height: 1.25rem;
 }
 #grade #submission {
   position: relative;
   background-color: var(--accent-color);
-  color: white;
+  color: #ffffff;
   text-decoration: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -697,7 +700,7 @@ form[action="/auth"] input[type=submit] {
   background: var(--bg-color);
   border: 2px solid var(--accent-color);
   padding: 12px 0px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .task-form {

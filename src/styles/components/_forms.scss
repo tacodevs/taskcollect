@@ -1,7 +1,7 @@
 @mixin styling-1 {
     border-radius: 5px;
     font-family: var(--main-font);
-    font-size: 0.9em;
+    font-size: 0.9rem;
 }
 
 input[type="submit"],
@@ -31,7 +31,7 @@ input[type="file"] {
     background: var(--bg-color);
     border: none;
     font-family: var(--main-font);
-    font-size: 0.9em;
+    font-size: 0.9rem;
 }
 
 input:focus,
