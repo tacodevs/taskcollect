@@ -85,7 +85,7 @@ def update_res_files():
     src = tmpl_src
     rel_path = Path.relative_to(src, tmpl_src)
     dst = tmpl_dst.joinpath(rel_path)
-    shutil.copytree(str(src), str(dst))
+    shutil.copytree(str(src), str(dst), dirs_exist_ok=True)
     print(f"  Copied {src} -> {dst}")
 
     # NOTE: shell=True must be set for the command to work on Windows systems.
