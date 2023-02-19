@@ -130,20 +130,20 @@ $checkbox-dim: 1.2em;
     padding: 0 !important;
     border: 2px solid var(--fg-color);
     border-radius: 10px;
-    font-size: 30px;
+    font-size: 2rem;
 
     &:hover {
         background: var(--bg-color);
     }
 
     h1 {
-        font-size: 50px;
-        line-height: 60px;
+        font-size: 3rem;
+        line-height: 3.75rem;
     }
 
     h2 {
-        font-size: 25px;
-        line-height: 20px;
+        font-size: 1.5rem;
+        line-height: 1.25rem;
     }
 
     // Unused
@@ -180,7 +180,7 @@ $checkbox-dim: 1.2em;
     background: var(--bg-color);
     border: 2px solid var(--accent-color);
     padding: 12px 0px;
-    font-size: 16px;
+    font-size: 1rem;
 }
 
 .task-form {
