@@ -216,15 +216,15 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 		fullPath := fp.Join(h.database.path, "script.js")
 		dispatchAsset(w, fullPath, "text/javascript")
 
-	} else if res == "/mainfont.ttf" {
+	} else if res == "/mainfont.woff2" {
 		w.Header().Set("Cache-Control", "max-age=259200")
-		fullPath := fp.Join(h.database.path, "mainfont.ttf")
-		dispatchAsset(w, fullPath, "font/ttf")
+		fullPath := fp.Join(h.database.path, "mainfont.woff2")
+		dispatchAsset(w, fullPath, "font/woff2")
 
-	} else if res == "/navfont.ttf" {
+	} else if res == "/navfont.woff2" {
 		w.Header().Set("Cache-Control", "max-age=259200")
-		fullPath := fp.Join(h.database.path, "navfont.ttf")
-		dispatchAsset(w, fullPath, "font/ttf")
+		fullPath := fp.Join(h.database.path, "navfont.woff2")
+		dispatchAsset(w, fullPath, "font/woff2")
 
 	} else {
 		if res == "/" {
