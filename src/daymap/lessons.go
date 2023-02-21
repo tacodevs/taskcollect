@@ -139,6 +139,12 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			} else {
 				lesson.Notice = l.Text
 			}
+
+			lesson.Notice = strings.ReplaceAll(
+				lesson.Notice,
+				`<img src="/daymap/images/buttons/roomChange.gif"/>&nbsp;`,
+				"",
+			)
 		}
 
 		if strings.Contains(class, "Mentor") {
