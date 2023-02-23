@@ -503,6 +503,9 @@ form[action="/auth"] input[type=submit] {
 #timetable .day .lessons > .lesson .notice {
   font-weight: bold;
 }
+#timetable .day:first-child {
+  border-left: none;
+}
 @media (min-width: 0) and (max-width: 479px) {
   #timetable {
     padding: 0;
@@ -512,10 +515,16 @@ form[action="/auth"] input[type=submit] {
     border-left: none;
     border-bottom: 2px solid var(--bg-color);
   }
+  #timetable .yesterday {
+    display: none;
+  }
   #timetable .lessons > .lesson {
     position: static !important;
     top: 0px !important;
     min-height: 90px !important;
+  }
+  #timetable .lessons > .lesson:first-child {
+    margin-top: 1.2em;
   }
 }
 @media (min-width: 480px) and (max-width: 767px) {
@@ -527,10 +536,16 @@ form[action="/auth"] input[type=submit] {
     border-left: none;
     border-bottom: 2px solid var(--bg-color);
   }
+  #timetable .yesterday {
+    display: none;
+  }
   #timetable .lessons > .lesson {
     position: static !important;
     top: 0px !important;
     min-height: 90px !important;
+  }
+  #timetable .lessons > .lesson:first-child {
+    margin-top: 1.2em;
   }
 }
 .task-header {
