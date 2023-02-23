@@ -80,6 +80,10 @@
         }
     }
 
+    .day:first-child {
+        border-left: none;
+    }
+
     @include bp.xs {
         padding: 0;
 
@@ -89,10 +93,18 @@
             border-bottom: 2px solid var(--bg-color);
         }
 
+        .yesterday {
+            display: none;
+        }
+
         .lessons>.lesson {
             position: static !important;
             top: 0px !important;
             min-height: 90px !important;
+        }
+
+        .lessons>.lesson:first-child {
+            margin-top: 1.2em;
         }
     }
 
@@ -105,10 +117,18 @@
             border-bottom: 2px solid var(--bg-color);
         }
 
+        .yesterday {
+            display: none;
+        }
+
         .lessons>.lesson {
             position: static !important;
             top: 0px !important;
             min-height: 90px !important;
+        }
+
+        .lessons>.lesson:first-child {
+            margin-top: 1.2em;
         }
     }
 

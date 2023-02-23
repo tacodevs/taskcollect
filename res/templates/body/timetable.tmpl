@@ -8,17 +8,13 @@
     {{range $index, $day := .Body.TimetableData.Days}}
         {{$weekday := (add $index 1)}}
         {{if eq $currentDay $weekday}}
-            {{if eq $weekday 1}}
-                <div class="day" style="background: #c2cdfc; border-left: none;">
-            {{else}}
-                <div class="day" style="background: #c2cdfc;">
-            {{end}}
+            <div class="day" style="background: #c2cdfc;">
             <h2 style="background: var(--accent-hover);">{{$day.Day}}</h2>
         {{else}}
-            {{if eq $weekday 1}}
-                <div class="day" style="border-left: none;">
+            {{if lt $weekday $currentDay}}
+            <div class="day yesterday">
             {{else}}
-                <div class="day">
+            <div class="day">
             {{end}}
             <h2>{{$day.Day}}</h2>
         {{end}}
