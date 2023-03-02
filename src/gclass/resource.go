@@ -91,7 +91,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 			resource.Posted = posted
 		}
 
-		resName := []rune(r.Text)
+		resName := []rune(strings.Split(r.Text, "\n")[0])
 
 		if len(resName) >= 50 {
 			resName = resName[:50]
