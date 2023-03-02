@@ -432,6 +432,10 @@ form[action="/auth"] input[type=submit] {
   transition: 0.2s;
 }
 
+#privacy-and-terms {
+  text-align: center;
+}
+
 #timetable-img {
   display: block;
   margin: 0 auto;
