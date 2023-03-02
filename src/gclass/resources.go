@@ -1,6 +1,7 @@
 package gclass
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -41,7 +42,7 @@ func classAnnouncements(
 			resource.Posted = posted
 		}
 
-		resName := []rune(r.Text)
+		resName := []rune(strings.Split(r.Text, "\n")[0])
 
 		if len(resName) >= 50 {
 			resName = resName[:50]
