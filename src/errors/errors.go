@@ -8,6 +8,7 @@ import (
 var (
 	ErrAuthFailed           = errors.New("authentication failed")
 	ErrCorruptMIME          = errors.New("corrupt MIME request")
+	ErrDaymapUpload         = errors.New("Daymap task file uploads don't work (issue #68)")
 	ErrGclassApiRestriction = errors.New("Google Classroom API restriction")
 	ErrIncompleteCreds      = errors.New("user has incomplete credentials")
 	ErrInvalidAuth          = errors.New("invalid session token")
