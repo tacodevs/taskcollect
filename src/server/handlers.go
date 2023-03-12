@@ -27,7 +27,11 @@ func (h *handler) handleTask(r *http.Request, creds User, platform, id, cmd stri
 
 	if cmd == "submit" {
 		err := submitTask(creds, platform, id)
-		if err != nil {
+		if err == errors.ErrGclassApiRestriction {
+			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+			data = statusGclassErrorData
+			statusCode = 500
+		} else if err != nil {
 			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
 			data = statusServerErrorData
 			statusCode = 500
@@ -38,7 +42,15 @@ func (h *handler) handleTask(r *http.Request, creds User, platform, id, cmd stri
 		}
 	} else if cmd == "upload" {
 		err := uploadWork(creds, platform, id, r)
-		if err != nil {
+		if err == errors.ErrGclassApiRestriction {
+			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+			data = statusGclassErrorData
+			statusCode = 500
+		} else if err == errors.ErrDaymapUpload {
+			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+			data = statusDaymapErrorData
+			statusCode = 500
+		} else if err != nil {
 			logger.Error(errors.NewError("server.handleTask", "failed to upload work", err))
 			data = statusServerErrorData
 			statusCode = 500
@@ -55,7 +67,11 @@ func (h *handler) handleTask(r *http.Request, creds User, platform, id, cmd stri
 		}
 
 		err := removeWork(creds, platform, id, filenames)
-		if err == errNoPlatform {
+		if err == errors.ErrGclassApiRestriction {
+			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+			data = statusGclassErrorData
+			statusCode = 500
+		} else if err == errNoPlatform {
 			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
@@ -118,6 +134,7 @@ func (h *handler) handleTaskReq(r *http.Request, creds User) (int, pageData, [][
 		)
 	}
 
+	data.User = userData{Name: creds.DispName}
 	return statusCode, data, headers
 }
 
@@ -187,10 +204,14 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 		default:
 			if name == "/" {
 				w.WriteHeader(403)
-				h.genPage(w, statusForbiddenData)
+				data := statusForbiddenData
+				data.User = userData{Name: "none"}
+				h.genPage(w, data)
 			} else {
 				w.WriteHeader(404)
-				h.genPage(w, statusNotFoundData)
+				data := statusNotFoundData
+				data.User = userData{Name: "none"}
+				h.genPage(w, data)
 			}
 			return
 		}
@@ -229,10 +250,14 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if res == "/" {
 			w.WriteHeader(403)
-			h.genPage(w, statusForbiddenData)
+			data := statusForbiddenData
+			data.User = userData{Name: "none"}
+			h.genPage(w, data)
 		} else {
 			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
+			data := statusNotFoundData
+			data.User = userData{Name: "none"}
+			h.genPage(w, data)
 		}
 	}
 }
@@ -246,7 +271,9 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.loginHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -285,7 +312,9 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.authHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -334,7 +363,9 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.logoutHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -348,7 +379,9 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			logger.Error(errors.NewError("server.logoutHandler", "failed to log out user", err))
 			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
+			data := statusServerErrorData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		}
 	} else {
 		w.Header().Set("Location", "/login")
@@ -365,7 +398,9 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.resHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -381,7 +416,9 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 
 		if index == -1 {
 			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
+			data := statusNotFoundData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 			return
 		}
 
@@ -392,7 +429,9 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error(errors.NewError("server.resHandler", "failed to get resource", err))
 			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
+			data := statusServerErrorData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 			return
 		}
 
@@ -414,7 +453,9 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.taskHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -444,7 +485,9 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.tasksHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -454,11 +497,15 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 		webpageData, err := genRes(h.database.path, "/tasks", creds)
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
+			data := statusNotFoundData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else if err != nil {
 			logger.Error(errors.NewError("server.tasksHandler", "failed to generate resources", err))
 			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
+			data := statusServerErrorData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else {
 			w.Header().Set("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
@@ -478,7 +525,9 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.timetableHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -488,11 +537,15 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 		webpageData, err := genRes(h.database.path, "/timetable", creds)
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
+			data := statusNotFoundData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else if err != nil {
 			logger.Error(errors.NewError("server.timetableHandler", "failed to generate resources", err))
 			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
+			data := statusServerErrorData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else {
 			w.Header().Set("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
@@ -512,7 +565,9 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.gradesHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -522,11 +577,15 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 		webpageData, err := genRes(h.database.path, "/grades", creds)
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
+			data := statusNotFoundData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else if err != nil {
 			logger.Error(errors.NewError("server.gradesHandler", "failed to generate resources", err))
 			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
+			data := statusServerErrorData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else {
 			w.Header().Set("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
@@ -548,7 +607,9 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.resHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 
@@ -558,11 +619,15 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 		webpageData, err := genRes(h.database.path, "/res", creds)
 		if errors.Is(err, errNotFound) {
 			w.WriteHeader(404)
-			h.genPage(w, statusNotFoundData)
+			data := statusNotFoundData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else if err != nil {
 			logger.Error(errors.NewError("server.resHandler", "failed to generate resources", err))
 			w.WriteHeader(500)
-			h.genPage(w, statusServerErrorData)
+			data := statusServerErrorData
+			data.User = userData{Name: creds.DispName}
+			h.genPage(w, data)
 		} else {
 			w.Header().Set("Cache-Control", "max-age=2400")
 			h.genPage(w, webpageData)
@@ -582,7 +647,9 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.rootHandler", "failed to get creds", err))
-		h.genPage(w, statusServerErrorData)
+		data := statusServerErrorData
+		data.User = userData{Name: "none"}
+		h.genPage(w, data)
 		return
 	}
 

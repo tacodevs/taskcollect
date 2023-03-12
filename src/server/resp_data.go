@@ -1,6 +1,8 @@
 package server
 
-import "html/template"
+import (
+	"html/template"
+)
 
 // Primary (page, head, body)
 
@@ -197,6 +199,35 @@ var statusServerErrorData = pageData{
 		ErrorData: errData{
 			Heading: "500 Internal Server Error",
 			Message: "The server encountered an unexpected error and cannot continue.",
+		},
+	},
+}
+
+var daymapErrMsg = `We're trying to figure out how Daymap uploads work, but in ` +
+`the meantime, please go back and use "open task in source platform" to upload work.`
+
+var statusDaymapErrorData = pageData{
+	PageType: "error",
+	Head: headData{
+		Title: "500 Internal Server Error",
+	},
+	Body: bodyData{
+		ErrorData: errData{
+			Heading: "Daymap uploads don't currently work",
+			Message: daymapErrMsg,
+		},
+	},
+}
+
+var statusGclassErrorData = pageData{
+	PageType: "error",
+	Head: headData{
+		Title: "500 Internal Server Error",
+	},
+	Body: bodyData{
+		ErrorData: errData{
+			Heading: "Google does not allow you to submit tasks, nor upload/remove work.",
+			Message: "Why, you may ask? I don't know! You should ask Google, not me.",
 		},
 	},
 }
