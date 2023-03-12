@@ -245,8 +245,10 @@ func (db *authDB) auth(query url.Values) (string, error) {
 		return "", err
 	}
 
-	if school == "gihs" && !strings.HasPrefix(user, `CURRIC\`) {
+	if school == "gihs" && !strings.HasPrefix(strings.ToUpper(user), `CURRIC\`) {
 		user = `CURRIC\` + user
+	} else if school == "gihs" {
+		user = strings.ToUpper(user)
 	}
 
 	gTok, err := db.getGTok(school, user, pwd)
