@@ -23,7 +23,7 @@ func resFromMaterials(materials []*classroom.Material) ([][2]string, error) {
 
 		if m.DriveFile != nil {
 			link = m.DriveFile.DriveFile.AlternateLink
-			if strings.Contains(link, "://drive.google.com/") {
+			if strings.Contains(link, "://drive.google.com/file/d/") {
 				link = directDriveLink(m.DriveFile.DriveFile.AlternateLink)
 			}
 			name = m.DriveFile.DriveFile.Title

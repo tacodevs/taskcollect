@@ -124,7 +124,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 			if w.DriveFile != nil {
 				link = w.DriveFile.AlternateLink
-				if strings.Contains(link, "://drive.google.com/") {
+				if strings.Contains(link, "://drive.google.com/file/d/") {
 					link = directDriveLink(w.DriveFile.AlternateLink)
 				}
 				name = w.DriveFile.Title
