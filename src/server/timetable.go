@@ -436,7 +436,11 @@ func genTimetable(creds User) (timetableData, error) {
 		data.Days = append(data.Days, d)
 	}
 
-	data.CurrentDay = today
+	if time.Now().Before(monday) {
+		data.CurrentDay = 0 /*int(time.Now().AddDate(0, 0, -1).Weekday())*/
+	} else {
+		data.CurrentDay = int(today)
+	}
 
 	return data, nil
 }
