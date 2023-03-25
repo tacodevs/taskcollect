@@ -20,15 +20,11 @@ func resFromMaterials(materials []*classroom.Material) ([][2]string, error) {
 
 	for _, m := range materials {
 		var link, name string
-		var err error
 
 		if m.DriveFile != nil {
 			link = m.DriveFile.DriveFile.AlternateLink
 			if strings.Contains(link, "://drive.google.com/") {
-				link, err = getDirectDriveLink(m.DriveFile.DriveFile.AlternateLink)
-				if err != nil {
-					return nil, errors.NewError("gclass.resFromMaterials", "failed to get direct drive link", err)
-				}
+				link = directDriveLink(m.DriveFile.DriveFile.AlternateLink)
 			}
 			name = m.DriveFile.DriveFile.Title
 		} else if m.Form != nil {
