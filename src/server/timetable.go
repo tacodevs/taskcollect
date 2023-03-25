@@ -304,8 +304,8 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 		Face: face,
 	}
 
-	today := int(time.Now().Weekday())
-	monday := time.Now()
+	today := int(time.Now().In(creds.Timezone).Weekday())
+	monday := time.Now().In(creds.Timezone)
 	v := -1
 
 	if today == int(time.Sunday) || today > numOfDays {
@@ -360,7 +360,7 @@ func genTimetable(creds User) (timetableData, error) {
 
 	const numOfDays = 5
 
-	//weekday := int(time.Now().Weekday())
+	//weekday := int(time.Now().In(creds.Timezone).Weekday())
 	//dayOffset := (weekday - 1) * dayWidth
 	classes := []string{}
 
@@ -379,8 +379,8 @@ func genTimetable(creds User) (timetableData, error) {
 		colorList[classes[i]] = colors[idx]
 	}
 
-	today := int(time.Now().Weekday())
-	monday := time.Now()
+	today := int(time.Now().In(creds.Timezone).Weekday())
+	monday := time.Now().In(creds.Timezone)
 	v := -1
 
 	if today == int(time.Sunday) || today > numOfDays {
@@ -398,6 +398,9 @@ func genTimetable(creds User) (timetableData, error) {
 		dayStart := 800.0 // is 08:00
 
 		for j := 0; j < len(day); j++ {
+			day[j].Start = day[j].Start.In(creds.Timezone)
+			day[j].End = day[j].End.In(creds.Timezone)
+
 			startMins := day[j].Start.Hour()*60 + day[j].Start.Minute()
 			endMins := day[j].End.Hour()*60 + day[j].End.Minute()
 			duration := endMins - startMins
@@ -436,8 +439,8 @@ func genTimetable(creds User) (timetableData, error) {
 		data.Days = append(data.Days, d)
 	}
 
-	if time.Now().Before(monday) {
-		data.CurrentDay = 0 /*int(time.Now().AddDate(0, 0, -1).Weekday())*/
+	if time.Now().In(creds.Timezone).Before(monday) {
+		data.CurrentDay = 0
 	} else {
 		data.CurrentDay = int(today)
 	}

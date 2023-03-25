@@ -132,7 +132,6 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 	fileDiv := `<div class='fLinkDiv'><a href='#' onclick="DMU.OpenAttachment(`
 	linkDiv := `<a href='javascript:DMU.OpenNewWindow("`
 	i, div := nextRes(b, planDiv, fileDiv, linkDiv)
-	var posted time.Time
 
 	for i != -1 {
 		resource := plat.Resource{}
@@ -147,7 +146,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			return
 		} else if dates != nil {
 			postStr := dates[len(dates)-1]
-			posted, err = time.Parse("2/01/2006", postStr)
+			resource.Posted, err = time.ParseInLocation("2/01/2006", postStr, creds.Timezone)
 			if err != nil {
 				*e = errors.NewError("daymap.getClassRes", "failed to parse time", err)
 				return
@@ -160,12 +159,6 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 
 		i = len(div)
 		b = b[i:]
-
-		resource.Posted = time.Date(
-			posted.Year(), posted.Month(), posted.Day(),
-			0, 0, 0, 0,
-			creds.Timezone,
-		)
 
 		i = strings.Index(b, ");")
 

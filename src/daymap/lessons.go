@@ -152,9 +152,9 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 		}
 
 		day := time.Date(
-			lesson.Start.Year(),
-			lesson.Start.Month(),
-			lesson.Start.Day(),
+			lesson.Start.In(creds.Timezone).Year(),
+			lesson.Start.In(creds.Timezone).Month(),
+			lesson.Start.In(creds.Timezone).Day(),
 			0, 0, 0, 0,
 			creds.Timezone,
 		)
