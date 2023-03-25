@@ -129,23 +129,16 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 		dueStr := b[:i]
 		b = b[i:]
-		var due time.Time
 
 		if !strings.Contains(dueStr, ":") {
-			due, err = time.Parse("2/01/2006", dueStr)
+			task.Due, err = time.ParseInLocation("2/01/2006", dueStr, creds.Timezone)
 		} else {
-			due, err = time.Parse("2/01/2006 3:04 PM", dueStr)
+			task.Due, err = time.ParseInLocation("2/01/2006 3:04 PM", dueStr, creds.Timezone)
 		}
 
 		if err != nil {
 			return plat.Task{}, errors.NewError("daymap.GetTask", "failed to parse time", err)
 		}
-
-		task.Due = time.Date(
-			due.Year(), due.Month(), due.Day(),
-			due.Hour(), due.Minute(), 0, 0,
-			creds.Timezone,
-		)
 	}
 
 	i = strings.Index(b, "My Work</div>")

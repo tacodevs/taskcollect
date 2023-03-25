@@ -210,23 +210,12 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		postedString := b[:i]
 
-		postedNoTimezone, err := time.Parse("2/01/06", postedString)
+		task.Posted, err = time.ParseInLocation("2/01/06", postedString, creds.Timezone)
 		if err != nil {
 			t <- nil
 			e <- [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)}}
 			return
 		}
-
-		task.Posted = time.Date(
-			postedNoTimezone.Year(),
-			postedNoTimezone.Month(),
-			postedNoTimezone.Day(),
-			postedNoTimezone.Hour(),
-			postedNoTimezone.Minute(),
-			postedNoTimezone.Second(),
-			postedNoTimezone.Nanosecond(),
-			creds.Timezone,
-		)
 
 		i += len(`</td><td>`)
 		b = b[i:]
@@ -240,21 +229,20 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		dueString := b[:i]
 
-		dueNoTimezone, err := time.Parse("2/01/06", dueString)
+		task.Due, err = time.ParseInLocation("2/01/06", dueString, creds.Timezone)
 		if err != nil {
 			t <- nil
 			e <- [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)}}
 			return
 		}
 
+		// Due time might not be 23:59:59, but if it is 00:00:00, the task will
+		// not be considered an active task even if it is due after 00:00:00.
+		// It's better to stay safe and mark overdue tasks as active rather than
+		// mark active tasks as overdue.
 		task.Due = time.Date(
-			dueNoTimezone.Year(),
-			dueNoTimezone.Month(),
-			dueNoTimezone.Day(),
-			dueNoTimezone.Hour(),
-			dueNoTimezone.Minute(),
-			dueNoTimezone.Second(),
-			dueNoTimezone.Nanosecond(),
+			task.Due.Year(), task.Due.Month(), task.Due.Day(),
+			23, 59, 59, 999999999,
 			creds.Timezone,
 		)
 
