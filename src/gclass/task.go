@@ -11,11 +11,12 @@ import (
 	"main/plat"
 )
 
-// Create a direct download link to a Google Drive file from a web view link.
-func getDirectDriveLink(inputUrl string) (string, error) {
-	urlResult, err := url.Parse(inputUrl)
+// Create a direct download link to a Google Drive file from a web view link. If
+// an error occurs, return the original specified link.
+func directDriveLink(link string) string {
+	urlResult, err := url.Parse(link)
 	if err != nil {
-		return "", errors.NewError("gclass.getDirectDriveLink", "URL parse error", err)
+		return link
 	}
 
 	// NOTE: urlResult.Path contains a leading "/": "/file/d/1234567890/view"
@@ -23,11 +24,11 @@ func getDirectDriveLink(inputUrl string) (string, error) {
 
 	splitUrl := strings.Split(urlResult.Path, "/")
 	if len(splitUrl) < 4 {
-		return "", errors.NewError("gclass.getDirectDriveLink", "split URL does not contain enough elements", nil)
+		return link
 	}
 
 	finalUrl := "https://drive.google.com/uc?export=download&confirm=t&id=" + splitUrl[3]
-	return finalUrl, nil
+	return finalUrl
 }
 
 // Fetch the name of the class a task belongs to from Google Classroom.
@@ -124,10 +125,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			if w.DriveFile != nil {
 				link = w.DriveFile.AlternateLink
 				if strings.Contains(link, "://drive.google.com/") {
-					link, err = getDirectDriveLink(w.DriveFile.AlternateLink)
-					if err != nil {
-						return plat.Task{}, errors.NewError("gclass.GetTask", "failed to get direct drive link", err)
-					}
+					link = directDriveLink(w.DriveFile.AlternateLink)
 				}
 				name = w.DriveFile.Title
 			} else if w.Form != nil {
