@@ -168,7 +168,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			continue
 		}
 
-		if err = std.Access(make([]bool, len(lessons)), i); err != nil {
+		if err = std.Access(lessons, i); err != nil {
 			return nil, errors.NewError("daymap.GetLessons", "number of days with lessons exceeded 5", err)
 		}
 

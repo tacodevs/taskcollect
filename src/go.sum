@@ -5,8 +5,8 @@ cloud.google.com/go/compute v1.18.0/go.mod h1:1X7yHxec2Ga+Ss6jPyjxRxpu2uu7PLgsOV
 cloud.google.com/go/compute/metadata v0.2.3 h1:mg4jlk7mCAj6xXp9UJ4fjI9VUI5rubuGBW5aJ7UnBMY=
 cloud.google.com/go/compute/metadata v0.2.3/go.mod h1:VAV5nSsACxMJvgaAuX6Pk2AawlZn8kiOGuCv6gTkwuA=
 cloud.google.com/go/longrunning v0.4.1 h1:v+yFJOfKC3yZdY6ZUI933pIYdhyhV8S3NpWrXWmg7jM=
-codeberg.org/kvo/std v0.0.0-20230326061903-e975ba4896a0 h1:/tpeWlpb9J3koWf4xSNKhpCrKEILPMorBhTh1OCa/0I=
-codeberg.org/kvo/std v0.0.0-20230326061903-e975ba4896a0/go.mod h1:T3eok1G+fYwwMMY2obvjO18tBFoqkqcCwbP25DmBz3U=
+codeberg.org/kvo/std v0.0.0-20230326083304-8b7fa96e5a2b h1:CAZ/5yVtW/tu8lay6AQ1zQBJpFUbRzT83Lmz7Q0RmUM=
+codeberg.org/kvo/std v0.0.0-20230326083304-8b7fa96e5a2b/go.mod h1:T3eok1G+fYwwMMY2obvjO18tBFoqkqcCwbP25DmBz3U=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/bsm/ginkgo/v2 v2.5.0 h1:aOAnND1T40wEdAtkGSkvSICWeQ8L3UASX7YVCqQx+eQ=
 github.com/bsm/gomega v1.20.0 h1:JhAwLmtRzXFTx2AkALSLa8ijZafntmhSoU63Ok18Uq8=

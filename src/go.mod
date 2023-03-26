@@ -3,7 +3,7 @@ module main
 go 1.20
 
 require (
-	codeberg.org/kvo/std v0.0.0-20230326061903-e975ba4896a0
+	codeberg.org/kvo/std v0.0.0-20230326083304-8b7fa96e5a2b
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/redis/go-redis/v9 v9.0.2
 	golang.org/x/image v0.6.0
