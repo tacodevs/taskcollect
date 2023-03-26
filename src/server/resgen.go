@@ -5,7 +5,6 @@ import (
 	"html"
 	"html/template"
 	"image/color"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,37 +34,69 @@ func genDueStr(due time.Time, creds User) string {
 
 	todayEnd := todayStart.AddDate(0, 0, 1)
 	tmrEnd := todayStart.AddDate(0, 0, 2)
+	yesterday := todayStart.AddDate(0, 0, -1)
+	lastWeek := todayStart.AddDate(0, 0, -7)
 	weekEnd := todayStart.AddDate(0, 0, 7)
 
-	if localDueDate.Before(todayStart) || !localDueDate.Before(weekEnd) {
-		dueDate = strconv.Itoa(localDueDate.Day())
-		dueDate += " " + localDueDate.Month().String()[:3]
-		if localDueDate.Year() != now.Year() {
-			dueDate += " " + strconv.Itoa(localDueDate.Year())
-		}
-	} else if localDueDate.Before(todayEnd) {
-		dueDate = "Today"
-	} else if localDueDate.Before(tmrEnd) {
-		dueDate = "Tomorrow"
-	} else if localDueDate.Before(weekEnd) {
+	if localDueDate.After(weekEnd) || localDueDate.Before(lastWeek) {
+		dueDate = localDueDate.Format("2 Jan 2006")
+	} else if localDueDate.Before(weekEnd) && localDueDate.After(tmrEnd) {
 		dueDate = localDueDate.Weekday().String()
+	} else if localDueDate.After(lastWeek) && localDueDate.Before(yesterday) {
+		dueDate = "last " + localDueDate.Weekday().String()
+	} else if localDueDate.After(yesterday) && localDueDate.Before(todayStart) {
+		dueDate = "yesterday"
+	} else if localDueDate.Before(todayEnd) {
+		dueDate = "today"
+	} else if localDueDate.Before(tmrEnd) {
+		dueDate = "tomorrow"
 	}
 
 	if localDueDate.Hour() != 0 || localDueDate.Minute() != 0 {
-		strHour := strconv.Itoa(localDueDate.Hour())
-		if len(strHour) == 1 {
-			strHour = "0" + strHour
-		}
-
-		strMinute := strconv.Itoa(localDueDate.Minute())
-		if len(strMinute) == 1 {
-			strMinute = "0" + strMinute
-		}
-
-		dueDate += ", " + strHour + ":" + strMinute
+		dueDate += localDueDate.Format(", 15:04")
 	}
 
 	return dueDate
+}
+
+func genPostStr(posted time.Time, creds User) string {
+	var postDate string
+	now := time.Now().In(creds.Timezone)
+	localPostDate := posted.In(creds.Timezone)
+
+	todayStart := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		0, 0, 0, 0,
+		creds.Timezone,
+	)
+
+	todayEnd := todayStart.AddDate(0, 0, 1)
+	tmrEnd := todayStart.AddDate(0, 0, 2)
+	yesterday := todayStart.AddDate(0, 0, -1)
+	lastWeek := todayStart.AddDate(0, 0, -7)
+	weekEnd := todayStart.AddDate(0, 0, 7)
+
+	if localPostDate.After(weekEnd) || localPostDate.Before(lastWeek) {
+		postDate = localPostDate.Format("2 Jan 2006")
+	} else if localPostDate.Before(weekEnd) && localPostDate.After(tmrEnd) {
+		postDate = "for " + localPostDate.Weekday().String()
+	} else if localPostDate.After(lastWeek) && localPostDate.Before(yesterday) {
+		postDate = localPostDate.Weekday().String()
+	} else if localPostDate.After(yesterday) && localPostDate.Before(todayStart) {
+		postDate = "yesterday"
+	} else if localPostDate.Before(todayEnd) {
+		postDate = "today"
+	} else if localPostDate.Before(tmrEnd) {
+		postDate = "tomorrow"
+	}
+
+	if localPostDate.Hour() != 0 || localPostDate.Minute() != 0 {
+		postDate += localPostDate.Format(", 15:04")
+	}
+
+	return postDate
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
@@ -82,7 +113,7 @@ func genTask(assignment plat.Task, noteType string, creds User) taskItem {
 	case "dueDate":
 		task.DueDate = genDueStr(assignment.Due, creds)
 	case "posted":
-		task.Posted = genDueStr(assignment.Posted, creds)
+		task.Posted = genPostStr(assignment.Posted, creds)
 	case "grade":
 		task.Grade = assignment.Result.Grade
 		if task.Grade != "" && assignment.Result.Mark != 0.0 {
@@ -221,7 +252,7 @@ func genResPage(res plat.Resource, creds User) pageData {
 				Class:       res.Class,
 				URL:         res.Link,
 				Desc:        "",
-				Posted:      genDueStr(res.Posted, creds),
+				Posted:      genPostStr(res.Posted, creds),
 				ResLinks:    nil,
 				HasResLinks: false,
 			},
@@ -263,7 +294,7 @@ func genHtmlResLink(className string, res []plat.Resource, creds User) resClass 
 		class.ResItems = append(class.ResItems, resItem{
 			Id:       r.Id,
 			Name:     r.Name,
-			Posted:   genDueStr(r.Posted, creds),
+			Posted:   genPostStr(r.Posted, creds),
 			Platform: r.Platform,
 			URL:      r.Link,
 		})
