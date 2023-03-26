@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/kvo/builtin"
-	"github.com/go-redis/redis/v9"
+	"codeberg.org/kvo/std"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/oauth2"
 
 	"main/daymap"
@@ -240,7 +240,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	user := query.Get("usr")
 	pwd := query.Get("pwd")
 
-	if builtin.Contains([]string{user, pwd}, "") {
+	if std.Contains([]string{user, pwd}, "") {
 		err := errors.NewError("server.auth", "username or password is empty", errAuthFailed)
 		return "", err
 	}
