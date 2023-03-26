@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/kvo/builtin"
+	"codeberg.org/kvo/std"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -219,7 +219,7 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 
 	for i := 0; i < len(lessons); i++ {
 		for j := 0; j < len(lessons[i]); j++ {
-			if !builtin.Contains(classes, lessons[i][j].Class) {
+			if !std.Contains(classes, lessons[i][j].Class) {
 				classes = append(classes, lessons[i][j].Class)
 			}
 		}
@@ -366,7 +366,7 @@ func genTimetable(creds User) (timetableData, error) {
 
 	for i := 0; i < len(lessons); i++ {
 		for j := 0; j < len(lessons[i]); j++ {
-			if !builtin.Contains(classes, lessons[i][j].Class) {
+			if !std.Contains(classes, lessons[i][j].Class) {
 				classes = append(classes, lessons[i][j].Class)
 			}
 		}

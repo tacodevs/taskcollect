@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"codeberg.org/kvo/builtin"
+	"codeberg.org/kvo/std"
 
 	"main/errors"
 	"main/logger"
@@ -18,7 +18,7 @@ func main() {
 		logger.Fatal(errors.ErrBadCommandUsage)
 	}
 
-	if builtin.Contains(os.Args, "-w") {
+	if std.Contains(os.Args, "-w") {
 		tlsConn = false
 	}
 

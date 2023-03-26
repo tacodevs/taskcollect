@@ -12,7 +12,7 @@ import (
 	fp "path/filepath"
 	_ "time/tzdata"
 
-	"codeberg.org/kvo/builtin"
+	"codeberg.org/kvo/std"
 	"golang.org/x/term"
 
 	"main/errors"
@@ -144,7 +144,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 		logger.Fatal(errors.NewError("server.initTemplates", "error walking the template/ directory", err))
 	}
 
-	files = builtin.Remove(files, tmplResPath)
+	files = std.Remove(files, tmplResPath)
 
 	var requiredFiles []string
 	tmplFiles := []string{
@@ -161,7 +161,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	filesMissing := false
 	var missingFiles []string
 	for _, f := range requiredFiles {
-		if !builtin.Contains(files, f) {
+		if !std.Contains(files, f) {
 			filesMissing = true
 			missingFiles = append(missingFiles, f)
 		}

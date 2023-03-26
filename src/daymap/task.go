@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/kvo/builtin"
+	"codeberg.org/kvo/std"
 
 	"main/errors"
 	"main/plat"
@@ -576,7 +576,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		fname := b[:i]
 		b = b[i:]
 
-		if builtin.Contains(filenames, fname) {
+		if std.Contains(filenames, fname) {
 			rwForm.Set(name, "del")
 		}
 
