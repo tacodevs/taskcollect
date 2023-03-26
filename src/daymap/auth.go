@@ -241,9 +241,8 @@ func get(webUrl, username, password string) (string, string, error) {
 	cookies := jar.Cookies(&daymapUrl)
 	authToken := ""
 
-	for i := 0; i < len(cookies); i++ {
-		authToken += cookies[i].String()
-
+	for i, cookie := range cookies {
+		authToken += cookie.String()
 		if i < len(cookies)-1 {
 			authToken += "; "
 		}

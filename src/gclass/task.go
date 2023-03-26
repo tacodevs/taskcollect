@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/kvo/std"
 	"google.golang.org/api/classroom/v1"
 
 	"main/errors"
@@ -23,10 +24,9 @@ func directDriveLink(link string) string {
 	// so the split list will have an extra element at the start hence splitUrl[3] and not splitUrl[2]
 
 	splitUrl := strings.Split(urlResult.Path, "/")
-	if len(splitUrl) < 4 {
+	if err = std.Access(splitUrl, 3); err != nil {
 		return link
 	}
-
 	finalUrl := "https://drive.google.com/uc?export=download&confirm=t&id=" + splitUrl[3]
 	return finalUrl
 }

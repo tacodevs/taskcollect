@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/kvo/std"
 	"google.golang.org/api/classroom/v1"
 
 	"main/errors"
@@ -58,7 +59,9 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 	resource.Platform = "gclass"
 	isAnn := false
 	idSlice := strings.SplitN(id, "-", 2)
-
+	if err := std.Access(idSlice, 1); err != nil {
+		return plat.Resource{}, errors.NewError("gclass.GetResource", "invalid resource ID", err)
+	}
 	if strings.HasPrefix(idSlice[1], "a") {
 		isAnn = true
 		idSlice[1] = (idSlice[1])[1:]

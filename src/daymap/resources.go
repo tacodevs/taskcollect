@@ -12,6 +12,8 @@ import (
 
 	"main/errors"
 	"main/plat"
+
+	"codeberg.org/kvo/std"
 )
 
 type resJson struct {
@@ -141,10 +143,10 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		b = b[i:]
 		dates := re.FindAllString(dateRegion, -1)
 
-		if dates == nil && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
+		if len(dates) == 0 && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
 			*e = errNoDateFound
 			return
-		} else if dates != nil {
+		} else if len(dates) > 0 {
 			postStr := dates[len(dates)-1]
 			resource.Posted, err = time.ParseInLocation("2/01/2006", postStr, creds.Timezone)
 			if err != nil {
@@ -152,12 +154,20 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 				return
 			}
 		} else {
+			if err = std.Access(b, len(div)); err != nil {
+				*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
+				return
+			}
 			b = b[len(div):]
 			i, div = nextRes(b, planDiv, fileDiv, linkDiv)
 			continue
 		}
 
 		i = len(div)
+		if err = std.Access(b, i); err != nil {
+			*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
+			return
+		}
 		b = b[i:]
 
 		i = strings.Index(b, ");")
@@ -193,6 +203,10 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			}
 		}
 
+		if err = std.Access(b, i); err != nil {
+			*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
+			return
+		}
 		resource.Name = b[:i]
 
 		if div == fileDiv {
@@ -204,6 +218,10 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 
 		resource.Id = id + "-" + resource.Id
 		*res = append(*res, resource)
+		if err = std.Access(b, i); err != nil {
+			*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
+			return
+		}
 		b = b[i:]
 		i, div = nextRes(b, planDiv, fileDiv, linkDiv)
 	}
