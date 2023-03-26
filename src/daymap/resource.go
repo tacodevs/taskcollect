@@ -9,6 +9,8 @@ import (
 
 	"main/errors"
 	"main/plat"
+
+	"codeberg.org/kvo/std"
 )
 
 // Get a file resource from DayMap for a user.
@@ -155,6 +157,10 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 	idSlice := strings.Split(id, "-")
 	var res plat.Resource
 	var err error
+
+	if err = std.Access(idSlice, 1); err != nil {
+		return plat.Resource{}, errors.NewError("daymap.GetResource", "invalid resource ID", err)
+	}
 
 	if strings.HasPrefix(idSlice[1], "f") {
 		res, err = fileRes(creds, idSlice[0], idSlice[1][1:])

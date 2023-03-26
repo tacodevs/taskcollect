@@ -10,6 +10,8 @@ import (
 
 	"main/errors"
 	"main/plat"
+
+	"codeberg.org/kvo/std"
 )
 
 type dmJsonEntry struct {
@@ -115,10 +117,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 		}
 
 		class := l.Title
-
-		for class[len(class)-1] == ' ' {
-			class = strings.TrimSuffix(class, " ")
-		}
+		class = strings.TrimSpace(class)
 
 		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
 		if err != nil {
@@ -167,6 +166,10 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 		if i > 4 {
 			continue
+		}
+
+		if err = std.Access(make([]bool, len(lessons)), i); err != nil {
+			return nil, errors.NewError("daymap.GetLessons", "number of days with lessons exceeded 5", err)
 		}
 
 		lessons[i] = append(lessons[i], lesson)

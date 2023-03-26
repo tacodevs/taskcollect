@@ -1,9 +1,9 @@
 module main
 
-go 1.19
+go 1.20
 
 require (
-	codeberg.org/kvo/std v0.0.0-20230313070111-0c905d759e42
+	codeberg.org/kvo/std v0.0.0-20230326061903-e975ba4896a0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/redis/go-redis/v9 v9.0.2
 	golang.org/x/image v0.6.0
