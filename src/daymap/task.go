@@ -588,7 +588,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	rwForm.Set("__EVENTARGUMENT", "")
 
 	rwData := strings.NewReader(rwForm.Encode())
-	if err = std.Access(rwUrl, 1); err != nil {
+	if err = std.Access([]byte(rwUrl), 1); err != nil {
 		return errors.NewError("daymap.RemoveWork", "invalid task HTML response", err)
 	}
 	rwfurl := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]

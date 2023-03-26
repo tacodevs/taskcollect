@@ -154,7 +154,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 				return
 			}
 		} else {
-			if err = std.Access(b, len(div)); err != nil {
+			if err = std.Access([]byte(b), len(div)); err != nil {
 				*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
 				return
 			}
@@ -164,7 +164,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		}
 
 		i = len(div)
-		if err = std.Access(b, i); err != nil {
+		if err = std.Access([]byte(b), i); err != nil {
 			*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
 			return
 		}
@@ -203,7 +203,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			}
 		}
 
-		if err = std.Access(b, i); err != nil {
+		if err = std.Access([]byte(b), i); err != nil {
 			*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
 			return
 		}
@@ -218,7 +218,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 
 		resource.Id = id + "-" + resource.Id
 		*res = append(*res, resource)
-		if err = std.Access(b, i); err != nil {
+		if err = std.Access([]byte(b), i); err != nil {
 			*e = errors.NewError("daymap.getClassRes", "invalid HTML response", err)
 			return
 		}
