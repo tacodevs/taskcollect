@@ -77,7 +77,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 	for _, l := range dmJson {
 		lesson := plat.Lesson{}
-		lesson.Start, err = time.Parse("2006-01-02T15:04:05.0000000", l.Start)
+		lesson.Start, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
 
 		if err != nil {
 			startIdx := strings.Index(l.Start, "(") + 1
@@ -110,7 +110,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 			lesson.End = time.Unix(int64(finishInt), 0)
 		} else {
-			lesson.End, err = time.Parse("2006-01-02T15:04:05.0000000", l.Finish)
+			lesson.End, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Finish, creds.Timezone)
 			if err != nil {
 				return nil, errors.NewError("daymap.GetLessons", "failed to parse time", err)
 			}
