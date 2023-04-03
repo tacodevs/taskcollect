@@ -37,11 +37,12 @@ func getLessons(creds User) ([][]plat.Lesson, error) {
 
 	for i := 0; i < len(dmLessons); i++ {
 		day := []plat.Lesson{}
-
 		for j := 0; j < len(dmLessons[i]); j++ {
 			day = append(day, plat.Lesson(dmLessons[i][j]))
 		}
-
+		sort.SliceStable(day, func(i, j int) bool {
+			return day[i].Start.In(creds.Timezone).Unix() < day[j].Start.In(creds.Timezone).Unix()
+		})
 		lessons = append(lessons, day)
 	}
 
