@@ -24,10 +24,11 @@ func directDriveLink(link string) string {
 	// so the split list will have an extra element at the start hence splitUrl[3] and not splitUrl[2]
 
 	splitUrl := strings.Split(urlResult.Path, "/")
-	if err = std.Access(splitUrl, 3); err != nil {
+	fileId, err := std.Access(splitUrl, 3)
+	if err != nil {
 		return link
 	}
-	finalUrl := "https://drive.google.com/uc?export=download&confirm=t&id=" + splitUrl[3]
+	finalUrl := "https://drive.google.com/uc?export=download&confirm=t&id=" + fileId
 	return finalUrl
 }
 
