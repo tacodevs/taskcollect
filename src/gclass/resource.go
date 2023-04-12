@@ -59,12 +59,17 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 	resource.Platform = "gclass"
 	isAnn := false
 	idSlice := strings.SplitN(id, "-", 2)
-	if err := std.Access(idSlice, 1); err != nil {
+	courseId, err := std.Access(idSlice, 0)
+	if err != nil {
 		return plat.Resource{}, errors.NewError("gclass.GetResource", "invalid resource ID", err)
 	}
-	if strings.HasPrefix(idSlice[1], "a") {
+	resId, err := std.Access(idSlice, 1)
+	if err != nil {
+		return plat.Resource{}, errors.NewError("gclass.GetResource", "invalid resource ID", err)
+	}
+	if strings.HasPrefix(resId, "a") {
 		isAnn = true
-		idSlice[1] = (idSlice[1])[1:]
+		resId = resId[1:]
 	}
 
 	svc, err := Auth(creds)
@@ -74,10 +79,10 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 
 	classChan := make(chan string)
 	classErrChan := make(chan error)
-	go getClass(svc, idSlice[0], classChan, classErrChan)
+	go getClass(svc, courseId, classChan, classErrChan)
 
 	if isAnn {
-		r, err := svc.Courses.Announcements.Get(idSlice[0], idSlice[1]).Do()
+		r, err := svc.Courses.Announcements.Get(courseId, resId).Do()
 		if err != nil {
 			return plat.Resource{}, errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
 		}
@@ -85,7 +90,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
 
 		if err != nil {
-			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+			resource.Posted = time.Time{}
 		} else {
 			resource.Posted = posted
 		}
@@ -107,7 +112,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 		}
 	} else {
 		r, err := svc.Courses.CourseWorkMaterials.Get(
-			idSlice[0], idSlice[1],
+			courseId, resId,
 		).Fields("title", "alternateLink", "creationTime", "description", "materials").Do()
 
 		if err != nil {
@@ -117,7 +122,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
 
 		if err != nil {
-			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+			resource.Posted = time.Time{}
 		} else {
 			resource.Posted = posted
 		}

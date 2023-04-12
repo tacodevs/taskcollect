@@ -156,16 +156,20 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 func GetResource(creds User, id string) (plat.Resource, error) {
 	idSlice := strings.Split(id, "-")
 	var res plat.Resource
-	var err error
 
-	if err = std.Access(idSlice, 1); err != nil {
+	courseId, err := std.Access(idSlice, 0)
+	if err != nil {
+		return plat.Resource{}, errors.NewError("daymap.GetResource", "invalid resource ID", err)
+	}
+	resId, err := std.Access(idSlice, 1)
+	if err != nil {
 		return plat.Resource{}, errors.NewError("daymap.GetResource", "invalid resource ID", err)
 	}
 
-	if strings.HasPrefix(idSlice[1], "f") {
-		res, err = fileRes(creds, idSlice[0], idSlice[1][1:])
+	if strings.HasPrefix(resId, "f") {
+		res, err = fileRes(creds, courseId, resId[1:])
 	} else {
-		res, err = planRes(creds, idSlice[0], idSlice[1])
+		res, err = planRes(creds, courseId, resId)
 	}
 
 	return res, err
