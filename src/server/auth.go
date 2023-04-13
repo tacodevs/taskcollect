@@ -353,7 +353,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	dmCreds, err := daymap.Auth(school, user, pwd)
 	if err != nil {
-		return "", errors.NewError("server.auth", "could not authenticate to Daymap", err)
+		logger.Warn(errors.NewError("server.auth", "could not authenticate to Daymap", err))
 	}
 
 	siteTokens := map[string]string{
