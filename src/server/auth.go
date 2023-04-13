@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"math/rand"
+	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	fp "path/filepath"
@@ -20,6 +23,82 @@ import (
 	"main/gclass"
 	"main/logger"
 )
+
+// Attempt to get GIHS Daily Access home page using a username and password.
+// Used for authenticating GIHS students.
+func gihsAuth(username, password string) error {
+	// Stage 1 - Get a Daily Access redirect to SAML.
+
+	// A persistent cookie jar is required for the entire process.
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return errors.NewError("daymap.get", "failed to create cookiejar", err)
+	}
+
+	client := &http.Client{Jar: jar}
+
+	s1, err := client.Get("https://da.gihs.sa.edu.au")
+	if err != nil {
+		return errors.NewError("daymap.get", "GET request failed", err)
+	}
+
+	s1body, err := io.ReadAll(s1.Body)
+	if err != nil {
+		return errors.NewError("daymap.get", "failed to read s1.Body", err)
+	}
+
+	s1page := string(s1body)
+
+	// Stage 2 - POST credentials to SAML.
+
+	// Generate POST form data with provided credentials.
+
+	s2form := url.Values{}
+	s2form.Set("UserName", username)
+	s2form.Set("Password", password)
+	s2form.Set("AuthMethod", "FormsAuthentication")
+	s2data := strings.NewReader(s2form.Encode())
+
+	// Get SAML request ID. This must be extracted to make a valid login.
+
+	idIndex := strings.Index(s1page, "&client-request-id=")
+	if idIndex == -1 {
+		err = errors.NewError("server.gihsAuth", "could not find client request ID", nil)
+		return err
+	}
+
+	idEnd := strings.Index(s1page[idIndex:], `"`)
+	idEnd += idIndex
+
+	if idEnd == -1 {
+		err = errors.NewError("server.gihsAuth", "client request ID has no end", nil)
+		return err
+	}
+
+	s2id := s1page[idIndex:idEnd]
+	s2url := s1.Request.URL.String() + s2id
+
+	// Send the POST request with the generated form data.
+
+	s2req, err := http.NewRequest("POST", s2url, s2data)
+	if err != nil {
+		return errors.NewError("daymap.get", "(s2) POST request failed", err)
+	}
+
+	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	s2, err := client.Do(s2req)
+	if err != nil {
+		return errors.NewError("daymap.get", "s2req", err)
+	}
+
+	// Stage 3 - Check if authentication was successful.
+
+	if s2.StatusCode == 200 && s2.Header.Get("X-Frame-Options") == "" {
+		return nil
+	}
+	return errors.NewError("server.gihsAuth", "error authenticating to GIHS SAML", err)
+}
 
 type authDB struct {
 	path   string
@@ -262,8 +341,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 		go gclass.Test(db.gAuth, gTok, gTestErr)
 	}
 
-	dmCreds, err := daymap.Auth(school, user, pwd)
-	if err != nil {
+	if gihsAuth(user, pwd) != nil {
 		userExists, err := db.findUser(school, user, pwd)
 		if err != nil {
 			return "", errors.NewError("server.auth", "could not determine if user exists", err)
@@ -271,6 +349,11 @@ func (db *authDB) auth(query url.Values) (string, error) {
 		if !userExists {
 			return "", errors.NewError("server.auth", "user was not found", errAuthFailed)
 		}
+	}
+
+	dmCreds, err := daymap.Auth(school, user, pwd)
+	if err != nil {
+		return "", errors.NewError("server.auth", "could not authenticate to Daymap", err)
 	}
 
 	siteTokens := map[string]string{
