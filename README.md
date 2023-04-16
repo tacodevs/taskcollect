@@ -81,9 +81,9 @@ Although the mailing list is public, the mailing list archives are not accessibl
 
 ## Announcements
 
-To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to [this email address][1].
+To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to this email address: ~kvo/taskcollect-announce+subscribe@lists.sr.ht
 
-For all previous announcements, [see the archives][2].
+For all previous announcements, [see the archives][1].
 
 ## Future directions
 
@@ -102,5 +102,4 @@ Additional feature tabs to TaskCollect:
   * Calendar (with source platform synchronisation)
 
 
-[1]: ~kvo/taskcollect-announce+subscribe@lists.sr.ht
-[2]: https://lists.sr.ht/~kvo/taskcollect-announce
+[1]: https://lists.sr.ht/~kvo/taskcollect-announce
