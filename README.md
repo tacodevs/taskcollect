@@ -60,7 +60,7 @@ TaskCollect and its host system should be protected by a strong firewall to prev
 
 As of v1.0.0, TaskCollect is considered production-ready and its public interface is stable (see `IMPLEMENTATION.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases. Where possible, select the latest available release in order to ensure you are running the most secure and issue-free version available.
 
-Easier installation and update mechanisms for TaskCollect will be developed in the future to make these processes easier and smoother for deployers.
+Easier installation and update mechanisms for TaskCollect will be developed in the future to make these processes easier and smoother for deployers. Furthermore, it is a regrettable decision for the TaskCollect resources folder to be located in the user's home folder — one which will be corrected in a future version of TaskCollect.
 
 ## Testing
 
@@ -81,11 +81,9 @@ Although the mailing list is public, the mailing list archives are not accessibl
 
 ## Announcements
 
-To keep up with official TaskCollect announcements, subscribe to the announcements mailing list:
+To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to [this email address][1].
 
-  * ~kvo/taskcollect-announce+subscribe@lists.sr.ht
-
-For all previous announcements, [see the archives][1].
+For all previous announcements, [see the archives][2].
 
 ## Future directions
 
@@ -104,4 +102,5 @@ Additional feature tabs to TaskCollect:
   * Calendar (with source platform synchronisation)
 
 
-[1]: https://lists.sr.ht/~kvo/taskcollect-announce
+[1]: ~kvo/taskcollect-announce+subscribe@lists.sr.ht
+[2]: https://lists.sr.ht/~kvo/taskcollect-announce
