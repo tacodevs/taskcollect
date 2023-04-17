@@ -58,7 +58,7 @@ Although building TaskCollect from source is simple, deployment is not (unfortun
 
 TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors. In particular, the firewall should prevent overly frequent requests to TaskCollect, as some APIs that TaskCollect uses enforce a stringent request rate limit. Those deploying TaskCollect should additionally request higher request rate limits for the Google Classroom API to avoid having "ratelimit exceeded" errors.
 
-As of v1.0.0, TaskCollect is considered production-ready and its public interface is stable (see `info/impl.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases. Where possible, select the latest available release in order to ensure you are running the most secure and issue-free version available.
+As of v1.0.0, TaskCollect is considered production-ready and its public interface is stable (see `assets/info/impl.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases. Where possible, select the latest available release in order to ensure you are running the most secure and issue-free version available.
 
 Easier installation and update mechanisms for TaskCollect will be developed in the future to make these processes easier and smoother for deployers. Furthermore, it is a regrettable decision for the TaskCollect resources folder to be located in the user's home folder — one which will be corrected in a future version of TaskCollect.
 
