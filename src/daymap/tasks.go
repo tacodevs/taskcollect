@@ -259,7 +259,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i != -1 {
 			task.Submitted = true
-			task.Result.Exists = true
+			task.Graded = true
 		}
 
 		i = strings.Index(taskLine, `Your work has been received`)
@@ -280,7 +280,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 	}
 
 	for _, utask := range unsorted {
-		if utask.Result.Exists {
+		if utask.Graded {
 			continue
 		} else if utask.Submitted {
 			tasks["submitted"] = append(tasks["submitted"], utask)
