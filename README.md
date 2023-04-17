@@ -3,9 +3,9 @@ A web server that multiplexes functionality from educational web platforms for s
 
 ## Description
 
-There are a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to many factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to manage the large number of platforms in use by their school to retrieve their homework and available educational resources.
+There are a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to many factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to manage the large number of platforms in use by their school to retrieve their homework and available educational resources. This inconvenience could quickly become a serious problem if the number of platforms in use at the school drastically increases.
 
-The solution to this is TaskCollect: a web server that multiplexes functionality from educational web platforms, providing a clean, simple, intuitive web interface for students.
+The solution to this problem is TaskCollect: a web server that multiplexes functionality from educational web platforms, which provides a single, reliable, and intuitive web interface for students.
 
 At the moment, TaskCollect acts as a multiplexed interface for the following platforms:
   * Daymap
@@ -84,22 +84,6 @@ Although the mailing list is public, the mailing list archives are not accessibl
 To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to this email address: ~kvo/taskcollect-announce+subscribe@lists.sr.ht
 
 For all previous announcements, [see the archives][1].
-
-## Future directions
-
-Despite the v1.0.0 release, it is evident that many other useful features (and fixes) could be added in the future. However, the scope of TaskCollect's aims for version 1.0.0 has been rather conservative to emphasise robustness, security, and stability. In the future, the following features could be added (potentially through a bounty program).
-
-Support for:
-
-  * Edpuzzle
-  * Stile
-  * InThinking
-  * Kognity
-
-Additional feature tabs to TaskCollect:
-
-  * Dashboard (organisation and planning space)
-  * Calendar (with source platform synchronisation)
 
 
 [1]: https://lists.sr.ht/~kvo/taskcollect-announce
