@@ -12,8 +12,14 @@ import (
 	"main/plat"
 )
 
+type taskGrade struct {
+	Exists bool
+	Grade  string
+	Mark   float64
+}
+
 // Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(webpage *string) (plat.TaskGrade, error) {
+func findGrade(webpage *string) (taskGrade, error) {
 	var grade string
 	var percent float64
 	i := strings.Index(*webpage, "Grade:")
@@ -22,7 +28,7 @@ func findGrade(webpage *string) (plat.TaskGrade, error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return plat.TaskGrade{}, errInvalidTaskResp
+			return taskGrade{}, errInvalidTaskResp
 		}
 
 		*webpage = (*webpage)[i:]
@@ -31,7 +37,7 @@ func findGrade(webpage *string) (plat.TaskGrade, error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return plat.TaskGrade{}, errInvalidTaskResp
+			return taskGrade{}, errInvalidTaskResp
 		}
 
 		grade = (*webpage)[:i]
@@ -44,7 +50,7 @@ func findGrade(webpage *string) (plat.TaskGrade, error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return plat.TaskGrade{}, errInvalidTaskResp
+			return taskGrade{}, errInvalidTaskResp
 		}
 
 		*webpage = (*webpage)[i:]
@@ -53,7 +59,7 @@ func findGrade(webpage *string) (plat.TaskGrade, error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return plat.TaskGrade{}, errInvalidTaskResp
+			return taskGrade{}, errInvalidTaskResp
 		}
 
 		markStr := (*webpage)[:i]
@@ -62,7 +68,7 @@ func findGrade(webpage *string) (plat.TaskGrade, error) {
 		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
-			return plat.TaskGrade{}, errInvalidTaskResp
+			return taskGrade{}, errInvalidTaskResp
 		}
 
 		st := markStr[:x]
@@ -70,23 +76,23 @@ func findGrade(webpage *string) (plat.TaskGrade, error) {
 
 		it, err := strconv.ParseFloat(st, 64)
 		if err != nil {
-			return plat.TaskGrade{}, errors.NewError("daymap.GetTask", "(1) string to float64 conversion failed", err)
+			return taskGrade{}, errors.NewError("daymap.GetTask", "(1) string to float64 conversion failed", err)
 		}
 
 		ib, err := strconv.ParseFloat(sb, 64)
 		if err != nil {
-			return plat.TaskGrade{}, errors.NewError("daymap.GetTask", "(2) string to float64 conversion failed", err)
+			return taskGrade{}, errors.NewError("daymap.GetTask", "(2) string to float64 conversion failed", err)
 		}
 
 		percent = it / ib * 100
 	}
 
-	result := plat.TaskGrade{Exists: true, Grade: grade, Mark: percent}
+	result := taskGrade{Exists: true, Grade: grade, Mark: percent}
 	return result, nil
 }
 
 // Retrieve the grade given to a student for a particular DayMap task.
-func taskGrade(creds User, id string, result *plat.TaskGrade, e *error, wg *sync.WaitGroup) {
+func getGrade(creds User, id string, result *taskGrade, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 	client := &http.Client{}
@@ -214,12 +220,12 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 	}
 
 	wg := sync.WaitGroup{}
-	results := make([]plat.TaskGrade, len(graded))
+	results := make([]taskGrade, len(graded))
 	errs := make([]error, len(graded))
 
 	for i, id := range graded {
 		wg.Add(1)
-		taskGrade(creds, id, &results[i], &errs[i], &wg)
+		getGrade(creds, id, &results[i], &errs[i], &wg)
 	}
 
 	wg.Wait()
@@ -233,7 +239,9 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 	for i, task := range unsorted {
 		for j, id := range graded {
 			if task.Id == id {
-				unsorted[i].Result = results[j]
+				unsorted[i].Graded = results[j].Exists
+				unsorted[i].Grade = results[j].Grade
+				unsorted[i].Score = results[j].Mark
 			}
 		}
 	}
@@ -241,7 +249,7 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 	tasks := []plat.Task{}
 
 	for _, task := range unsorted {
-		if (task.Result != plat.TaskGrade{}) {
+		if task.Graded == true {
 			tasks = append(tasks, task)
 		}
 	}

@@ -198,7 +198,7 @@ func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA,
 }
 
 // Generate a timetable image in PNG format.
-func genTimetableImg(creds User, w http.ResponseWriter) {
+func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {
 		logger.Error(errors.NewError("server.genTimetableImg", "failed to get lessons", err))
@@ -350,7 +350,7 @@ func genTimetableImg(creds User, w http.ResponseWriter) {
 }
 
 // Generate data for the HTML timetable.
-func genTimetable(creds User) (timetableData, error) {
+func genTimetable(creds plat.User) (timetableData, error) {
 	data := timetableData{}
 
 	lessons, err := getLessons(creds)

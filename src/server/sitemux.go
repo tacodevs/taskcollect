@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"sort"
-	"time"
 
 	"main/daymap"
 	"main/errors"
@@ -14,18 +13,7 @@ import (
 	"main/plat"
 )
 
-type User struct {
-	Timezone   *time.Location
-	School     string
-	DispName   string
-	Username   string
-	Password   string
-	Token      string
-	SiteTokens map[string]string
-	GAuthID    []byte
-}
-
-func getLessons(creds User) ([][]plat.Lesson, error) {
+func getLessons(creds plat.User) ([][]plat.Lesson, error) {
 	lessons := [][]plat.Lesson{}
 
 	dmCreds := daymap.User{
@@ -49,7 +37,7 @@ func getLessons(creds User) ([][]plat.Lesson, error) {
 	return lessons, err
 }
 
-func getTasks(creds User) map[string][]plat.Task {
+func getTasks(creds plat.User) map[string][]plat.Task {
 	gcChan := make(chan map[string][]plat.Task)
 	gcErrChan := make(chan [][]error)
 
@@ -145,7 +133,7 @@ func getTasks(creds User) map[string][]plat.Task {
 	return tasks
 }
 
-func getResources(creds User) ([]string, map[string][]plat.Resource) {
+func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gResChan := make(chan []plat.Resource)
 	gErrChan := make(chan []error)
 
@@ -223,7 +211,7 @@ func getResources(creds User) ([]string, map[string][]plat.Resource) {
 }
 
 // Get a task from the given platform.
-func getTask(platform, taskId string, creds User) (plat.Task, error) {
+func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
 	assignment := plat.Task{}
 	err := errNoPlatform.AsError()
 
@@ -251,7 +239,7 @@ func getTask(platform, taskId string, creds User) (plat.Task, error) {
 }
 
 // Get a resource from the given platform.
-func getResource(platform, resId string, creds User) (plat.Resource, error) {
+func getResource(platform, resId string, creds plat.User) (plat.Resource, error) {
 	res := plat.Resource{}
 	err := errNoPlatform.AsError()
 
@@ -279,7 +267,7 @@ func getResource(platform, resId string, creds User) (plat.Resource, error) {
 }
 
 // Submit task to a given platform.
-func submitTask(creds User, platform, taskId string) error {
+func submitTask(creds plat.User, platform, taskId string) error {
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -325,7 +313,7 @@ func reqFiles(r *http.Request) ([]plat.File, error) {
 }
 
 // Upload work to a given platform.
-func uploadWork(creds User, platform string, id string, r *http.Request) error {
+func uploadWork(creds plat.User, platform string, id string, r *http.Request) error {
 	files, err := reqFiles(r)
 	if err != nil {
 		return err
@@ -352,7 +340,7 @@ func uploadWork(creds User, platform string, id string, r *http.Request) error {
 }
 
 // Remove work from a given platform.
-func removeWork(creds User, platform, taskId string, filenames []string) error {
+func removeWork(creds plat.User, platform, taskId string, filenames []string) error {
 	err := errNoPlatform.AsError()
 
 	switch platform {
@@ -375,7 +363,7 @@ func removeWork(creds User, platform, taskId string, filenames []string) error {
 }
 
 // Return graded tasks from all supported platforms.
-func gradedTasks(creds User) []plat.Task {
+func gradedTasks(creds plat.User) []plat.Task {
 	gcChan := make(chan []plat.Task)
 	gcErrChan := make(chan [][]error)
 

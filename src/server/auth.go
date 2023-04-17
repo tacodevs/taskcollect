@@ -22,6 +22,7 @@ import (
 	"main/errors"
 	"main/gclass"
 	"main/logger"
+	"main/plat"
 )
 
 // Attempt to get GIHS Daily Access home page using a username and password.
@@ -125,13 +126,13 @@ func initDB(addr string, pwd string, idx int) *redis.Client {
 }
 
 // Attempt to get pre-existing user credentials.
-func (db *authDB) getCreds(cookies string) (User, error) {
-	creds := User{}
+func (db *authDB) getCreds(cookies string) (plat.User, error) {
+	creds := plat.User{}
 	var token string
 
 	start := strings.Index(cookies, "token=")
 	if start == -1 {
-		return User{}, errInvalidAuth
+		return plat.User{}, errInvalidAuth
 	}
 
 	start += 6
@@ -196,7 +197,7 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 	if creds.School == "gihs" {
 		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
-			return User{}, errors.NewError("server.getCreds", "could not load timezone location data", err)
+			return plat.User{}, errors.NewError("server.getCreds", "could not load timezone location data", err)
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -204,7 +205,7 @@ func (db *authDB) getCreds(cookies string) (User, error) {
 			"gclass": result["gclass"],
 		}
 	} else {
-		return User{}, errors.NewError("server.getCreds", "invalid school", errInvalidAuth)
+		return plat.User{}, errors.NewError("server.getCreds", "invalid school", errInvalidAuth)
 	}
 
 	return creds, nil
@@ -268,7 +269,7 @@ func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 }
 
 // Create new user or update pre-existing user in the database.
-func (db *authDB) writeCreds(creds User) error {
+func (db *authDB) writeCreds(creds plat.User) error {
 	ctx := context.Background()
 
 	studentIDKey := "school:" + creds.School + ":studentID:" + creds.Username
@@ -383,7 +384,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 		}
 	}
 
-	creds := User{
+	creds := plat.User{
 		Timezone:   timezone,
 		School:     school,
 		Username:   user,
@@ -422,7 +423,7 @@ func (db *authDB) gAuthEndpoint() (string, error) {
 }
 
 // Run the Google authentication flow for a user.
-func (db *authDB) runGAuth(creds User, query url.Values) error {
+func (db *authDB) runGAuth(creds plat.User, query url.Values) error {
 	authCode := query.Get("code")
 
 	clientId, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
@@ -455,7 +456,7 @@ func (db *authDB) runGAuth(creds User, query url.Values) error {
 }
 
 // Logout a user from TaskCollect.
-func (db *authDB) logout(creds User) error {
+func (db *authDB) logout(creds plat.User) error {
 	token := creds.Token
 
 	// Clear tokens

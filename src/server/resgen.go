@@ -19,7 +19,7 @@ var gradeColors = []color.RGBA{
 	{0x03, 0x6e, 0x05, 0xff}, // Green, #036e05
 }
 
-func genDueStr(due time.Time, creds User) string {
+func genDueStr(due time.Time, creds plat.User) string {
 	var dueDate string
 	now := time.Now().In(creds.Timezone)
 	localDueDate := due.In(creds.Timezone)
@@ -59,7 +59,7 @@ func genDueStr(due time.Time, creds User) string {
 	return dueDate
 }
 
-func genPostStr(posted time.Time, creds User) string {
+func genPostStr(posted time.Time, creds plat.User) string {
 	var postDate string
 	now := time.Now().In(creds.Timezone)
 	localPostDate := posted.In(creds.Timezone)
@@ -100,7 +100,7 @@ func genPostStr(posted time.Time, creds User) string {
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
-func genTask(assignment plat.Task, noteType string, creds User) taskItem {
+func genTask(assignment plat.Task, noteType string, creds plat.User) taskItem {
 	task := taskItem{
 		Id:       assignment.Id,
 		Name:     assignment.Name,
@@ -115,11 +115,11 @@ func genTask(assignment plat.Task, noteType string, creds User) taskItem {
 	case "posted":
 		task.Posted = genPostStr(assignment.Posted, creds)
 	case "grade":
-		task.Grade = assignment.Result.Grade
-		if task.Grade != "" && assignment.Result.Mark != 0.0 {
-			task.Grade += fmt.Sprintf(" (%.f%%)", assignment.Result.Mark)
-		} else if assignment.Result.Mark != 0.0 {
-			task.Grade = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+		task.Grade = assignment.Grade
+		if task.Grade != "" && assignment.Score != 0.0 {
+			task.Grade += fmt.Sprintf(" (%.f%%)", assignment.Score)
+		} else if assignment.Score != 0.0 {
+			task.Grade = fmt.Sprintf("%.f%%", assignment.Score)
 		} else {
 			task.Grade = "N/A"
 		}
@@ -129,7 +129,7 @@ func genTask(assignment plat.Task, noteType string, creds User) taskItem {
 }
 
 // Generate the HTML page for viewing a single task
-func genTaskPage(assignment plat.Task, creds User) pageData {
+func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 	data := pageData{
 		PageType: "task",
 		Head: headData{
@@ -195,23 +195,23 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 		}
 	}
 
-	if assignment.Result.Grade != "" {
-		data.Body.TaskData.TaskGrade.Grade = assignment.Result.Grade
+	if assignment.Grade != "" {
+		data.Body.TaskData.TaskGrade.Grade = assignment.Grade
 	} else {
 		data.Body.TaskData.TaskGrade.Grade = "N/A"
 	}
 
 	bgColor := color.RGBA{0x00, 0x00, 0x00, 0x00}
-	data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Result.Mark)
+	data.Body.TaskData.TaskGrade.Mark = fmt.Sprintf("%.f%%", assignment.Score)
 
-	if assignment.Result.Mark != 0.0 {
-		if assignment.Result.Mark < 50 {
+	if assignment.Score != 0.0 {
+		if assignment.Score < 50 {
 			bgColor = gradeColors[0] // Red
-		} else if (50 <= assignment.Result.Mark) && (assignment.Result.Mark < 70) {
+		} else if (50 <= assignment.Score) && (assignment.Score < 70) {
 			bgColor = gradeColors[1] // Amber/Orange
-		} else if (70 <= assignment.Result.Mark) && (assignment.Result.Mark < 85) {
+		} else if (70 <= assignment.Score) && (assignment.Score < 85) {
 			bgColor = gradeColors[2] // Yellow
-		} else if assignment.Result.Mark >= 85 {
+		} else if assignment.Score >= 85 {
 			bgColor = gradeColors[3] // Green
 		}
 		textColor := "#ffffff"
@@ -238,7 +238,7 @@ func genTaskPage(assignment plat.Task, creds User) pageData {
 }
 
 // Generate the HTML page for viewing a single resource
-func genResPage(res plat.Resource, creds User) pageData {
+func genResPage(res plat.Resource, creds plat.User) pageData {
 	data := pageData{
 		PageType: "resource",
 		Head: headData{
@@ -285,7 +285,7 @@ func genResPage(res plat.Resource, creds User) pageData {
 }
 
 // Generate a resource link
-func genHtmlResLink(className string, res []plat.Resource, creds User) resClass {
+func genHtmlResLink(className string, res []plat.Resource, creds plat.User) resClass {
 	class := resClass{
 		Name: className,
 	}
@@ -304,7 +304,7 @@ func genHtmlResLink(className string, res []plat.Resource, creds User) resClass 
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, creds User) (pageData, error) {
+func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 	var data pageData
 	data.User.Name = creds.DispName
 

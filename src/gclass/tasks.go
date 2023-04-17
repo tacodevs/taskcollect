@@ -70,8 +70,8 @@ func getTask(
 	}
 
 	if studSub.AssignedGrade != 0 && gcTask.MaxPoints != 0 {
-		task.Result.Exists = true
-		task.Result.Mark = studSub.AssignedGrade / gcTask.MaxPoints * 100
+		task.Graded = true
+		task.Score = studSub.AssignedGrade / gcTask.MaxPoints * 100
 	}
 
 	task.Name = gcTask.Title
@@ -166,7 +166,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 	for x := 0; x < len(tasks); x++ {
 		for y := 0; y < len(tasks[x]); y++ {
-			if (tasks[x][y].Result != plat.TaskGrade{}) {
+			if tasks[x][y].Graded {
 				gcTasks["graded"] = append(
 					gcTasks["graded"],
 					tasks[x][y],

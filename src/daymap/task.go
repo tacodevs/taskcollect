@@ -195,10 +195,13 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		}
 	}
 
-	task.Result, err = findGrade(&b)
+	result, err := findGrade(&b)
 	if err != nil {
 		return plat.Task{}, err
 	}
+	task.Graded = result.Exists
+	task.Grade = result.Grade
+	task.Score = result.Mark
 
 	i = strings.Index(b, `class="WhiteBox">`)
 

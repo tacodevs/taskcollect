@@ -157,8 +157,8 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	}
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {
-		task.Result.Exists = true
-		task.Result.Mark = studSub.AssignedGrade / gc.MaxPoints * 100
+		task.Graded = true
+		task.Score = studSub.AssignedGrade / gc.MaxPoints * 100
 	}
 
 	if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {

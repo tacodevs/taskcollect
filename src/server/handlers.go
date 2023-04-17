@@ -10,6 +10,7 @@ import (
 
 	"main/errors"
 	"main/logger"
+	"main/plat"
 )
 
 type handler struct {
@@ -18,7 +19,7 @@ type handler struct {
 }
 
 // Handle things like submission and file uploads/removals.
-func (h *handler) handleTask(r *http.Request, creds User, platform, id, cmd string) (int, pageData, [][2]string) {
+func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd string) (int, pageData, [][2]string) {
 	data := pageData{}
 
 	res := r.URL.EscapedPath()
@@ -91,7 +92,7 @@ func (h *handler) handleTask(r *http.Request, creds User, platform, id, cmd stri
 	return statusCode, data, headers
 }
 
-func (h *handler) handleTaskReq(r *http.Request, creds User) (int, pageData, [][2]string) {
+func (h *handler) handleTaskReq(r *http.Request, creds plat.User) (int, pageData, [][2]string) {
 	res := r.URL.EscapedPath()
 
 	statusCode := 200
