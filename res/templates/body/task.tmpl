@@ -14,7 +14,10 @@
     <div class="task-container">
         <div class="grid-element">
             {{if eq .Body.TaskData.IsDue true}}
-                <h4>Due {{.Body.TaskData.DueDate}}</h4><hr>
+                <h4>Due {{.Body.TaskData.DueDate}}</h4>
+            {{end}}
+            {{if and (eq .Body.TaskData.IsDue true) (or (ne .Body.TaskData.Desc "") (eq .Body.TaskData.HasResLinks true))}}
+                <hr>
             {{end}}
             {{if ne .Body.TaskData.Desc ""}}
                 <h4>Task description</h4>
@@ -24,9 +27,7 @@
                 <h4>Linked resources</h4>
                 <ul>
                     {{range $name, $url := .Body.TaskData.ResLinks}}
-                        <li>
-                            <a href="{{$url}}">{{$name}}</a>
-                        </li>
+                        <li><a href="{{$url}}">{{$name}}</a></li>
                     {{end}}
                 </ul>
             {{end}}
@@ -52,13 +53,16 @@
                     <input class="secondary" type="submit" value="Remove selected file(s)">
                 </form>
             {{end}}
-            <div class="linebreak"></div>
-            {{if eq .Body.TaskData.Submitted false}}
-                <a href="/tasks/{{.Body.TaskData.Platform}}/{{.Body.TaskData.Id}}/submit">Submit work</a>
-            {{end}}
-            <div class="linebreak"></div>
+            <br>
         </div>
         <div class="task-grade">
+            {{if eq .Body.TaskData.Submitted false}}
+            <h4 style="text-align: left">Submit work</h4>
+            <form class="task-form" action="/tasks/{{.Body.TaskData.Platform}}/{{.Body.TaskData.Id}}/submit">
+                <input type="submit" value="Submit work">
+            </form>
+            <hr style="margin: 35px 0px">
+            {{end}}
             {{$taskGrade := .Body.TaskData.TaskGrade}}
             <h3>Grade</h3>
             <div id="grade" style="color: {{$taskGrade.Color}}; background-color: {{$taskGrade.BGColor}};">

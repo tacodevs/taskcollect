@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"sort"
 
-	"main/daymap"
+	"main/plat/daymap"
 	"main/errors"
-	"main/gclass"
+	"main/plat/gclass"
 	"main/logger"
 	"main/plat"
 )

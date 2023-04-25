@@ -36,8 +36,9 @@ type userData struct {
 // Error Page
 
 type errData struct {
-	Heading string
-	Message string
+	Heading  string
+	Message  string
+	InfoLink string
 }
 
 // Login page
@@ -215,6 +216,7 @@ var statusDaymapErrorData = pageData{
 		ErrorData: errData{
 			Heading: "Daymap uploads don't currently work",
 			Message: daymapErrMsg,
+			InfoLink: "https://codeberg.org/kvo/taskcollect/issues/68",
 		},
 	},
 }
@@ -228,6 +230,7 @@ var statusGclassErrorData = pageData{
 		ErrorData: errData{
 			Heading: "Google does not allow you to submit tasks, nor upload/remove work.",
 			Message: "Why, you may ask? I don't know! You should ask Google, not me.",
+            InfoLink: "https://codeberg.org/kvo/taskcollect/issues/3",
 		},
 	},
 }

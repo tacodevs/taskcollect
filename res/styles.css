@@ -180,6 +180,10 @@ hr#logout {
   width: 85%;
 }
 
+li {
+  margin: 0.2em 0;
+}
+
 @font-face {
   font-family: "Lato";
   font-style: normal;
@@ -598,7 +602,6 @@ form[action="/auth"] input[type=submit] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   width: 100%;
-  max-height: 80vh;
   column-gap: 1px;
   row-gap: 1px;
   background-color: var(--fg-color);
@@ -635,18 +638,34 @@ form[action="/auth"] input[type=submit] {
   display: inline-block;
   max-height: inherit;
   background-color: var(--bg-color);
-  padding: 0px 30px;
+}
+@media (min-width: 0) and (max-width: 479px) {
+  .task-grade {
+    padding: 15px 30px;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  .task-grade {
+    padding: 15px 30px;
+  }
 }
 @media (min-width: 768px) and (max-width: 1023px) {
   .task-grade {
     grid-column-start: 1;
     grid-column-end: 3;
+    padding: 15px 30px;
   }
 }
 @media (min-width: 1024px) and (max-width: 1199px) {
   .task-grade {
     grid-column-start: 1;
     grid-column-end: 3;
+    padding: 0px 30px;
+  }
+}
+@media (min-width: 1200px) {
+  .task-grade {
+    padding: 0px 30px;
   }
 }
 
@@ -655,7 +674,31 @@ form[action="/auth"] input[type=submit] {
   display: inline-block;
   max-height: inherit;
   background-color: var(--bg-color);
-  padding: 0px 30px;
+}
+@media (min-width: 0) and (max-width: 479px) {
+  .grid-element {
+    padding: 15px 30px;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  .grid-element {
+    padding: 15px 30px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .grid-element {
+    padding: 15px 30px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .grid-element {
+    padding: 0px 30px;
+  }
+}
+@media (min-width: 1200px) {
+  .grid-element {
+    padding: 0px 30px;
+  }
 }
 
 .task-container:hover {
@@ -730,10 +773,10 @@ form[action="/auth"] input[type=submit] {
 .task-form .form-control {
   display: flex;
   font-weight: bold;
-  line-height: 1.1;
+  line-height: 1.5;
 }
 .task-form .form-control + .form-control {
-  margin-top: 1em;
+  margin-top: 0.5em;
 }
 .task-form .form-control .left {
   position: relative;
