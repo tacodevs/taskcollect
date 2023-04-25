@@ -18,9 +18,9 @@ import (
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/oauth2"
 
-	"main/daymap"
+	"main/plat/daymap"
 	"main/errors"
-	"main/gclass"
+	"main/plat/gclass"
 	"main/logger"
 	"main/plat"
 )

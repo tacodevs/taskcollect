@@ -4,6 +4,12 @@
 <main id="main-content">
     <h1>{{.Body.ErrorData.Heading}}</h1>
     <p>{{.Body.ErrorData.Message}}</p>
+    {{if ne .Body.ErrorData.InfoLink ""}}
+        <p>
+            Further information:<br>
+            <a href="{{.Body.ErrorData.InfoLink}}">{{.Body.ErrorData.InfoLink}}</a>
+        </p>
+    {{end}}
 </main>
 <footer></footer>
 </div>
