@@ -109,6 +109,4 @@ type User struct {
 	Password   string
 	Token      string
 	SiteTokens map[string]string
-	// TODO: Move this elsewhere.
-	GAuthID    []byte
 }
