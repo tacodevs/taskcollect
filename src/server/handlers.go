@@ -266,7 +266,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 // Handle login requests. If the user is already logged in, redirect to the timetable view.
 func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
-	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
+	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
@@ -277,8 +277,6 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		h.genPage(w, data)
 		return
 	}
-
-	creds.GAuthID = h.database.gAuth
 
 	if !validAuth {
 		if r.URL.Query().Get("auth") == "failed" {
@@ -307,7 +305,7 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 // Handle authentication requests. If the user is already logged in, redirect to the timetable view.
 func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
-	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
+	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
 	if errors.Is(err, errInvalidAuth) {
 		validAuth = false
@@ -318,8 +316,6 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 		h.genPage(w, data)
 		return
 	}
-
-	creds.GAuthID = h.database.gAuth
 
 	if !validAuth {
 		var cookie string
@@ -370,8 +366,6 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds.GAuthID = h.database.gAuth
-
 	if validAuth {
 		err = h.database.logout(creds)
 		if err == nil {
@@ -404,8 +398,6 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 		h.genPage(w, data)
 		return
 	}
-
-	creds.GAuthID = h.database.gAuth
 
 	if validAuth {
 		reqRes := r.URL.EscapedPath()
@@ -460,8 +452,6 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds.GAuthID = h.database.gAuth
-
 	if validAuth {
 		statusCode, respBody, respHeaders := h.handleTaskReq(r, creds)
 
@@ -491,8 +481,6 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 		h.genPage(w, data)
 		return
 	}
-
-	creds.GAuthID = h.database.gAuth
 
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/tasks", creds)
@@ -532,8 +520,6 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds.GAuthID = h.database.gAuth
-
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/timetable", creds)
 		if errors.Is(err, errNotFound) {
@@ -571,8 +557,6 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 		h.genPage(w, data)
 		return
 	}
-
-	creds.GAuthID = h.database.gAuth
 
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/grades", creds)
@@ -614,8 +598,6 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds.GAuthID = h.database.gAuth
-
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/res", creds)
 		if errors.Is(err, errNotFound) {
@@ -654,7 +636,6 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds.GAuthID = h.database.gAuth
 	invalidRes := false
 
 	if res == "/" {

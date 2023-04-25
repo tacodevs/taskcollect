@@ -65,7 +65,7 @@ func Run(tcVersion string, tlsConn bool) {
 	newRedisDB := initDB(dbAddr, password, dbIdx)
 	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)
 
-	gcid, err := os.ReadFile(fp.Join(resPath, "gauth.json"))
+	GAuthID, err = os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
 		logger.Fatal(errors.NewError("server", "Google client ID "+errors.ErrFileRead.Error(), err))
 	}
@@ -79,7 +79,6 @@ func Run(tcVersion string, tlsConn bool) {
 	db := authDB{
 		path:   resPath,
 		client: newRedisDB,
-		gAuth:  gcid,
 	}
 
 	h := handler{

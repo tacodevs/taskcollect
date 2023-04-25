@@ -25,6 +25,13 @@ import (
 	"main/plat"
 )
 
+// Global variable which holds an in-memory copy of the Google OAuth client ID
+// file.
+//
+// This is a kluge. Google Classroom auth must be made to function in the same
+// way as authentication for all other supported platforms.
+var GAuthID []byte
+
 // Attempt to get GIHS Daily Access home page using a username and password.
 // Used for authenticating GIHS students.
 func gihsAuth(username, password string) error {
@@ -104,7 +111,6 @@ func gihsAuth(username, password string) error {
 type authDB struct {
 	path   string
 	client *redis.Client
-	gAuth  []byte
 }
 
 // Initializes the database and returns the created instance.
@@ -339,7 +345,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	gTestErr := make(chan error)
 
 	if gTok != "" {
-		go gclass.Test(db.gAuth, gTok, gTestErr)
+		go gclass.Test(GAuthID, gTok, gTestErr)
 	}
 
 	if gihsAuth(user, pwd) != nil {
