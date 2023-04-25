@@ -60,7 +60,6 @@ $checkbox-dim: 1.2em;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
-    max-height: 80vh;
     column-gap: 1px;
     row-gap: 1px;
     background-color: var(--fg-color);
@@ -93,16 +92,29 @@ $checkbox-dim: 1.2em;
     display: inline-block;
     max-height: inherit;
     background-color: var(--bg-color);
-    padding: 0px 30px;
+
+    @include bp.xs {
+        padding: 15px 30px;
+    }
+
+    @include bp.sm {
+        padding: 15px 30px;
+    }
 
     @include bp.md {
         grid-column-start: 1;
         grid-column-end: 3;
+        padding: 15px 30px;
     }
 
     @include bp.lg {
         grid-column-start: 1;
         grid-column-end: 3;
+        padding: 0px 30px;
+    }
+
+    @include bp.xl {
+        padding: 0px 30px;
     }
 }
 
@@ -111,7 +123,26 @@ $checkbox-dim: 1.2em;
     display: inline-block;
     max-height: inherit;
     background-color: var(--bg-color);
-    padding: 0px 30px;
+
+    @include bp.xs {
+        padding: 15px 30px;
+    }
+
+    @include bp.sm {
+        padding: 15px 30px;
+    }
+
+    @include bp.md {
+        padding: 15px 30px;
+    }
+
+    @include bp.lg {
+        padding: 0px 30px;
+    }
+
+    @include bp.xl {
+        padding: 0px 30px;
+    }
 }
 
 .task-container:hover {
@@ -191,10 +222,10 @@ $checkbox-dim: 1.2em;
     .form-control {
         display: flex;
         font-weight: bold;
-        line-height: 1.1;
+        line-height: 1.5;
 
         +.form-control {
-            margin-top: 1em;
+            margin-top: 0.5em;
         }
 
         .left {
