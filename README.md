@@ -21,7 +21,7 @@ TaskCollect currently supports users from the following schools:
 ### Building
 Build dependencies:
   * Git
-  * Go 1.18+
+  * Go 1.20+
   * Python 3.9+ (build script)
   * Sass 1.57+
 
