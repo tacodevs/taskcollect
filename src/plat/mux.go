@@ -93,10 +93,14 @@ func (m *Mux) Auth(creds *User) error {
 		go f(*creds, c, errs)
 	}
 	var err error
+	valid := false
 	for e := range errs {
 		errors.Join(err, e)
+		if err == nil {
+			valid = true
+		}
 	}
-	if err != nil {
+	if !valid {
 		return err
 	}
 	for token := range c {
