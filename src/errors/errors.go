@@ -5,33 +5,6 @@ import (
 	"fmt"
 )
 
-var (
-	ErrAuthFailed           = errors.New("authentication failed")
-	ErrCorruptMIME          = errors.New("corrupt MIME request")
-	ErrDaymapUpload         = errors.New("Daymap task file uploads don't work (issue #68)")
-	ErrGclassApiRestriction = errors.New("Google Classroom API restriction")
-	ErrIncompleteCreds      = errors.New("user has incomplete credentials")
-	ErrInvalidAuth          = errors.New("invalid session token")
-	ErrNoPlatform           = errors.New("unsupported platform")
-	ErrNotFound             = errors.New("cannot find resource")
-	ErrNeedsGAuth           = errors.New("Google auth required")
-
-	ErrInitFailed = errors.New("initialization failed")
-
-	// File errors
-
-	ErrFileRead     = errors.New("file could not be read")
-	ErrMissingFiles = errors.New("the following files are missing")
-
-	// User errors
-
-	ErrBadCommandUsage = errors.New("taskcollect: Invalid invocation. See the documentation on command usage")
-
-	// Misc
-
-	ErrInvalidInterfaceType = errors.New("an invalid interface type was passed as argument")
-)
-
 // Custom error wrapper
 type ErrorWrapper struct {
 	Origin string

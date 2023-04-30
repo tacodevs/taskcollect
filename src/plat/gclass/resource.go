@@ -59,6 +59,7 @@ func GetResource(creds User, id string) (plat.Resource, error) {
 	resource.Platform = "gclass"
 	isAnn := false
 	idSlice := strings.SplitN(id, "-", 2)
+	var err error
 	courseId, err := std.Access(idSlice, 0)
 	if err != nil {
 		return plat.Resource{}, errors.NewError("gclass.GetResource", "invalid resource ID", err)

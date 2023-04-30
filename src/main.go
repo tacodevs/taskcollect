@@ -6,8 +6,8 @@ import (
 
 	"codeberg.org/kvo/std"
 
-	"main/errors"
 	"main/logger"
+	"main/plat"
 	"main/server"
 )
 
@@ -15,7 +15,7 @@ func main() {
 	tlsConn := true
 
 	if len(os.Args) > 2 || len(os.Args) == 2 && os.Args[1] != "-w" {
-		logger.Fatal(errors.ErrBadCommandUsage)
+		logger.Fatal(plat.ErrBadCommandUsage)
 	}
 
 	if std.Contains(os.Args, "-w") {

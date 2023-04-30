@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"main/errors"
+	"main/plat"
 )
-
-var errInvalidInterfaceType = errors.NewError("logger", errors.ErrInvalidInterfaceType.Error(), nil)
 
 var buf bytes.Buffer
 
@@ -88,7 +87,7 @@ func Info(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		infoLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errInvalidInterfaceType)
+		Fatal(plat.ErrInvalidInterfaceType)
 	}
 	write()
 }
@@ -102,7 +101,7 @@ func Debug(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		debugLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errInvalidInterfaceType)
+		Fatal(plat.ErrInvalidInterfaceType)
 	}
 	write()
 }
@@ -115,7 +114,7 @@ func Warn(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		warnLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errInvalidInterfaceType)
+		Fatal(plat.ErrInvalidInterfaceType)
 	}
 	write()
 }
@@ -128,7 +127,7 @@ func Error(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		errorLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errInvalidInterfaceType)
+		Fatal(plat.ErrInvalidInterfaceType)
 	}
 	write()
 }
@@ -146,7 +145,7 @@ func Fatal(format any, v ...any) {
 		fatalLogger.logWrite(err.Error(), v...)
 
 	default:
-		fatalLogger.logWrite(errInvalidInterfaceType.Error())
+		fatalLogger.logWrite(plat.ErrInvalidInterfaceType.Error())
 	}
 	write()
 	os.Exit(1)
