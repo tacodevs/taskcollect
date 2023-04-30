@@ -1,19 +1,19 @@
 package server
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"sort"
 
+	"codeberg.org/kvo/std/errors"
+
 	"main/plat/daymap"
-	"main/errors"
 	"main/plat/gclass"
 	"main/logger"
 	"main/plat"
 )
 
-func getLessons(creds plat.User) ([][]plat.Lesson, error) {
+func getLessons(creds plat.User) ([][]plat.Lesson, errors.Error) {
 	lessons := [][]plat.Lesson{}
 
 	dmCreds := daymap.User{
@@ -39,7 +39,7 @@ func getLessons(creds plat.User) ([][]plat.Lesson, error) {
 
 func getTasks(creds plat.User) map[string][]plat.Task {
 	gcChan := make(chan map[string][]plat.Task)
-	gcErrChan := make(chan [][]error)
+	gcErrChan := make(chan [][]errors.Error)
 
 	gcCreds := gclass.User{
 		ClientID: GAuthID,
@@ -50,7 +50,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	go gclass.ListTasks(gcCreds, gcChan, gcErrChan)
 
 	dmChan := make(chan map[string][]plat.Task)
-	dmErrChan := make(chan [][]error)
+	dmErrChan := make(chan [][]errors.Error)
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
@@ -66,7 +66,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	for _, classErrs := range gcErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("server.getTasks", "failed to get task list from gclass", err))
+				logger.Error(errors.New("failed to get task list from gclass", err))
 			}
 		}
 	}
@@ -75,7 +75,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("server.getTasks", "failed to get task list from daymap", err))
+				logger.Error(errors.New("failed to get task list from daymap", err))
 			}
 		}
 	}
@@ -135,7 +135,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 
 func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gResChan := make(chan []plat.Resource)
-	gErrChan := make(chan []error)
+	gErrChan := make(chan []errors.Error)
 
 	gcCreds := gclass.User{
 		ClientID: GAuthID,
@@ -146,7 +146,7 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	go gclass.ListRes(gcCreds, gResChan, gErrChan)
 
 	dmResChan := make(chan []plat.Resource)
-	dmErrChan := make(chan []error)
+	dmErrChan := make(chan []errors.Error)
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
@@ -160,14 +160,14 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gcResLinks, errs := <-gResChan, <-gErrChan
 	for _, err := range errs {
 		if err != nil {
-			logger.Error(errors.NewError("server.getResources", "failed to get list of resources from gclass", err))
+			logger.Error(errors.New("failed to get list of resources from gclass", err))
 		}
 	}
 
 	dmResLinks, errs := <-dmResChan, <-dmErrChan
 	for _, err := range errs {
 		if err != nil {
-			logger.Error(errors.NewError("server.getResources", "failed to get list of resources from daymap", err))
+			logger.Error(errors.New("failed to get list of resources from daymap", err))
 		}
 	}
 
@@ -211,9 +211,9 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 }
 
 // Get a task from the given platform.
-func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
+func getTask(platform, taskId string, creds plat.User) (plat.Task, errors.Error) {
 	assignment := plat.Task{}
-	var err error = plat.ErrNoPlatform.Here()
+	err := plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -239,9 +239,9 @@ func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
 }
 
 // Get a resource from the given platform.
-func getResource(platform, resId string, creds plat.User) (plat.Resource, error) {
+func getResource(platform, resId string, creds plat.User) (plat.Resource, errors.Error) {
 	res := plat.Resource{}
-	var err error = plat.ErrNoPlatform.Here()
+	err := plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -267,8 +267,8 @@ func getResource(platform, resId string, creds plat.User) (plat.Resource, error)
 }
 
 // Submit task to a given platform.
-func submitTask(creds plat.User, platform, taskId string) error {
-	var err error = plat.ErrNoPlatform.Here()
+func submitTask(creds plat.User, platform, taskId string) errors.Error {
+	err := plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -284,36 +284,36 @@ func submitTask(creds plat.User, platform, taskId string) error {
 }
 
 // Return a slice of plat.File from a multipart MIME file upload request.
-func reqFiles(r *http.Request) ([]plat.File, error) {
+func reqFiles(r *http.Request) ([]plat.File, errors.Error) {
 	defer r.Body.Close()
 	files := []plat.File{}
-	reader, err := r.MultipartReader()
-	if err != nil {
+	reader, e := r.MultipartReader()
+	if e != nil {
+		err := errors.New(e.Error(), nil)
 		return nil, err
 	}
 
-	part, err := reader.NextPart()
-
-	for err == nil {
+	part, e := reader.NextPart()
+	for e == nil {
 		file := plat.File{
 			Name:     part.FileName(),
 			MimeType: part.Header.Get("Content-Type"),
 			Reader:   part,
 		}
 		files = append(files, file)
-		part, err = reader.NextPart()
+		part, e = reader.NextPart()
 	}
-
-	if err == io.EOF {
+	err := errors.New(e.Error(), nil)
+	if e == io.EOF {
 		return files, nil
 	} else {
-		fmt.Println(err)
-		return nil, errors.NewError("server.reqFiles", "failed parsing files from multipart MIME request", err)
+		logger.Error(err)
+		return nil, errors.New("failed parsing files from multipart MIME request", err)
 	}
 }
 
 // Upload work to a given platform.
-func uploadWork(creds plat.User, platform string, id string, r *http.Request) error {
+func uploadWork(creds plat.User, platform string, id string, r *http.Request) errors.Error {
 	files, err := reqFiles(r)
 	if err != nil {
 		return err
@@ -340,8 +340,8 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 }
 
 // Remove work from a given platform.
-func removeWork(creds plat.User, platform, taskId string, filenames []string) error {
-	var err error = plat.ErrNoPlatform.Here()
+func removeWork(creds plat.User, platform, taskId string, filenames []string) errors.Error {
+	err := plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -365,7 +365,7 @@ func removeWork(creds plat.User, platform, taskId string, filenames []string) er
 // Return graded tasks from all supported platforms.
 func gradedTasks(creds plat.User) []plat.Task {
 	gcChan := make(chan []plat.Task)
-	gcErrChan := make(chan [][]error)
+	gcErrChan := make(chan [][]errors.Error)
 
 	gcCreds := gclass.User{
 		ClientID: GAuthID,
@@ -376,7 +376,7 @@ func gradedTasks(creds plat.User) []plat.Task {
 	go gclass.GradedTasks(gcCreds, gcChan, gcErrChan)
 
 	dmChan := make(chan []plat.Task)
-	dmErrChan := make(chan [][]error)
+	dmErrChan := make(chan [][]errors.Error)
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
@@ -391,7 +391,7 @@ func gradedTasks(creds plat.User) []plat.Task {
 	for _, classErrs := range gcErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("server.gradedTasks", "failed to get graded tasks from gclass", err))
+				logger.Error(errors.New("failed to get graded tasks from gclass", err))
 			}
 		}
 	}
@@ -400,7 +400,7 @@ func gradedTasks(creds plat.User) []plat.Task {
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.NewError("server.gradedTasks", "failed to get graded list from daymap", err))
+				logger.Error(errors.New("failed to get graded list from daymap", err))
 			}
 		}
 	}

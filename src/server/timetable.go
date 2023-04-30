@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"codeberg.org/kvo/std"
+	"codeberg.org/kvo/std/errors"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -19,7 +20,6 @@ import (
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/math/fixed"
 
-	"main/errors"
 	"main/logger"
 	"main/plat"
 )
@@ -66,17 +66,19 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 		}
 	}
 
-	boldFont, err := freetype.ParseFont(gobold.TTF)
-	if err != nil {
-		logger.Error(errors.NewError("server.genLessonImg", "font (bold) parsing failed", err))
+	boldFont, e := freetype.ParseFont(gobold.TTF)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Error(errors.New("font (bold) parsing failed", err))
 		*img = canvas
 		daymapWG.Done()
 		return
 	}
 
-	regFont, err := freetype.ParseFont(goregular.TTF)
-	if err != nil {
-		logger.Error(errors.NewError("server.genLessonImg", "font (reg) parsing failed", err))
+	regFont, e := freetype.ParseFont(goregular.TTF)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Error(errors.New("font (reg) parsing failed", err))
 		*img = canvas
 		daymapWG.Done()
 		return
@@ -201,7 +203,7 @@ func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA,
 func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 	lessons, err := getLessons(creds)
 	if err != nil {
-		logger.Error(errors.NewError("server.genTimetableImg", "failed to get lessons", err))
+		logger.Error(errors.New("failed to get lessons", err))
 		w.WriteHeader(500)
 		return
 	}
@@ -285,9 +287,10 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 		}
 	}
 
-	boldFont, err := freetype.ParseFont(gobold.TTF)
-	if err != nil {
-		logger.Error(errors.NewError("server.genTimetableImg", "font (bold) parsing failed", err))
+	boldFont, e := freetype.ParseFont(gobold.TTF)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Error(errors.New("font (bold) parsing failed", err))
 		w.WriteHeader(500)
 		return
 	}
@@ -342,20 +345,21 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 		draw.Draw(canvas, r, days[i], sr.Min, draw.Src)
 	}
 
-	if err := png.Encode(w, canvas); err != nil {
-		logger.Error(errors.NewError("server.genTimetableImg", "timetable image encoding failed", err))
+	if e := png.Encode(w, canvas); e != nil {
+		err = errors.New(e.Error(), nil)
+		logger.Error(errors.New("timetable image encoding failed", err))
 		w.WriteHeader(500)
 		return
 	}
 }
 
 // Generate data for the HTML timetable.
-func genTimetable(creds plat.User) (timetableData, error) {
+func genTimetable(creds plat.User) (timetableData, errors.Error) {
 	data := timetableData{}
 
 	lessons, err := getLessons(creds)
 	if err != nil {
-		return data, errors.NewError("server.genTimetable", "failed to get lessons", err)
+		return data, errors.New("failed to get lessons", err)
 	}
 
 	const numOfDays = 5

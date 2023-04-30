@@ -4,20 +4,20 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/kvo/std/errors"
 	"google.golang.org/api/classroom/v1"
 
-	"main/errors"
 	"main/plat"
 )
 
 // Retrieve Google Classroom task information using a workload submission point ID.
 func getTask(
 	studSub *classroom.StudentSubmission, svc *classroom.Service, class string,
-	task *plat.Task, e *error, taskWG *sync.WaitGroup,
+	task *plat.Task, e *errors.Error, taskWG *sync.WaitGroup,
 ) {
 	defer taskWG.Done()
 
-	gcTask, err := svc.Courses.CourseWork.Get(
+	gcTask, er := svc.Courses.CourseWork.Get(
 		studSub.CourseId, studSub.CourseWorkId,
 	).Fields(
 		"alternateLink",
@@ -27,17 +27,17 @@ func getTask(
 		"maxPoints",
 		"title",
 	).Do()
-
-	if err != nil {
-		*e = errors.NewError("gclass.getTask", "failed to get coursework", err)
+	if er != nil {
+		err := errors.New(er.Error(), nil)
+		*e = errors.New("failed to get coursework", err)
 		return
 	}
 
 	var hours, minutes, seconds, nanoseconds int
 	task.Id = studSub.CourseId + "-" + studSub.CourseWorkId + "-" + studSub.Id
 
-	posted, err := time.Parse(time.RFC3339Nano, gcTask.CreationTime)
-	if err != nil {
+	posted, er := time.Parse(time.RFC3339Nano, gcTask.CreationTime)
+	if er != nil {
 		task.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 	} else {
 		task.Posted = posted
@@ -81,9 +81,9 @@ func getTask(
 }
 
 // Get a list of work submission points for a Google Classroom class.
-func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.Task, e *[]error, swg *sync.WaitGroup) {
+func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.Task, e *[]errors.Error, swg *sync.WaitGroup) {
 	defer swg.Done()
-	resp, err := svc.Courses.CourseWork.StudentSubmissions.List(
+	resp, er := svc.Courses.CourseWork.StudentSubmissions.List(
 		c.Id, "-",
 	).Fields(
 		"studentSubmissions/id",
@@ -92,14 +92,14 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 		"studentSubmissions/courseWorkId",
 		"studentSubmissions/assignedGrade",
 	).Do()
-
-	if err != nil {
-		*e = []error{errors.NewError("gclass.getSubmissions", "failed to get student submissions", err)}
+	if er != nil {
+		err := errors.New(er.Error(), nil)
+		*e = []errors.Error{errors.New("failed to get student submissions", err)}
 		return
 	}
 
 	submissions := make([]plat.Task, len(resp.StudentSubmissions))
-	errs := make([]error, len(resp.StudentSubmissions))
+	errs := make([]errors.Error, len(resp.StudentSubmissions))
 	var taskWG sync.WaitGroup
 
 	for i, studSub := range resp.StudentSubmissions {
@@ -113,21 +113,21 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 }
 
 // Retrieve a list of tasks from Google Classroom for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]errors.Error) {
 	svc, err := Auth(creds)
 	if err != nil {
-		e <- [][]error{{errors.NewError("gclass.ListTasks", "Google auth failed", err)}}
+		e <- [][]errors.Error{{errors.New("Google auth failed", err)}}
 		return
 	}
 
-	resp, err := svc.Courses.List().CourseStates("ACTIVE").Fields(
+	resp, er := svc.Courses.List().CourseStates("ACTIVE").Fields(
 		"courses/name",
 		"courses/id",
 	).Do()
-
-	if err != nil {
+	if er != nil {
+		err = errors.New(er.Error(), nil)
 		t <- nil
-		e <- [][]error{{errors.NewError("gclass.ListTasks", "failed to get response", err)}}
+		e <- [][]errors.Error{{errors.New("failed to get response", err)}}
 		return
 	}
 
@@ -138,7 +138,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 	}
 
 	tasks := make([][]plat.Task, len(resp.Courses))
-	errs := make([][]error, len(resp.Courses))
+	errs := make([][]errors.Error, len(resp.Courses))
 	var swg sync.WaitGroup
 
 	for i, c := range resp.Courses {
@@ -149,7 +149,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 	swg.Wait()
 
 	for _, classErrs := range errs {
-		if !errors.HasOnly(classErrs, nil) {
+		if errors.Join(classErrs...) != nil {
 			t <- nil
 			e <- errs
 			return

@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"main/errors"
+	"codeberg.org/kvo/std/errors"
+
 	"main/plat"
 )
 
@@ -304,7 +305,7 @@ func genHtmlResLink(className string, res []plat.Resource, creds plat.User) resC
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
+func genRes(resPath string, resURL string, creds plat.User) (pageData, errors.Error) {
 	var data pageData
 	data.User.Name = creds.DispName
 
@@ -314,7 +315,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 
 		timetable, err := genTimetable(creds)
 		if err != nil {
-			return data, errors.NewError("server.genRes", "failed to generate timetable", err)
+			return data, errors.New("failed to generate timetable", err)
 		}
 
 		data.Body.TimetableData = timetable

@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"main/errors"
 	"main/plat"
+
+	"codeberg.org/kvo/std/errors"
 )
 
 var buf bytes.Buffer
@@ -29,18 +31,24 @@ var (
 
 // Set up the logger to use a config file. Invoking it will start logging to file as well as console.
 // Must provide the path to where the log files should go.
-func UseConfigFile(logPath string) error {
+func UseConfigFile(logPath string) errors.Error {
 	useLogFile = true
 
 	err := os.MkdirAll(logPath, os.ModePerm)
 	if err != nil {
-		return errors.NewError("logger.UseConfigFile", "failed to create directory", err)
+		return errors.New(
+			"failed to create directory",
+			errors.New(err.Error(), nil),
+		)
 	}
 
 	logFileName = filepath.Join(logPath, time.Now().Format("2006-01-02_150405")+".log")
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		return errors.NewError("logger.UseConfigFile", "could not open log file", err)
+		return errors.New(
+			"could not open log file",
+			errors.New(err.Error(), nil),
+		)
 	}
 	defer logFile.Close()
 
@@ -58,7 +66,10 @@ func write() {
 		logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
 			logFileFailCount += 1
-			Error(errors.NewError("logger.write", "could not open log file", err))
+			Error(errors.New(
+				"could not open log file",
+				errors.New(err.Error(), nil),
+			))
 		}
 		defer logFile.Close()
 
@@ -66,7 +77,10 @@ func write() {
 		_, err = f.WriteString(buf.String())
 		if err != nil {
 			logFileFailCount += 1
-			Error(errors.NewError("logger.write", "could not write to log file", err))
+			Error(errors.New(
+				"could not write to log file",
+				errors.New(err.Error(), nil),
+			))
 		}
 		f.Flush()
 
@@ -82,7 +96,13 @@ func Info(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
 		infoLogger.logWrite(a, v...)
-
+	case errors.Error:
+		err := fmt.Sprintf("%s: %s", a.Func(), a.Error())
+		i := strings.Index(a.File(), "/src/")
+		if i != -1 {
+			err = fmt.Sprintf("%s:%d: %s", a.File()[i+1:], a.Line(), err)
+		}
+		infoLogger.logWrite(err, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
 		infoLogger.logWrite(err.Error(), v...)
@@ -92,11 +112,18 @@ func Info(format any, v ...any) {
 	write()
 }
 
-// TODO: provide more diagnostic info for debug outputs, such as traceback abilities
 func Debug(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
 		debugLogger.logWrite(a, v...)
+	case errors.Error:
+		err := fmt.Sprintf("%s: %s", a.Func(), a.Error())
+		i := strings.Index(a.File(), "/src/")
+		if i != -1 {
+			err = fmt.Sprintf("%s:%d: %s", a.File()[i+1:], a.Line(), err)
+		}
+		debugLogger.logWrite(err, v...)
+		errors.Trace(debugLogger.out, a)
 	case error:
 		err := fmt.Errorf("%v", a)
 		debugLogger.logWrite(err.Error(), v...)
@@ -110,6 +137,13 @@ func Warn(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
 		warnLogger.logWrite(a, v...)
+	case errors.Error:
+		err := fmt.Sprintf("%s: %s", a.Func(), a.Error())
+		i := strings.Index(a.File(), "/src/")
+		if i != -1 {
+			err = fmt.Sprintf("%s:%d: %s", a.File()[i+1:], a.Line(), err)
+		}
+		warnLogger.logWrite(err, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
 		warnLogger.logWrite(err.Error(), v...)
@@ -123,6 +157,13 @@ func Error(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
 		errorLogger.logWrite(a, v...)
+	case errors.Error:
+		err := fmt.Sprintf("%s: %s", a.Func(), a.Error())
+		i := strings.Index(a.File(), "/src/")
+		if i != -1 {
+			err = fmt.Sprintf("%s:%d: %s", a.File()[i+1:], a.Line(), err)
+		}
+		errorLogger.logWrite(err, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
 		errorLogger.logWrite(err.Error(), v...)
@@ -137,13 +178,16 @@ func Fatal(format any, v ...any) {
 	switch a := format.(type) {
 	case string:
 		fatalLogger.logWrite(a, v...)
-	case errors.ErrorWrapper:
-		err := a.AsString()
+	case errors.Error:
+		err := fmt.Sprintf("%s: %s", a.Func(), a.Error())
+		i := strings.Index(a.File(), "/src/")
+		if i != -1 {
+			err = fmt.Sprintf("%s:%d: %s", a.File()[i+1:], a.Line(), err)
+		}
 		fatalLogger.logWrite(err, v...)
 	case error:
 		err := fmt.Errorf("%v", a)
 		fatalLogger.logWrite(err.Error(), v...)
-
 	default:
 		fatalLogger.logWrite(plat.ErrInvalidInterfaceType.Error())
 	}

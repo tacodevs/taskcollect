@@ -13,18 +13,18 @@ import (
 	_ "time/tzdata"
 
 	"codeberg.org/kvo/std"
+	"codeberg.org/kvo/std/errors"
 	"golang.org/x/term"
 
-	"main/errors"
 	"main/logger"
 	"main/plat"
 )
 
 // Run the TaskCollect server.
 func Run(tcVersion string, tlsConn bool) {
-	curUser, err := user.Current()
-	if err != nil {
-		logger.Fatal("taskcollect: Cannot determine current user's home folder")
+	curUser, e := user.Current()
+	if e != nil {
+		logger.Fatal("cannot determine current user's home folder")
 	}
 
 	home := curUser.HomeDir
@@ -35,7 +35,7 @@ func Run(tcVersion string, tlsConn bool) {
 
 	result, err := getConfig(configFile)
 	if err != nil {
-		logger.Error(errors.NewError("server", "unable to read config file", err))
+		logger.Error(errors.New("unable to read config file", err))
 		logger.Warn("Resorting to default configuration settings")
 	}
 
@@ -44,7 +44,7 @@ func Run(tcVersion string, tlsConn bool) {
 		logPath := fp.Join(resPath, "logs")
 		err = logger.UseConfigFile(logPath)
 		if err != nil {
-			logger.Error(errors.NewError("server", "Log file was not set up successfully", err))
+			logger.Error(errors.New("Log file was not set up successfully", err))
 		} else {
 			logger.Info("Log file set up successfully")
 		}
@@ -54,9 +54,10 @@ func Run(tcVersion string, tlsConn bool) {
 
 	var password string
 	fmt.Print("Password to Redis database: ")
-	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
-	if err != nil {
-		logger.Fatal(errors.NewError("server", "could not get password input", err))
+	dbPwdInput, e := term.ReadPassword(int(os.Stdin.Fd()))
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		logger.Fatal(errors.New("could not get password input", err))
 	}
 	fmt.Println()
 
@@ -66,14 +67,15 @@ func Run(tcVersion string, tlsConn bool) {
 	newRedisDB := initDB(dbAddr, password, dbIdx)
 	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)
 
-	GAuthID, err = os.ReadFile(fp.Join(resPath, "gauth.json"))
-	if err != nil {
-		logger.Fatal(errors.NewError("server", "Google client ID "+plat.ErrFileRead.Error(), err))
+	GAuthID, e = os.ReadFile(fp.Join(resPath, "gauth.json"))
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		logger.Fatal(errors.New("Google client ID "+plat.ErrFileRead.Error(), err))
 	}
 
 	templates, err := initTemplates(resPath)
 	if err != nil {
-		logger.Fatal(errors.NewError("server", plat.ErrInitFailed.Error()+" for HTML templates", err))
+		logger.Fatal(errors.New(plat.ErrInitFailed.Error()+" for HTML templates", err))
 	}
 	logger.Info("Successfully initialized HTML templates")
 
@@ -104,30 +106,31 @@ func Run(tcVersion string, tlsConn bool) {
 
 	if tlsConn {
 		logger.Info("Running on port 443")
-		err = http.ListenAndServeTLS(":443", certFile, keyFile, mux)
+		e = http.ListenAndServeTLS(":443", certFile, keyFile, mux)
 	} else {
 		logger.Warn("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
-		err = http.ListenAndServe(":8080", mux)
+		e = http.ListenAndServe(":8080", mux)
 	}
 
-	if err != nil {
-		logger.Fatal(err)
+	if e != nil {
+		logger.Fatal(errors.New(e.Error(), nil))
 	}
 }
 
 // Create and manage necessary HTML files from template files.
-func initTemplates(resPath string) (*template.Template, error) {
+func initTemplates(resPath string) (*template.Template, errors.Error) {
 	// Create "./templates/" dir if it does not exist
 	tmplPath := fp.Join(resPath, "templates")
-	err := os.MkdirAll(tmplPath, os.ModePerm)
-	if err != nil {
-		return nil, errors.NewError("server.initTemplates", "could not make 'templates' directory", err)
+	e := os.MkdirAll(tmplPath, os.ModePerm)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return nil, errors.New("could not make 'templates' directory", err)
 	}
 
 	tmplResPath := tmplPath
 
 	var files []string
-	err = fp.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
+	e = fp.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -140,8 +143,9 @@ func initTemplates(resPath string) (*template.Template, error) {
 		files = append(files, path)
 		return nil
 	})
-	if err != nil {
-		logger.Fatal(errors.NewError("server.initTemplates", "error walking the template/ directory", err))
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Fatal(errors.New("error walking the template/ directory", err))
 	}
 
 	files = std.Remove(files, tmplResPath)
@@ -168,7 +172,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	}
 	if filesMissing {
 		errStr := fmt.Errorf("%v:\n%+v", plat.ErrMissingFiles.Error(), missingFiles)
-		logger.Fatal(errors.NewError("server.initTemplates", errStr.Error(), nil))
+		logger.Fatal(errors.New(errStr.Error(), nil))
 	}
 
 	// Find page.tmpl and put it at the front; NOTE: (only needed when not using ExecuteTemplate)
@@ -217,7 +221,7 @@ type databaseConfig struct {
 }
 
 // Get user configuration options from config.json
-func getConfig(cfgPath string) (config, error) {
+func getConfig(cfgPath string) (config, errors.Error) {
 	// Default config
 	result := config{
 		loggingConfig{
@@ -229,44 +233,51 @@ func getConfig(cfgPath string) (config, error) {
 		},
 	}
 
-	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return result, errors.NewError("server.getConfig", "failed to open config.json", err)
+	jsonFile, e := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return result, errors.New("failed to open config.json", err)
 	}
 
-	b, err := io.ReadAll(jsonFile)
-	if err != nil {
-		return result, errors.NewError("server.getConfig", "failed to read config.json", err)
+	b, e := io.ReadAll(jsonFile)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return result, errors.New("failed to read config.json", err)
 	}
 
-	err = jsonFile.Close()
-	if err != nil {
-		return result, errors.NewError("server.getConfig", "failed to close config.json", err)
+	e = jsonFile.Close()
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return result, errors.New("failed to close config.json", err)
 	}
 
-	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
-	if err != nil {
-		return result, errors.NewError("server.getConfig", "failed to open config.json", err)
+	jsonFile, e = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return result, errors.New("failed to open config.json", err)
 	}
 	defer jsonFile.Close()
 
 	if len(b) > 0 {
-		err = json.Unmarshal(b, &result)
-		if err != nil {
-			return result, errors.NewError("server.getConfig", "failed to unmarshal config.json", err)
+		e = json.Unmarshal(b, &result)
+		if e != nil {
+			err := errors.New(e.Error(), nil)
+			return result, errors.New("failed to unmarshal config.json", err)
 		}
 	} else {
 		logger.Info("Using default configuration settings. These can be edited in the config.json file")
 	}
 
-	rawJson, err := json.MarshalIndent(result, "", "    ")
-	if err != nil {
-		return config{}, errors.NewError("server.getConfig", "failed to marshal config.json", err)
+	rawJson, e := json.MarshalIndent(result, "", "    ")
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return config{}, errors.New("failed to marshal config.json", err)
 	}
 
-	_, err = jsonFile.Write(rawJson)
-	if err != nil {
-		return result, errors.NewError("server.getConfig", "failed to write to config.json", err)
+	_, e = jsonFile.Write(rawJson)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return result, errors.New("failed to write to config.json", err)
 	}
 
 	return result, nil

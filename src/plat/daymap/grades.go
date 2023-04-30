@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"main/errors"
+	"codeberg.org/kvo/std/errors"
+
 	"main/plat"
 )
 
@@ -19,7 +20,7 @@ type taskGrade struct {
 }
 
 // Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(webpage *string) (taskGrade, error) {
+func findGrade(webpage *string) (taskGrade, errors.Error) {
 	var grade string
 	var percent float64
 	i := strings.Index(*webpage, "Grade:")
@@ -76,12 +77,18 @@ func findGrade(webpage *string) (taskGrade, error) {
 
 		it, err := strconv.ParseFloat(st, 64)
 		if err != nil {
-			return taskGrade{}, errors.NewError("daymap.GetTask", "(1) string to float64 conversion failed", err)
+			return taskGrade{}, errors.New(
+				"(1) string to float64 conversion failed",
+				errors.New(err.Error(), nil),
+			)
 		}
 
 		ib, err := strconv.ParseFloat(sb, 64)
 		if err != nil {
-			return taskGrade{}, errors.NewError("daymap.GetTask", "(2) string to float64 conversion failed", err)
+			return taskGrade{}, errors.New(
+				"(2) string to float64 conversion failed",
+				errors.New(err.Error(), nil),
+			)
 		}
 
 		percent = it / ib * 100
@@ -92,27 +99,36 @@ func findGrade(webpage *string) (taskGrade, error) {
 }
 
 // Retrieve the grade given to a student for a particular DayMap task.
-func getGrade(creds User, id string, result *taskGrade, e *error, wg *sync.WaitGroup) {
+func getGrade(creds User, id string, result *taskGrade, e *errors.Error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		*e = errors.NewError("daymap.GetTask", "GET request failed", err)
+		*e = errors.New(
+			"GET request failed",
+			errors.New(err.Error(), nil),
+		)
 		return
 	}
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		*e = errors.NewError("daymap.GetTask", "failed to get resp", err)
+		*e = errors.New(
+			"failed to get resp",
+			errors.New(err.Error(), nil),
+		)
 		return
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		*e = errors.NewError("daymap.GetTask", "failed to read resp.Body", err)
+		*e = errors.New(
+			"failed to read resp.Body",
+			errors.New(err.Error(), nil),
+		)
 		return
 	}
 	page := string(respBody)
@@ -120,11 +136,11 @@ func getGrade(creds User, id string, result *taskGrade, e *error, wg *sync.WaitG
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
+func GradedTasks(creds User, t chan []plat.Task, e chan [][]errors.Error) {
 	webpage, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
-		e <- [][]error{{err}}
+		e <- [][]errors.Error{{err}}
 		return
 	}
 
@@ -143,30 +159,55 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 		}
 
 		task.Id, err = page.UpTo(`)">`)
-			if err != nil { strErr = "failed getting task ID"; break }
+		if err != nil {
+			strErr = "failed getting task ID"
+			break
+		}
 		task.Link = "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + task.Id
 
 		err = page.Advance(`<td>`)
-			if err != nil { strErr = "failed advancing past task ID"; break }
+		if err != nil {
+			strErr = "failed advancing past task ID"
+			break
+		}
 
 		task.Class, err = page.UpTo(`</td>`)
-			if err != nil { strErr = "failed getting class name"; break }
+		if err != nil {
+			strErr = "failed getting class name"
+			break
+		}
 
 		err = page.Advance(`</td>`)
-			if err != nil { strErr = "failed advancing past class name"; break }
+		if err != nil {
+			strErr = "failed advancing past class name"
+			break
+		}
 
 		err = page.Advance(`</td><td>`)
-			if err != nil { strErr = "failed advancing past summative/formative info"; break }
+		if err != nil {
+			strErr = "failed advancing past summative/formative info"
+			break
+		}
 
 		task.Name, err = page.UpTo(`</td><td>`)
-			if err != nil { strErr = "failed getting task name"; break }
+		if err != nil {
+			strErr = "failed getting task name"
+			break
+		}
 
 		err = page.Advance(`</td><td>`)
-			if err != nil { strErr ="failed advancing to post date"; break }
+		if err != nil {
+			strErr = "failed advancing to post date"
+			break
+		}
 
 		postStr, err = page.UpTo(`</td><td>`)
-		local, err = time.Parse("2/01/06", postStr)
-			if err != nil { strErr = "failed to parse post date"; break }
+		var e error
+		local, e = time.Parse("2/01/06", postStr)
+		if e != nil {
+			strErr = "failed to parse post date"
+			break
+		}
 		task.Posted = time.Date(
 			local.Year(),
 			local.Month(),
@@ -179,11 +220,17 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 		)
 
 		err = page.Advance(`</td><td>`)
-			if err != nil { strErr = "failed advancing to due date" ; break }
+		if err != nil {
+			strErr = "failed advancing to due date"
+			break
+		}
 
 		dueStr, err = page.UpTo(`</td><td>`)
-		local, err = time.Parse("2/01/06", dueStr)
-			if err != nil { strErr = "failed to parse due date"; break }
+		local, e = time.Parse("2/01/06", dueStr)
+		if e != nil {
+			strErr = "failed to parse due date"
+			break
+		}
 		task.Due = time.Date(
 			local.Year(),
 			local.Month(),
@@ -196,7 +243,10 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 		)
 
 		taskLine, err = page.UpTo("\n")
-			if err != nil { strErr = "failed getting task info line"; break }
+		if err != nil {
+			strErr = "failed getting task info line"
+			break
+		}
 
 		i := strings.Index(taskLine, `Results have been published`)
 		if i != -1 {
@@ -215,13 +265,13 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 
 	if strErr != "" {
 		t <- nil
-		e <- [][]error{{errors.NewError("daymap.GradedTasks", strErr, err)}}
+		e <- [][]errors.Error{{errors.New(strErr, err)}}
 		return
 	}
 
 	wg := sync.WaitGroup{}
 	results := make([]taskGrade, len(graded))
-	errs := make([]error, len(graded))
+	errs := make([]errors.Error, len(graded))
 
 	for i, id := range graded {
 		wg.Add(1)
@@ -230,9 +280,9 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]error) {
 
 	wg.Wait()
 
-	if !errors.HasOnly(errs, nil) {
+	if errors.Join(errs...) != nil {
 		t <- nil
-		e <- [][]error{errs}
+		e <- [][]errors.Error{errs}
 		return
 	}
 
