@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"codeberg.org/kvo/std"
+	"codeberg.org/kvo/std/errors"
 	"google.golang.org/api/classroom/v1"
 
-	"main/errors"
 	"main/plat"
 )
 
@@ -33,11 +33,12 @@ func directDriveLink(link string) string {
 }
 
 // Fetch the name of the class a task belongs to from Google Classroom.
-func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan error) {
-	course, err := svc.Courses.Get(courseId).Fields("name").Do()
-	if err != nil {
+func getClass(svc *classroom.Service, courseId string, classChan chan string, classErrChan chan errors.Error) {
+	course, e := svc.Courses.Get(courseId).Fields("name").Do()
+	if e != nil {
+		err := errors.New(e.Error(), nil)
 		classChan <- ""
-		classErrChan <- errors.NewError("gclass.getClass", "failed to get class", err)
+		classErrChan <- errors.New("failed to get class", err)
 		return
 	}
 	classChan <- course.Name
@@ -45,8 +46,8 @@ func getClass(svc *classroom.Service, courseId string, classChan chan string, cl
 }
 
 // Fetch task information (excluding the class name) from Google Classroom for a user.
-func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan classroom.CourseWork, taskErrChan chan error) {
-	task, err := svc.Courses.CourseWork.Get(courseId, workId).Fields(
+func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan classroom.CourseWork, taskErrChan chan errors.Error) {
+	task, e := svc.Courses.CourseWork.Get(courseId, workId).Fields(
 		"title",
 		"alternateLink",
 		"description",
@@ -56,10 +57,10 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 		"dueTime",
 		"workType",
 	).Do()
-
-	if err != nil {
+	if e != nil {
+		err := errors.New(e.Error(), nil)
 		taskChan <- classroom.CourseWork{}
-		taskErrChan <- errors.NewError("gclass.getGCTask", "failed to get task information", err)
+		taskErrChan <- errors.New("failed to get task information", err)
 		return
 	}
 
@@ -68,7 +69,7 @@ func getGCTask(svc *classroom.Service, courseId, workId string, taskChan chan cl
 }
 
 // Get a task from Google Classroom for a user.
-func GetTask(creds User, id string) (plat.Task, error) {
+func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	cid := strings.SplitN(id, "-", 3)
 
 	if len(cid) != 3 {
@@ -77,32 +78,35 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	svc, err := Auth(creds)
 	if err != nil {
-		return plat.Task{}, errors.NewError("gclass.GetTask", "Google auth failed", err)
+		return plat.Task{}, errors.New("Google auth failed", err)
 	}
 
 	classChan := make(chan string)
-	classErrChan := make(chan error)
+	classErrChan := make(chan errors.Error)
 	go getClass(svc, cid[0], classChan, classErrChan)
 
 	taskChan := make(chan classroom.CourseWork)
-	taskErrChan := make(chan error)
+	taskErrChan := make(chan errors.Error)
 	go getGCTask(svc, cid[0], cid[1], taskChan, taskErrChan)
 
-	studSub, err := svc.Courses.CourseWork.StudentSubmissions.Get(
+	studSub, e := svc.Courses.CourseWork.StudentSubmissions.Get(
 		cid[0], cid[1], cid[2],
 	).Fields("state", "assignedGrade", "assignmentSubmission").Do()
-	if err != nil {
-		return plat.Task{}, errors.NewError("gclass.GetTask", "failed to get student submission", err)
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		return plat.Task{}, errors.New("failed to get student submission", err)
 	}
 
-	gc, err := <-taskChan, <-taskErrChan
-	if err != nil {
-		return plat.Task{}, errors.NewError("gclass.GetTask", "from taskErrChan", err)
+	gc, e := <-taskChan, <-taskErrChan
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		return plat.Task{}, errors.New("from taskErrChan", err)
 	}
 
-	class, err := <-classChan, <-classErrChan
-	if err != nil {
-		return plat.Task{}, errors.NewError("gclass.GetTask", "from classErrChan", err)
+	class, e := <-classChan, <-classErrChan
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		return plat.Task{}, errors.New("from classErrChan", err)
 	}
 
 	task := plat.Task{
@@ -151,9 +155,10 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		}
 	}
 
-	task.ResLinks, err = resFromMaterials(gc.Materials)
-	if err != nil {
-		return plat.Task{}, errors.NewError("gclass.GetTask", "failed getting resource links from task", err)
+	task.ResLinks, e = resFromMaterials(gc.Materials)
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		return plat.Task{}, errors.New("failed getting resource links from task", err)
 	}
 
 	if studSub.AssignedGrade != 0 && gc.MaxPoints != 0 {
@@ -213,10 +218,10 @@ https://codeberg.org/kvo/taskcollect/issues/3
 */
 
 // Submit a Google Classroom task on behalf of a user.
-func SubmitTask(creds User, id string) error {
+func SubmitTask(creds User, id string) errors.Error {
 	/*svc, err := Auth(creds)
 	if err != nil {
-		e <- errors.NewError("gclass.SubmitTask", "Google auth failed", err)
+		e <- errors.New("Google auth failed", err)
 		return
 	}
 
@@ -226,19 +231,19 @@ func SubmitTask(creds User, id string) error {
 	).Do()
 
 	if err != nil {
-		return errors.NewError("gclass.SubmitTask", "error turning in task", err)
+		return errors.New("error turning in task", err)
 	}*/
 	return plat.ErrGclassApiRestriction
 }
 
 // Upload a file as a user's work for a Google Classroom task.
-func UploadWork(creds User, id string, files []plat.File) error {
+func UploadWork(creds User, id string, files []plat.File) errors.Error {
 	// Upload a file as a submission.
 	return plat.ErrGclassApiRestriction
 }
 
 // Remove a file (a user's work) from a Google Classroom task.
-func RemoveWork(creds User, id string, filenames []string) error {
+func RemoveWork(creds User, id string, filenames []string) errors.Error {
 	// Remove file submission.
 	return plat.ErrGclassApiRestriction
 }
