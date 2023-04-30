@@ -836,6 +836,12 @@ input[type=checkbox]:checked::before {
   transform: scale(1);
 }
 
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .loader {
   margin: auto;
   top: 50%;
