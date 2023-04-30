@@ -66,13 +66,13 @@ func auxClassInfo(creds User, link string) (string, string, error) {
 	classDiv := `<td><span id="ctl00_ctl00_cp_cp_divHeader" class="Header14" style="padding-left: 20px">`
 	i := strings.Index(page, classDiv)
 	if i == -1 {
-		return "", "", errors.NewError("daymap.auxClassInfo", "can't find class name", errInvalidResp)
+		return "", "", errors.NewError("daymap.auxClassInfo", "can't find class name", plat.ErrInvalidResp.Here())
 	}
 	i += len(classDiv)
 	page = page[i:]
 	i = strings.Index(page, "</span>")
 	if i == -1 {
-		return "", "", errors.NewError("daymap.auxClassInfo", "can't find class name end", errInvalidResp)
+		return "", "", errors.NewError("daymap.auxClassInfo", "can't find class name end", plat.ErrInvalidResp.Here())
 	}
 	class := page[:i]
 
@@ -144,7 +144,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		dates := re.FindAllString(dateRegion, -1)
 
 		if len(dates) == 0 && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
-			*e = errNoDateFound
+			*e = plat.ErrNoDateFound.Here()
 			return
 		} else if len(dates) > 0 {
 			postStr := dates[len(dates)-1]
@@ -173,7 +173,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		i = strings.Index(b, ");")
 
 		if i == -1 {
-			*e = errInvalidResp
+			*e = plat.ErrInvalidResp.Here()
 			return
 		}
 
@@ -182,7 +182,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		if div == fileDiv {
 			i = strings.Index(b, "&nbsp;")
 			if i == -1 {
-				*e = errInvalidResp
+				*e = plat.ErrInvalidResp.Here()
 				return
 			}
 
@@ -190,7 +190,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			b = b[i:]
 			i = strings.Index(b, "</a>")
 			if i == -1 {
-				*e = errInvalidResp
+				*e = plat.ErrInvalidResp.Here()
 				return
 			}
 		} else {
@@ -198,7 +198,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			b = b[i:]
 			i = strings.Index(b, "</div>")
 			if i == -1 {
-				*e = errInvalidResp
+				*e = plat.ErrInvalidResp.Here()
 				return
 			}
 		}
@@ -267,7 +267,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 
 		if i == -1 {
 			r <- nil
-			e <- []error{errInvalidResp}
+			e <- []error{plat.ErrInvalidResp.Here()}
 			return
 		}
 
@@ -277,7 +277,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 
 		if i == -1 {
 			r <- nil
-			e <- []error{errInvalidResp}
+			e <- []error{plat.ErrInvalidResp.Here()}
 			return
 		}
 

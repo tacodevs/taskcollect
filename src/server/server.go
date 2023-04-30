@@ -17,6 +17,7 @@ import (
 
 	"main/errors"
 	"main/logger"
+	"main/plat"
 )
 
 // Run the TaskCollect server.
@@ -67,12 +68,12 @@ func Run(tcVersion string, tlsConn bool) {
 
 	GAuthID, err = os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if err != nil {
-		logger.Fatal(errors.NewError("server", "Google client ID "+errors.ErrFileRead.Error(), err))
+		logger.Fatal(errors.NewError("server", "Google client ID "+plat.ErrFileRead.Error(), err))
 	}
 
 	templates, err := initTemplates(resPath)
 	if err != nil {
-		logger.Fatal(errors.NewError("server", errors.ErrInitFailed.Error()+" for HTML templates", err))
+		logger.Fatal(errors.NewError("server", plat.ErrInitFailed.Error()+" for HTML templates", err))
 	}
 	logger.Info("Successfully initialized HTML templates")
 
@@ -166,7 +167,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 		}
 	}
 	if filesMissing {
-		errStr := fmt.Errorf("%v:\n%+v", errors.ErrMissingFiles.Error(), missingFiles)
+		errStr := fmt.Errorf("%v:\n%+v", plat.ErrMissingFiles.Error(), missingFiles)
 		logger.Fatal(errors.NewError("server.initTemplates", errStr.Error(), nil))
 	}
 

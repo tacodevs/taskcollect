@@ -84,7 +84,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			endIdx := strings.Index(l.Start, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errInvalidDmJson
+				return nil, plat.ErrInvalidDmJson.Here()
 			}
 
 			startStr := l.Start[startIdx:endIdx]
@@ -99,7 +99,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			endIdx = strings.Index(l.Finish, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errInvalidDmJson
+				return nil, plat.ErrInvalidDmJson.Here()
 			}
 
 			finishStr := l.Finish[startIdx:endIdx]

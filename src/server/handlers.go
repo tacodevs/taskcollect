@@ -28,7 +28,7 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 
 	if cmd == "submit" {
 		err := submitTask(creds, platform, id)
-		if err == errors.ErrGclassApiRestriction {
+		if err == plat.ErrGclassApiRestriction {
 			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
 			data = statusGclassErrorData
 			statusCode = 500
@@ -43,11 +43,11 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 		}
 	} else if cmd == "upload" {
 		err := uploadWork(creds, platform, id, r)
-		if err == errors.ErrGclassApiRestriction {
+		if err == plat.ErrGclassApiRestriction {
 			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
 			data = statusGclassErrorData
 			statusCode = 500
-		} else if err == errors.ErrDaymapUpload {
+		} else if err == plat.ErrDaymapUpload {
 			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
 			data = statusDaymapErrorData
 			statusCode = 500
@@ -68,11 +68,11 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 		}
 
 		err := removeWork(creds, platform, id, filenames)
-		if err == errors.ErrGclassApiRestriction {
+		if errors.Is(err, plat.ErrGclassApiRestriction) {
 			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
 			data = statusGclassErrorData
 			statusCode = 500
-		} else if err == errNoPlatform {
+		} else if errors.Is(err, plat.ErrNoPlatform) {
 			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
@@ -268,7 +268,7 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.loginHandler", "failed to get creds", err))
@@ -307,7 +307,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.authHandler", "failed to get creds", err))
@@ -332,7 +332,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", "/timetable")
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
-		} else if errors.Is(err, errNeedsGAuth) {
+		} else if errors.Is(err, plat.ErrNeedsGAuth) {
 			gAuthLoc, err := h.database.gAuthEndpoint()
 			if err != nil {
 				logger.Error(errors.NewError("server.authHandler", "failed to generate Google auth endpoint URL", err))
@@ -356,7 +356,7 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.logoutHandler", "failed to get creds", err))
@@ -389,7 +389,7 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.resHandler", "failed to get creds", err))
@@ -442,7 +442,7 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.taskHandler", "failed to get creds", err))
@@ -472,7 +472,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.tasksHandler", "failed to get creds", err))
@@ -484,7 +484,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/tasks", creds)
-		if errors.Is(err, errNotFound) {
+		if errors.Is(err, plat.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: creds.DispName}
@@ -510,7 +510,7 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.timetableHandler", "failed to get creds", err))
@@ -522,7 +522,7 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/timetable", creds)
-		if errors.Is(err, errNotFound) {
+		if errors.Is(err, plat.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: creds.DispName}
@@ -548,7 +548,7 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.gradesHandler", "failed to get creds", err))
@@ -560,7 +560,7 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/grades", creds)
-		if errors.Is(err, errNotFound) {
+		if errors.Is(err, plat.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: creds.DispName}
@@ -588,7 +588,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.resHandler", "failed to get creds", err))
@@ -600,7 +600,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(h.database.path, "/res", creds)
-		if errors.Is(err, errNotFound) {
+		if errors.Is(err, plat.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: creds.DispName}
@@ -626,7 +626,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, errInvalidAuth) {
+	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
 		logger.Error(errors.NewError("server.rootHandler", "failed to get creds", err))

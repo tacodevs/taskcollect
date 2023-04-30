@@ -138,7 +138,7 @@ func (db *authDB) getCreds(cookies string) (plat.User, error) {
 
 	start := strings.Index(cookies, "token=")
 	if start == -1 {
-		return plat.User{}, errInvalidAuth
+		return plat.User{}, plat.ErrInvalidAuth.Here()
 	}
 
 	start += 6
@@ -160,22 +160,22 @@ func (db *authDB) getCreds(cookies string) (plat.User, error) {
 	}
 	exists, err := tokenExists.Result()
 	if err != nil {
-		return creds, errInvalidAuth
+		return creds, plat.ErrInvalidAuth.Here()
 	}
 	if exists != 1 {
-		return creds, errInvalidAuth
+		return creds, plat.ErrInvalidAuth.Here()
 	}
 
 	studentID := db.client.HGetAll(ctx, userToken)
 	if studentID.Err() != nil {
 		//err := errors.NewError("server.getCreds", "a token does not exist for current user", studentID.Err())
 		//return creds, err
-		return creds, errInvalidAuth
+		return creds, plat.ErrInvalidAuth.Here()
 	}
 	res, err := studentID.Result()
 	if err != nil {
 		logger.Debug("studentID result ERROR: %v", studentID.Err().Error())
-		return creds, errInvalidAuth
+		return creds, plat.ErrInvalidAuth.Here()
 	}
 
 	key := "school:" + res["school"] + ":studentID:" + res["studentID"]
@@ -211,7 +211,7 @@ func (db *authDB) getCreds(cookies string) (plat.User, error) {
 			"gclass": result["gclass"],
 		}
 	} else {
-		return plat.User{}, errors.NewError("server.getCreds", "invalid school", errInvalidAuth)
+		return plat.User{}, errors.NewError("server.getCreds", "invalid school", plat.ErrInvalidAuth.Here())
 	}
 
 	return creds, nil
@@ -319,7 +319,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 
 	// NOTE: Options for other schools could be added in the future
 	if school != "gihs" {
-		err := errors.NewError("server.auth", "school was not GIHS", errAuthFailed)
+		err := errors.NewError("server.auth", "school was not GIHS", plat.ErrAuthFailed.Here())
 		return "", err
 	}
 
@@ -327,7 +327,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	pwd := query.Get("pwd")
 
 	if std.Contains([]string{user, pwd}, "") {
-		err := errors.NewError("server.auth", "username or password is empty", errAuthFailed)
+		err := errors.NewError("server.auth", "username or password is empty", plat.ErrAuthFailed.Here())
 		return "", err
 	}
 
@@ -354,7 +354,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 			return "", errors.NewError("server.auth", "could not determine if user exists", err)
 		}
 		if !userExists {
-			return "", errors.NewError("server.auth", "user was not found", errAuthFailed)
+			return "", errors.NewError("server.auth", "user was not found", plat.ErrAuthFailed.Here())
 		}
 	}
 
@@ -380,7 +380,7 @@ func (db *authDB) auth(query url.Values) (string, error) {
 	cookie += time.Now().UTC().AddDate(0, 0, 3).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
-	gAuthStatus := errNeedsGAuth.AsError()
+	gAuthStatus := plat.ErrNeedsGAuth.Here()
 
 	if gTok != "" {
 		err = <-gTestErr
@@ -434,7 +434,7 @@ func (db *authDB) runGAuth(creds plat.User, query url.Values) error {
 
 	clientId, err := os.ReadFile(fp.Join(db.path, "gauth.json"))
 	if err != nil {
-		return errors.NewError("server.runGAuth", errors.ErrFileRead.Error(), err)
+		return errors.NewError("server.runGAuth", plat.ErrFileRead.Here().Error(), err)
 	}
 
 	gAuthConfig, err := gclass.AuthConfig(clientId)
