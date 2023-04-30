@@ -71,7 +71,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	nameDiv := `<div id="ctl00_cp_divPlan"><div><h3>`
 	i := strings.Index(page, nameDiv)
 	if i == -1 {
-		return plat.Resource{}, errInvalidResp
+		return plat.Resource{}, plat.ErrInvalidResp.Here()
 	}
 
 	i += len(nameDiv)
@@ -79,7 +79,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	fileDiv := `</h3></div><br>`
 	i = strings.Index(page, fileDiv)
 	if i == -1 {
-		return plat.Resource{}, errInvalidResp
+		return plat.Resource{}, plat.ErrInvalidResp.Here()
 	}
 
 	res.Name = page[:i]
@@ -88,7 +88,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	descDiv := fmt.Sprintf(`<div  ><div class="lpAll" id="Note%s">`, id)
 	i = strings.Index(page, descDiv)
 	if i == -1 {
-		return plat.Resource{}, errInvalidResp
+		return plat.Resource{}, plat.ErrInvalidResp.Here()
 	}
 
 	fileSect := page[:i]
@@ -99,20 +99,20 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 		fileSect = fileSect[i:]
 		i = strings.Index(fileSect, ");")
 		if i == -1 {
-			return plat.Resource{}, errInvalidResp
+			return plat.Resource{}, plat.ErrInvalidResp.Here()
 		}
 		rlLink := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + fileSect[:i]
 		fileSect = fileSect[i:]
 
 		i = strings.Index(fileSect, "&nbsp;")
 		if i == -1 {
-			return plat.Resource{}, errInvalidResp
+			return plat.Resource{}, plat.ErrInvalidResp.Here()
 		}
 		i += len("&nbsp;")
 		fileSect = fileSect[i:]
 		i = strings.Index(fileSect, "</a>")
 		if i == -1 {
-			return plat.Resource{}, errInvalidResp
+			return plat.Resource{}, plat.ErrInvalidResp.Here()
 		}
 		rlName := fileSect[:i]
 		fileSect = fileSect[i:]
@@ -128,7 +128,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	)
 	i = strings.Index(page, endDiv)
 	if i == -1 {
-		return plat.Resource{}, errInvalidResp
+		return plat.Resource{}, plat.ErrInvalidResp.Here()
 	}
 
 	res.Desc = page[:i]
@@ -156,6 +156,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 func GetResource(creds User, id string) (plat.Resource, error) {
 	idSlice := strings.Split(id, "-")
 	var res plat.Resource
+	var err error
 
 	courseId, err := std.Access(idSlice, 0)
 	if err != nil {

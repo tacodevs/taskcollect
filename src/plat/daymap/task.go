@@ -61,14 +61,14 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i := strings.Index(b, "ctl00_ctl00_cp_cp_divResults")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
 	i = strings.Index(b, "SectionHeader")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
@@ -77,7 +77,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	task.Name = b[:i]
@@ -85,7 +85,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
@@ -94,7 +94,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	task.Class = b[:i]
@@ -102,7 +102,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
@@ -111,7 +111,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, errInvalidTaskResp
+		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
@@ -124,7 +124,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, errInvalidTaskResp
+			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		dueStr := b[:i]
@@ -148,14 +148,14 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "<div><div>")
 
 		if i == -1 {
-			return plat.Task{}, errInvalidTaskResp
+			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		b = b[i:]
 		i = strings.Index(b, "</div></div></div></div>")
 
 		if i == -1 {
-			return plat.Task{}, errInvalidTaskResp
+			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		wlHtml := b[:i]
@@ -168,7 +168,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(wlHtml, `"`)
 
 			if x == -1 {
-				return plat.Task{}, errInvalidTaskResp
+				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 			}
 
 			wll := wlHtml[:x]
@@ -177,7 +177,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(wlHtml, "&nbsp;")
 
 			if x == -1 {
-				return plat.Task{}, errInvalidTaskResp
+				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 			}
 
 			x += len("&nbsp;")
@@ -185,7 +185,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(wlHtml, "</a>")
 
 			if x == -1 {
-				return plat.Task{}, errInvalidTaskResp
+				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 			}
 
 			name := wlHtml[:x]
@@ -212,7 +212,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, errInvalidTaskResp
+			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		task.Comment = b[:i]
@@ -232,7 +232,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		}
 
 		if i == -1 {
-			return plat.Task{}, errInvalidTaskResp
+			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		rlHtml := b[:i]
@@ -245,7 +245,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(rlHtml, ")")
 
 			if x == -1 {
-				return plat.Task{}, errInvalidTaskResp
+				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 			}
 
 			rlId := rlHtml[:x]
@@ -254,7 +254,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(rlHtml, "&nbsp;")
 
 			if x == -1 {
-				return plat.Task{}, errInvalidTaskResp
+				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 			}
 
 			x += len("&nbsp;")
@@ -262,7 +262,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(rlHtml, "</a>")
 
 			if x == -1 {
-				return plat.Task{}, errInvalidTaskResp
+				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 			}
 
 			name := rlHtml[:x]
@@ -281,7 +281,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, errInvalidTaskResp
+			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		task.Desc = b[:i]
@@ -302,7 +302,7 @@ func randStr(n int) string {
 // Upload files from an HTTP request as student file submissions for a DayMap task.
 func UploadWork(creds User, id string, files []plat.File) error {
 	// TODO: Fix issue #68.
-	return errors.ErrDaymapUpload
+	return plat.ErrDaymapUpload.Here()
 
 	selectUrl := "https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID="
 	selectUrl += id
@@ -469,14 +469,14 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	i := strings.Index(b, "<form")
 
 	if i == -1 {
-		return errInvalidTaskResp
+		return plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
 	i = strings.Index(b, ` action="`)
 
 	if i == -1 {
-		return errInvalidTaskResp
+		return plat.ErrInvalidTaskResp.Here()
 	}
 
 	b = b[i:]
@@ -485,7 +485,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	i = strings.Index(b, `"`)
 
 	if i == -1 {
-		return errInvalidTaskResp
+		return plat.ErrInvalidTaskResp.Here()
 	}
 
 	rwUrl := b[:i]
@@ -500,7 +500,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, ` type=`)
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		b = b[i:]
@@ -509,7 +509,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, ` `)
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		inputType := b[:i]
@@ -517,7 +517,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `name="`)
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		b = b[i:]
@@ -526,7 +526,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `"`)
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		name = b[:i]
@@ -535,7 +535,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, "\n")
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		valTest := b[:i]
@@ -548,7 +548,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 			i = strings.Index(b, `"`)
 
 			if i == -1 {
-				return errInvalidTaskResp
+				return plat.ErrInvalidTaskResp.Here()
 			}
 
 			value = b[:i]
@@ -564,7 +564,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `<span name=filename>`)
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		b = b[i:]
@@ -573,7 +573,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `</span>`)
 
 		if i == -1 {
-			return errInvalidTaskResp
+			return plat.ErrInvalidTaskResp.Here()
 		}
 
 		fname := b[:i]

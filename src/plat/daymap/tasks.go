@@ -42,7 +42,7 @@ func tasksPage(creds User) (string, error) {
 		i = strings.Index(b, ">")
 
 		if i == -1 {
-			return "", errInvalidResp
+			return "", plat.ErrInvalidResp.Here()
 		}
 
 		inputTag := b[:i]
@@ -50,7 +50,7 @@ func tasksPage(creds User) (string, error) {
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			return "", errInvalidResp
+			return "", plat.ErrInvalidResp.Here()
 		}
 
 		i += len(`type="`)
@@ -58,7 +58,7 @@ func tasksPage(creds User) (string, error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			return "", errInvalidResp
+			return "", plat.ErrInvalidResp.Here()
 		}
 
 		inputType = inputType[:i]
@@ -71,7 +71,7 @@ func tasksPage(creds User) (string, error) {
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			return "", errInvalidResp
+			return "", plat.ErrInvalidResp.Here()
 		}
 
 		i += len(`name="`)
@@ -79,7 +79,7 @@ func tasksPage(creds User) (string, error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			return "", errInvalidResp
+			return "", plat.ErrInvalidResp.Here()
 		}
 
 		name = name[:i]
@@ -91,7 +91,7 @@ func tasksPage(creds User) (string, error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				return "", errInvalidResp
+				return "", plat.ErrInvalidResp.Here()
 			}
 
 			value = value[:i]
@@ -151,7 +151,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -162,7 +162,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -172,7 +172,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -183,7 +183,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -193,7 +193,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -204,7 +204,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -223,7 +223,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -250,7 +250,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errInvalidResp}}
+			e <- [][]error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 

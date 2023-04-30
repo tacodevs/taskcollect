@@ -14,8 +14,6 @@ import (
 	"main/errors"
 )
 
-var errInvalidTaskID = errors.NewError("gclass", "invalid task ID", nil)
-
 type User struct {
 	ClientID []byte
 	Timezone *time.Location
@@ -69,9 +67,6 @@ func Auth(creds User) (*classroom.Service, error) {
 
 // Test if the provided Google credentials are valid.
 func Test(gcid []byte, gTok string, e chan error) {
-
-	// TODO: NO MORE GCID, NO MORE GTOK, USE PROPER USER STRUCT!
-
 	svc, err := Auth(User{ClientID: gcid, Token: gTok})
 	if err != nil {
 		e <- errors.NewError("gclass.Test", "Google auth failed", err)
