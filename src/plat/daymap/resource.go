@@ -7,27 +7,27 @@ import (
 	"strings"
 	"sync"
 
-	"main/errors"
-	"main/plat"
-
 	"codeberg.org/kvo/std"
+	"codeberg.org/kvo/std/errors"
+
+	"main/plat"
 )
 
 // Get a file resource from DayMap for a user.
-func fileRes(creds User, courseId, id string) (plat.Resource, error) {
+func fileRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	res := plat.Resource{}
 	res.Platform = "daymap"
 	res.Id = courseId + "-f" + id
 	res.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + id
 
 	var resources []plat.Resource
-	var err error
+	var err errors.Error
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go getClassRes(creds, courseId, &resources, &err, &wg)
 	wg.Wait()
 	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.fileRes", "failed retrieving class resources", err)
+		return plat.Resource{}, errors.New("failed retrieving class resources", err)
 	}
 
 	for _, r := range resources {
@@ -44,27 +44,30 @@ func fileRes(creds User, courseId, id string) (plat.Resource, error) {
 }
 
 // Get a plan resource from DayMap for a user.
-func planRes(creds User, courseId, id string) (plat.Resource, error) {
+func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	res := plat.Resource{}
 	res.Platform = "daymap"
 	res.Id = courseId + "-" + id
 	res.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + id
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", res.Link, nil)
-	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.planRes", "GET request failed", err)
+	req, e := http.NewRequest("GET", res.Link, nil)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return plat.Resource{}, errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
-	resp, err := client.Do(req)
-	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.planRes", "failed to get resp", err)
+	resp, e := client.Do(req)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return plat.Resource{}, errors.New("failed to get resp", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.planRes", "failed to read resp.Body", err)
+	respBody, e := io.ReadAll(resp.Body)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return plat.Resource{}, errors.New("failed to read resp.Body", err)
 	}
 
 	page := string(respBody)
@@ -135,11 +138,12 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 
 	var resources []plat.Resource
 	var wg sync.WaitGroup
+	var err errors.Error
 	wg.Add(1)
 	go getClassRes(creds, courseId, &resources, &err, &wg)
 	wg.Wait()
 	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.planRes", "failed retrieving class resources", err)
+		return plat.Resource{}, errors.New("failed retrieving class resources", err)
 	}
 
 	for _, r := range resources {
@@ -153,18 +157,18 @@ func planRes(creds User, courseId, id string) (plat.Resource, error) {
 }
 
 // Get a resource from DayMap for a user.
-func GetResource(creds User, id string) (plat.Resource, error) {
+func GetResource(creds User, id string) (plat.Resource, errors.Error) {
 	idSlice := strings.Split(id, "-")
 	var res plat.Resource
-	var err error
+	var err errors.Error
 
 	courseId, err := std.Access(idSlice, 0)
 	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.GetResource", "invalid resource ID", err)
+		return plat.Resource{}, errors.New("invalid resource ID", err)
 	}
 	resId, err := std.Access(idSlice, 1)
 	if err != nil {
-		return plat.Resource{}, errors.NewError("daymap.GetResource", "invalid resource ID", err)
+		return plat.Resource{}, errors.New("invalid resource ID", err)
 	}
 
 	if strings.HasPrefix(resId, "f") {

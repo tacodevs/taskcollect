@@ -1,24 +1,25 @@
 package plat
 
 import (
-	"errors"
 	"sort"
 	"time"
+
+	"codeberg.org/kvo/std/errors"
 )
 
 // Mux is a platform multiplexer. Methods can be invoked on it to select the
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.
 type Mux struct {
-	auth     []func(User, chan [2]string, chan error)
-	classes  []func(User, chan []Class, chan error)
-	duetasks []func(User, chan []Task, chan error)
-	events   []func(User, chan []Event, chan error)
-	graded   []func(User, chan []Task, chan error)
-	items    []func(User, chan []Item, chan error, []Class)
-	lessons  func(User, time.Time, time.Time) ([]Lesson, error)
-	messages []func(User, chan []Message, chan error)
-	reports  func(User) ([]Report, error)
+	auth     []func(User, chan [2]string, chan errors.Error)
+	classes  []func(User, chan []Class, chan errors.Error)
+	duetasks []func(User, chan []Task, chan errors.Error)
+	events   []func(User, chan []Event, chan errors.Error)
+	graded   []func(User, chan []Task, chan errors.Error)
+	items    []func(User, chan []Item, chan errors.Error, []Class)
+	lessons  func(User, time.Time, time.Time) ([]Lesson, errors.Error)
+	messages []func(User, chan []Message, chan errors.Error)
+	reports  func(User) ([]Report, errors.Error)
 }
 
 // Return a new instance of Mux.
@@ -28,55 +29,55 @@ func NewMux() *Mux {
 
 // AddAuth adds the authentication function f to m for platform authentication
 // multiplexing.
-func (m *Mux) AddAuth(f func(User, chan [2]string, chan error)) {
+func (m *Mux) AddAuth(f func(User, chan [2]string, chan errors.Error)) {
 	m.auth = append(m.auth, f)
 }
 
 // AddClasses adds the class list retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddClasses(f func(User, chan []Class, chan error)) {
+func (m *Mux) AddClasses(f func(User, chan []Class, chan errors.Error)) {
 	m.classes = append(m.classes, f)
 }
 
 // AddDueTasks adds the active tasks retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddDueTasks(f func(User, chan []Task, chan error)) {
+func (m *Mux) AddDueTasks(f func(User, chan []Task, chan errors.Error)) {
 	m.duetasks = append(m.duetasks, f)
 }
 
 // AddEvents adds the calendar events retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddEvents(f func(User, chan []Event, chan error)) {
+func (m *Mux) AddEvents(f func(User, chan []Event, chan errors.Error)) {
 	m.events = append(m.events, f)
 }
 
 // AddGraded adds the graded tasks retrieval function f to m for platform
 // mulitplexing.
-func (m *Mux) AddGraded(f func(User, chan []Task, chan error)) {
+func (m *Mux) AddGraded(f func(User, chan []Task, chan errors.Error)) {
 	m.graded = append(m.graded, f)
 }
 
 // AddItems adds the class tasks/resources retrieval function f to m for
 // platform multiplexing.
-func (m *Mux) AddItems(f func(User, chan []Item, chan error, []Class)) {
+func (m *Mux) AddItems(f func(User, chan []Item, chan errors.Error, []Class)) {
 	m.items = append(m.items, f)
 }
 
 // AddMessages adds the unread messages retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddMessages(f func(User, chan []Message, chan error)) {
+func (m *Mux) AddMessages(f func(User, chan []Message, chan errors.Error)) {
 	m.messages = append(m.messages, f)
 }
 
 // SetLessons sets the lessons retrieval function for m as f for platform
 // multiplexing.
-func (m *Mux) SetLessons(f func(User, time.Time, time.Time) ([]Lesson, error)) {
+func (m *Mux) SetLessons(f func(User, time.Time, time.Time) ([]Lesson, errors.Error)) {
 	m.lessons = f
 }
 
 // SetReports sets the report card retrieval function for *m as f for platform
 // multiplexing.
-func (m *Mux) SetReports(f func(User) ([]Report, error)) {
+func (m *Mux) SetReports(f func(User) ([]Report, errors.Error)) {
 	m.reports = f
 }
 
@@ -86,13 +87,13 @@ func (m *Mux) SetReports(f func(User) ([]Report, error)) {
 //
 // An error is returned if no platform multiplexed by m can verify the
 // authenticity of the provided *creds.
-func (m *Mux) Auth(creds *User) error {
+func (m *Mux) Auth(creds *User) errors.Error {
 	c := make(chan [2]string)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.auth {
 		go f(*creds, c, errs)
 	}
-	var err error
+	var err errors.Error
 	valid := false
 	for e := range errs {
 		errors.Join(err, e)
@@ -110,10 +111,10 @@ func (m *Mux) Auth(creds *User) error {
 }
 
 // Classes returns a list of classes from all platforms multiplexed by m.
-func (m *Mux) Classes(creds User) ([]Class, error) {
+func (m *Mux) Classes(creds User) ([]Class, errors.Error) {
 	var classes []Class
 	c := make(chan []Class)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.classes {
 		go f(creds, c, errs)
 	}
@@ -132,10 +133,10 @@ func (m *Mux) Classes(creds User) ([]Class, error) {
 }
 
 // DueTasks returns a list of active tasks from all platforms multiplexed by m.
-func (m *Mux) DueTasks(creds User) ([]Task, error) {
+func (m *Mux) DueTasks(creds User) ([]Task, errors.Error) {
 	var active []Task
 	c := make(chan []Task)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.duetasks {
 		go f(creds, c, errs)
 	}
@@ -154,10 +155,10 @@ func (m *Mux) DueTasks(creds User) ([]Task, error) {
 }
 
 // Events returns a list of calendar events from all platforms multiplexed by m.
-func (m *Mux) Events(creds User) ([]Event, error) {
+func (m *Mux) Events(creds User) ([]Event, errors.Error) {
 	var events []Event
 	c := make(chan []Event)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.events {
 		go f(creds, c, errs)
 	}
@@ -176,10 +177,10 @@ func (m *Mux) Events(creds User) ([]Event, error) {
 }
 
 // Graded returns a list of graded tasks from all platforms multiplexed by m.
-func (m *Mux) Graded(creds User) ([]Task, error) {
+func (m *Mux) Graded(creds User) ([]Task, errors.Error) {
 	var graded []Task
 	c := make(chan []Task)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.graded {
 		go f(creds, c, errs)
 	}
@@ -198,10 +199,10 @@ func (m *Mux) Graded(creds User) ([]Task, error) {
 }
 
 // Items returns a list of tasks and resources for all specified classes.
-func (m *Mux) Items(creds User, classes ...Class) ([]Item, error) {
+func (m *Mux) Items(creds User, classes ...Class) ([]Item, errors.Error) {
 	var items []Item
 	c := make(chan []Item)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.items {
 		go f(creds, c, errs, classes)
 	}
@@ -220,7 +221,7 @@ func (m *Mux) Items(creds User, classes ...Class) ([]Item, error) {
 }
 
 // Lessons returns a list of lessons occuring from start to end.
-func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, error) {
+func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, errors.Error) {
 	lessons, err := m.lessons(creds, start, end)
 	if err != nil {
 		return nil, err
@@ -232,10 +233,10 @@ func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, error) {
 }
 
 // Messages returns all unread messages from all platforms multiplexed by m.
-func (m *Mux) Messages(creds User) ([]Message, error) {
+func (m *Mux) Messages(creds User) ([]Message, errors.Error) {
 	var messages []Message
 	c := make(chan []Message)
-	errs := make(chan error)
+	errs := make(chan errors.Error)
 	for _, f := range m.messages {
 		go f(creds, c, errs)
 	}
@@ -254,7 +255,7 @@ func (m *Mux) Messages(creds User) ([]Message, error) {
 }
 
 // Reports returns a series of report cards.
-func (m *Mux) Reports(creds User) ([]Report, error) {
+func (m *Mux) Reports(creds User) ([]Report, errors.Error) {
 	reports, err := m.reports(creds)
 	if err != nil {
 		return nil, err
