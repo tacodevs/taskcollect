@@ -7,29 +7,33 @@ import (
 	"strings"
 	"time"
 
-	"main/errors"
+	"codeberg.org/kvo/std/errors"
+
 	"main/plat"
 )
 
 // Retrieve a webpage of all DayMap tasks for a user.
-func tasksPage(creds User) (string, error) {
+func tasksPage(creds User) (string, errors.Error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", tasksUrl, nil)
-	if err != nil {
-		return "", errors.NewError("daymap.ListTasks", "GET request failed", err)
+	req, e := http.NewRequest("GET", tasksUrl, nil)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return "", errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", errors.NewError("daymap.ListTasks", "failed to get resp", err)
+	resp, e := client.Do(req)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return "", errors.New("failed to get resp", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", errors.NewError("daymap.ListTasks", "failed to read resp.Body", err)
+	respBody, e := io.ReadAll(resp.Body)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return "", errors.New("failed to read resp.Body", err)
 	}
 
 	taskForm := url.Values{}
@@ -107,33 +111,38 @@ func tasksPage(creds User) (string, error) {
 
 	tdata := strings.NewReader(taskForm.Encode())
 
-	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
-	if err != nil {
-		return "", errors.NewError("daymap.ListTasks", "POST request failed", err)
+	fullReq, e := http.NewRequest("POST", tasksUrl, tdata)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return "", errors.New("POST request failed", err)
 	}
 
 	fullReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	fullReq.Header.Set("Cookie", creds.Token)
 
-	full, err := client.Do(fullReq)
-	if err != nil {
-		return "", errors.NewError("daymap.ListTasks", "failed to get full resp", err)
+	full, e := client.Do(fullReq)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return "", errors.New("failed to get full resp", err)
 	}
 
-	fullBody, err := io.ReadAll(full.Body)
-	if err != nil {
-		return "", errors.NewError("daymap.ListTasks", "failed to real full.Body", err)
+	fullBody, e := io.ReadAll(full.Body)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return "", errors.New("failed to real full.Body", err)
 	}
 
 	return string(fullBody), nil
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
+func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]errors.Error) {
+	var er error
+
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
-		e <- [][]error{{errors.NewError("daymap.ListTasks", "failed retrieving tasks page", err)}}
+		e <- [][]errors.Error{{errors.New("failed retrieving tasks page", err)}}
 		return
 	}
 
@@ -151,7 +160,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -162,7 +171,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -172,7 +181,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -183,7 +192,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -193,7 +202,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
@@ -204,16 +213,17 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
 		postedString := b[:i]
 
-		task.Posted, err = time.ParseInLocation("2/01/06", postedString, creds.Timezone)
-		if err != nil {
+		task.Posted, er = time.ParseInLocation("2/01/06", postedString, creds.Timezone)
+		if er != nil {
+			err := errors.New(er.Error(), nil)
 			t <- nil
-			e <- [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (postedString)", err)}}
+			e <- [][]errors.Error{{errors.New("failed to parse time (postedString)", err)}}
 			return
 		}
 
@@ -223,16 +233,17 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 
 		dueString := b[:i]
 
-		task.Due, err = time.ParseInLocation("2/01/06", dueString, creds.Timezone)
-		if err != nil {
+		task.Due, er = time.ParseInLocation("2/01/06", dueString, creds.Timezone)
+		if er != nil {
+			err := errors.New(er.Error(), nil)
 			t <- nil
-			e <- [][]error{{errors.NewError("daymap.ListTasks", "failed to parse time (dueString)", err)}}
+			e <- [][]errors.Error{{errors.New("failed to parse time (dueString)", err)}}
 			return
 		}
 
@@ -250,7 +261,7 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]error) {
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
 			return
 		}
 

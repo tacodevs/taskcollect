@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"main/errors"
-	"main/plat"
-
 	"codeberg.org/kvo/std"
+	"codeberg.org/kvo/std/errors"
+
+	"main/plat"
 )
 
 type dmJsonEntry struct {
@@ -23,7 +23,7 @@ type dmJsonEntry struct {
 }
 
 // Get a list of lessons for the week from DayMap for a user.
-func GetLessons(creds User) ([][]plat.Lesson, error) {
+func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)
 
@@ -54,32 +54,35 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", lessonsUrl, nil)
-	if err != nil {
-		return nil, errors.NewError("daymap.GetLessons", "GET request for lessonsUrl failed", err)
+	req, e := http.NewRequest("GET", lessonsUrl, nil)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return nil, errors.New("GET request for lessonsUrl failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, errors.NewError("daymap.GetLessons", "failed to get resp", err)
+	resp, e := client.Do(req)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return nil, errors.New("failed to get resp", err)
 	}
 
 	dmJson := []dmJsonEntry{}
 
-	err = json.NewDecoder(resp.Body).Decode(&dmJson)
-	if err != nil {
-		return nil, errors.NewError("daymap.GetLessons", "failed to decode JSON", err)
+	e = json.NewDecoder(resp.Body).Decode(&dmJson)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		return nil, errors.New("failed to decode JSON", err)
 	}
 
 	lessons := make([][]plat.Lesson, 5)
 
 	for _, l := range dmJson {
 		lesson := plat.Lesson{}
-		lesson.Start, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
+		lesson.Start, e = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
 
-		if err != nil {
+		if e != nil {
 			startIdx := strings.Index(l.Start, "(") + 1
 			endIdx := strings.Index(l.Start, "000-")
 
@@ -88,9 +91,10 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			}
 
 			startStr := l.Start[startIdx:endIdx]
-			startInt, err := strconv.Atoi(startStr)
-			if err != nil {
-				return nil, errors.NewError("daymap.GetLessons", "(1) string -> int conversion failed", err)
+			startInt, e := strconv.Atoi(startStr)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return nil, errors.New("(1) string -> int conversion failed", err)
 			}
 
 			lesson.Start = time.Unix(int64(startInt), 0)
@@ -103,25 +107,28 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			}
 
 			finishStr := l.Finish[startIdx:endIdx]
-			finishInt, err := strconv.Atoi(finishStr)
-			if err != nil {
-				return nil, errors.NewError("daymap.GetLessons", "(2) string -> int conversion failed", err)
+			finishInt, e := strconv.Atoi(finishStr)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return nil, errors.New("(2) string -> int conversion failed", err)
 			}
 
 			lesson.End = time.Unix(int64(finishInt), 0)
 		} else {
-			lesson.End, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Finish, creds.Timezone)
-			if err != nil {
-				return nil, errors.NewError("daymap.GetLessons", "failed to parse time", err)
+			lesson.End, e = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Finish, creds.Timezone)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return nil, errors.New("failed to parse time", err)
 			}
 		}
 
 		class := l.Title
 		class = strings.TrimSpace(class)
 
-		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
-		if err != nil {
-			return nil, errors.NewError("daymap.GetLessons", "failed to compile regex", err)
+		re, e := regexp.Compile("[0-9][A-Z]+[0-9]+")
+		if e != nil {
+			err := errors.New(e.Error(), nil)
+			return nil, errors.New("failed to compile regex", err)
 		}
 
 		lesson.Room = re.FindString(class)
@@ -168,8 +175,8 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			continue
 		}
 
-		if _, err = std.Access(lessons, i); err != nil {
-			return nil, errors.NewError("daymap.GetLessons", "number of days with lessons exceeded 5", err)
+		if _, err := std.Access(lessons, i); err != nil {
+			return nil, errors.New("number of days with lessons exceeded 5", err)
 		}
 
 		lessons[i] = append(lessons[i], lesson)

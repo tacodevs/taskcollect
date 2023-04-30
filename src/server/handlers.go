@@ -8,7 +8,8 @@ import (
 	fp "path/filepath"
 	"strings"
 
-	"main/errors"
+	"codeberg.org/kvo/std/errors"
+
 	"main/logger"
 	"main/plat"
 )
@@ -28,12 +29,12 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 
 	if cmd == "submit" {
 		err := submitTask(creds, platform, id)
-		if err == plat.ErrGclassApiRestriction {
-			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+		if errors.Is(err, plat.ErrGclassApiRestriction) {
+			logger.Error(errors.New("failed to submit task", err))
 			data = statusGclassErrorData
 			statusCode = 500
 		} else if err != nil {
-			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+			logger.Debug(errors.New("failed to submit task", err))
 			data = statusServerErrorData
 			statusCode = 500
 		} else {
@@ -43,16 +44,16 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 		}
 	} else if cmd == "upload" {
 		err := uploadWork(creds, platform, id, r)
-		if err == plat.ErrGclassApiRestriction {
-			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+		if errors.Is(err, plat.ErrGclassApiRestriction) {
+			logger.Error(errors.New("failed to submit task", err))
 			data = statusGclassErrorData
 			statusCode = 500
-		} else if err == plat.ErrDaymapUpload {
-			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+		} else if errors.Is(err, plat.ErrDaymapUpload) {
+			logger.Error(errors.New("failed to submit task", err))
 			data = statusDaymapErrorData
 			statusCode = 500
 		} else if err != nil {
-			logger.Error(errors.NewError("server.handleTask", "failed to upload work", err))
+			logger.Debug(errors.New("failed to upload work", err))
 			data = statusServerErrorData
 			statusCode = 500
 		} else {
@@ -69,14 +70,14 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 
 		err := removeWork(creds, platform, id, filenames)
 		if errors.Is(err, plat.ErrGclassApiRestriction) {
-			logger.Error(errors.NewError("server.handleTask", "failed to submit task", err))
+			logger.Error(errors.New("failed to submit task", err))
 			data = statusGclassErrorData
 			statusCode = 500
 		} else if errors.Is(err, plat.ErrNoPlatform) {
 			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
-			logger.Error(errors.NewError("server.handleTask", "failed to remove work", err))
+			logger.Debug(errors.New("failed to remove work", err))
 			data = statusServerErrorData
 			statusCode = 500
 		} else {
@@ -115,7 +116,7 @@ func (h *handler) handleTaskReq(r *http.Request, creds plat.User) (int, pageData
 	if index == -1 {
 		assignment, err := getTask(platform, taskId, creds)
 		if err != nil {
-			logger.Error(errors.NewError("server.handleTaskReq", "failed to get task", err))
+			logger.Debug(errors.New("failed to get task", err))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
@@ -141,9 +142,10 @@ func (h *handler) handleTaskReq(r *http.Request, creds plat.User) (int, pageData
 
 // Generate the HTML page (and write that data to http.ResponseWriter).
 func (h *handler) genPage(w http.ResponseWriter, data pageData) {
-	err := h.templates.ExecuteTemplate(w, "page", data)
-	if err != nil {
-		logger.Error(errors.NewError("server.genPage", "template execution failed", err))
+	e := h.templates.ExecuteTemplate(w, "page", data)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Debug(errors.New("template execution failed", err))
 	}
 
 	// TESTING CODE:
@@ -167,16 +169,18 @@ func (h *handler) genPage(w http.ResponseWriter, data pageData) {
 func dispatchAsset(w http.ResponseWriter, fullPath string, mimeType string) {
 	w.Header().Set("Content-Type", mimeType+`, charset="utf-8"`)
 
-	file, err := os.Open(fullPath)
-	if err != nil {
-		logger.Error(errors.NewError("server.dispatchAsset", "could not open "+fullPath, err))
+	file, e := os.Open(fullPath)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Error(errors.New("could not open "+fullPath, err))
 		w.WriteHeader(500)
 	}
 	defer file.Close()
 
-	_, err = io.Copy(w, file)
-	if err != nil {
-		logger.Error(errors.NewError("server.dispatchAsset", "could not copy contents of "+fullPath, err))
+	_, e = io.Copy(w, file)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		logger.Debug(errors.New("could not copy contents of "+fullPath, err))
 		w.WriteHeader(500)
 	}
 }
@@ -271,7 +275,7 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.loginHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -310,7 +314,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.authHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -320,11 +324,11 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 	if !validAuth {
 		var cookie string
 
-		err = r.ParseForm()
+		e := r.ParseForm()
 
-		// If err != nil, the "else" section of the next if/else block will
+		// If e != nil, the "else" section of the next if/else block will
 		// execute, which returns the "could not authenticate user" error.
-		if err == nil {
+		if e == nil {
 			cookie, err = h.database.auth(r.PostForm)
 		}
 
@@ -335,14 +339,15 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 		} else if errors.Is(err, plat.ErrNeedsGAuth) {
 			gAuthLoc, err := h.database.gAuthEndpoint()
 			if err != nil {
-				logger.Error(errors.NewError("server.authHandler", "failed to generate Google auth endpoint URL", err))
+				logger.Debug(errors.New("failed to generate Google auth endpoint URL", err))
 			} else {
 				w.Header().Set("Location", gAuthLoc)
 				w.Header().Set("Set-Cookie", cookie)
 				w.WriteHeader(302)
 			}
 		} else {
-			logger.Error(errors.NewError("server.authHandler", "could not authenticate user", err))
+			err := errors.New(e.Error(), nil)
+			logger.Error(errors.New("could not authenticate user", err))
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
 		}
@@ -359,7 +364,7 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.logoutHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -372,7 +377,7 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
 		} else {
-			logger.Error(errors.NewError("server.logoutHandler", "failed to log out user", err))
+			logger.Error(errors.New("failed to log out user", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: creds.DispName}
@@ -392,7 +397,7 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.resHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -420,7 +425,7 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 
 		res, err := getResource(platform, resId, creds)
 		if err != nil {
-			logger.Error(errors.NewError("server.resHandler", "failed to get resource", err))
+			logger.Debug(errors.New("failed to get resource", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: creds.DispName}
@@ -445,7 +450,7 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.taskHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -475,7 +480,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.tasksHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -490,7 +495,7 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: creds.DispName}
 			h.genPage(w, data)
 		} else if err != nil {
-			logger.Error(errors.NewError("server.tasksHandler", "failed to generate resources", err))
+			logger.Debug(errors.New("failed to generate resources", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: creds.DispName}
@@ -513,7 +518,7 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.timetableHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -528,7 +533,7 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: creds.DispName}
 			h.genPage(w, data)
 		} else if err != nil {
-			logger.Error(errors.NewError("server.timetableHandler", "failed to generate resources", err))
+			logger.Debug(errors.New("failed to generate resources", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: creds.DispName}
@@ -551,7 +556,7 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.gradesHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -566,7 +571,7 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: creds.DispName}
 			h.genPage(w, data)
 		} else if err != nil {
-			logger.Error(errors.NewError("server.gradesHandler", "failed to generate resources", err))
+			logger.Debug(errors.New("failed to generate resources", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: creds.DispName}
@@ -591,7 +596,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.resHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -606,7 +611,7 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: creds.DispName}
 			h.genPage(w, data)
 		} else if err != nil {
-			logger.Error(errors.NewError("server.resHandler", "failed to generate resources", err))
+			logger.Debug(errors.New("failed to generate resources", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: creds.DispName}
@@ -629,7 +634,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, plat.ErrInvalidAuth) {
 		validAuth = false
 	} else if err != nil {
-		logger.Error(errors.NewError("server.rootHandler", "failed to get creds", err))
+		logger.Debug(errors.New("failed to get creds", err))
 		data := statusServerErrorData
 		data.User = userData{Name: "none"}
 		h.genPage(w, data)
@@ -646,32 +651,25 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		dispatchAsset(w, fullPath, "text/plain")
 	}
 
-	// User is not logged in (and is not on login page)
 	if !validAuth {
+		// User is not logged in (and is not on login page)
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(302)
-
 	} else if validAuth && res == "/gauth" {
 		err = h.database.runGAuth(creds, r.URL.Query())
 		if err != nil {
-			logger.Error(errors.NewError("server.rootHandler", "Google auth flow failed", err))
+			logger.Debug(errors.New("Google auth flow failed", err))
 		}
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
-
-		// Timetable image
-		// NOTE: Perhaps still keep the png generation even though the main timetable will
-		// be replaced by a table, rather than image
 	} else if validAuth && res == "/timetable.png" {
 		genTimetableImg(creds, w)
-
-		// Invalid URL while logged in redirects to /timetable
 	} else if validAuth && invalidRes {
+		// Invalid URL while logged in redirects to /timetable
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
-
-		// Logged in, and the requested URL is not handled by anything else (it's a 404)
 	} else if validAuth && !invalidRes {
+		// Logged in, and the requested URL is not handled by anything else (it's a 404)
 		w.WriteHeader(404)
 		h.genPage(w, statusNotFoundData)
 	}

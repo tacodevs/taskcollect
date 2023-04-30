@@ -3,11 +3,12 @@ package daymap
 import (
 	"strings"
 
-	"main/errors"
+	"codeberg.org/kvo/std/errors"
 )
 
-// Arbitrary strings generation mandatory for Daymap fetching.
-// I hope the Daymap developers reconsider their choices.
+// Arbitrary strings generation mandatory for making requests to Daymap.
+// There is no way around using these, unless you can convince the Daymap
+// developers to redesign their software.
 
 var auxClient = []string{
 	`ctl00_ctl00_cp_cp_grdAssignments_ctl00_`,
@@ -114,11 +115,11 @@ type Extractor interface {
 // Advance advances page past the substring bound in page, discarding the
 // contents of page before the substring bound. If bound does not exist in page,
 // an error is returned.
-func (page *Page) Advance(bound string) error {
+func (page *Page) Advance(bound string) errors.Error {
 	strPage := string(*page)
 	i := strings.Index(strPage, bound)
 	if i == -1 {
-		return errors.New("can't find substring")
+		return errors.New("can't find substring", nil)
 	}
 	i += len(bound)
 	*page = Page(strPage[i:])
@@ -128,10 +129,10 @@ func (page *Page) Advance(bound string) error {
 // UpTo extracts substring sub (which starts from the beginning of page and
 // is enclosed by substring bound on the right) from page. If bound does not
 // exist in page, an error is returned.
-func (page Page) UpTo(bound string) (string, error) {
+func (page Page) UpTo(bound string) (string, errors.Error) {
 	i := strings.Index(string(page), bound)
 	if i == -1 {
-		return "", errors.New("can't find substring")
+		return "", errors.New("can't find substring", nil)
 	}
 	return string(page)[:i], nil
 }

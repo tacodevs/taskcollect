@@ -4,28 +4,28 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/kvo/std/errors"
 	"google.golang.org/api/classroom/v1"
 
-	"main/errors"
 	"main/plat"
 )
 
 // Get a list of announcements for a Google Classroom class.
 func classAnnouncements(
 	course *classroom.Course, svc *classroom.Service, annChan chan []plat.Resource,
-	errChan chan error,
+	errChan chan errors.Error,
 ) {
 	announcements := []plat.Resource{}
 
-	resp, err := svc.Courses.Announcements.List(course.Id).Fields(
+	resp, e := svc.Courses.Announcements.List(course.Id).Fields(
 		"announcements/text",
 		"announcements/alternateLink",
 		"announcements/creationTime",
 		"announcements/id",
 	).Do()
-
-	if err != nil {
-		errChan <- errors.NewError("gclass.classAnnouncements", "failed to get course announcements", err)
+	if e != nil {
+		err := errors.New(e.Error(), nil)
+		errChan <- errors.New("failed to get course announcements", err)
 		return
 	}
 
@@ -33,9 +33,8 @@ func classAnnouncements(
 		resource := plat.Resource{}
 
 		resource.Id = course.Id + "-a" + r.Id
-		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
-
-		if err != nil {
+		posted, e := time.Parse(time.RFC3339Nano, r.CreationTime)
+		if e != nil {
 			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 		} else {
 			resource.Posted = posted
@@ -57,28 +56,28 @@ func classAnnouncements(
 	}
 
 	annChan <- announcements
-	errChan <- err
+	errChan <- nil
 }
 
 // Get a list of resources for a Google Classroom class.
 func classResources(
 	course *classroom.Course, svc *classroom.Service, res *[]plat.Resource,
-	e *error, resWG *sync.WaitGroup,
+	e *errors.Error, resWG *sync.WaitGroup,
 ) {
 	defer resWG.Done()
 	annChan := make(chan []plat.Resource)
-	annErrors := make(chan error)
+	annErrors := make(chan errors.Error)
 	go classAnnouncements(course, svc, annChan, annErrors)
 
-	resources, err := svc.Courses.CourseWorkMaterials.List(course.Id).Fields(
+	resources, er := svc.Courses.CourseWorkMaterials.List(course.Id).Fields(
 		"courseWorkMaterial/title",
 		"courseWorkMaterial/alternateLink",
 		"courseWorkMaterial/creationTime",
 		"courseWorkMaterial/id",
 	).Do()
-
-	if err != nil {
-		*e = errors.NewError("gclass.classResources", "failed to get coursework materials", err)
+	if er != nil {
+		err := errors.New(er.Error(), nil)
+		*e = errors.New("failed to get coursework materials", err)
 		return
 	}
 
@@ -86,9 +85,8 @@ func classResources(
 		resource := plat.Resource{}
 
 		resource.Id = course.Id + "-" + r.Id
-		posted, err := time.Parse(time.RFC3339Nano, r.CreationTime)
-
-		if err != nil {
+		posted, er := time.Parse(time.RFC3339Nano, r.CreationTime)
+		if er != nil {
 			resource.Posted = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 		} else {
 			resource.Posted = posted
@@ -102,10 +100,9 @@ func classResources(
 		*res = append(*res, resource)
 	}
 
-	announcements, err := <-annChan, <-annErrors
-
-	if err != nil {
-		*e = err
+	announcements, er := <-annChan, <-annErrors
+	if er != nil {
+		*e = errors.New(er.Error(), nil)
 		return
 	}
 
@@ -115,22 +112,22 @@ func classResources(
 }
 
 // Get a list of resources from Google Classroom for a user.
-func ListRes(creds User, r chan []plat.Resource, e chan []error) {
+func ListRes(creds User, r chan []plat.Resource, e chan []errors.Error) {
 	svc, err := Auth(creds)
 	if err != nil {
 		r <- nil
-		e <- []error{errors.NewError("gclass.ListRes", "Google auth failed", err)}
+		e <- []errors.Error{errors.New("Google auth failed", err)}
 		return
 	}
 
-	resp, err := svc.Courses.List().CourseStates("ACTIVE").Fields(
+	resp, er := svc.Courses.List().CourseStates("ACTIVE").Fields(
 		"courses/name",
 		"courses/id",
 	).Do()
-
-	if err != nil {
+	if er != nil {
+		err = errors.New(er.Error(), nil)
 		r <- nil
-		e <- []error{errors.NewError("gclass.ListRes", "failed to get response", err)}
+		e <- []errors.Error{errors.New("failed to get response", err)}
 		return
 	}
 
@@ -141,7 +138,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 	}
 
 	unordered := make([][]plat.Resource, len(resp.Courses))
-	errs := make([]error, len(resp.Courses))
+	errs := make([]errors.Error, len(resp.Courses))
 	var resWG sync.WaitGroup
 
 	for i, course := range resp.Courses {
@@ -151,7 +148,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 
 	resWG.Wait()
 
-	if !errors.HasOnly(errs, nil) {
+	if errors.Join(errs...) != nil {
 		r <- nil
 		e <- errs
 		return
