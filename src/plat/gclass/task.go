@@ -72,7 +72,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	cid := strings.SplitN(id, "-", 3)
 
 	if len(cid) != 3 {
-		return plat.Task{}, errInvalidTaskID
+		return plat.Task{}, plat.ErrInvalidTaskID.Here()
 	}
 
 	svc, err := Auth(creds)
@@ -228,17 +228,17 @@ func SubmitTask(creds User, id string) error {
 	if err != nil {
 		return errors.NewError("gclass.SubmitTask", "error turning in task", err)
 	}*/
-	return errors.ErrGclassApiRestriction
+	return plat.ErrGclassApiRestriction
 }
 
 // Upload a file as a user's work for a Google Classroom task.
 func UploadWork(creds User, id string, files []plat.File) error {
 	// Upload a file as a submission.
-	return errors.ErrGclassApiRestriction
+	return plat.ErrGclassApiRestriction
 }
 
 // Remove a file (a user's work) from a Google Classroom task.
 func RemoveWork(creds User, id string, filenames []string) error {
 	// Remove file submission.
-	return errors.ErrGclassApiRestriction
+	return plat.ErrGclassApiRestriction
 }

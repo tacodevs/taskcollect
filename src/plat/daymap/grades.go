@@ -28,7 +28,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return taskGrade{}, errInvalidTaskResp
+			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		*webpage = (*webpage)[i:]
@@ -37,7 +37,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return taskGrade{}, errInvalidTaskResp
+			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		grade = (*webpage)[:i]
@@ -50,7 +50,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return taskGrade{}, errInvalidTaskResp
+			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		*webpage = (*webpage)[i:]
@@ -59,7 +59,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return taskGrade{}, errInvalidTaskResp
+			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		markStr := (*webpage)[:i]
@@ -68,7 +68,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
-			return taskGrade{}, errInvalidTaskResp
+			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
 		}
 
 		st := markStr[:x]

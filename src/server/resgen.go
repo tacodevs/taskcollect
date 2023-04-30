@@ -404,7 +404,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 		}
 
 	} else {
-		return data, errors.ErrNotFound
+		return data, plat.ErrNotFound
 	}
 
 	return data, nil

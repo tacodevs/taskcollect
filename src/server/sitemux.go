@@ -213,7 +213,7 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 // Get a task from the given platform.
 func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
 	assignment := plat.Task{}
-	err := errNoPlatform.AsError()
+	var err error = plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -241,7 +241,7 @@ func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
 // Get a resource from the given platform.
 func getResource(platform, resId string, creds plat.User) (plat.Resource, error) {
 	res := plat.Resource{}
-	err := errNoPlatform.AsError()
+	var err error = plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -268,7 +268,7 @@ func getResource(platform, resId string, creds plat.User) (plat.Resource, error)
 
 // Submit task to a given platform.
 func submitTask(creds plat.User, platform, taskId string) error {
-	err := errNoPlatform.AsError()
+	var err error = plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
@@ -319,7 +319,7 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 		return err
 	}
 
-	err = errNoPlatform.AsError()
+	err = plat.ErrNoPlatform.Here()
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
@@ -341,7 +341,7 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 
 // Remove work from a given platform.
 func removeWork(creds plat.User, platform, taskId string, filenames []string) error {
-	err := errNoPlatform.AsError()
+	var err error = plat.ErrNoPlatform.Here()
 
 	switch platform {
 	case "gclass":
