@@ -160,14 +160,14 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gcResLinks, errs := <-gResChan, <-gErrChan
 	for _, err := range errs {
 		if err != nil {
-			logger.Error(errors.New("failed to get list of resources from gclass", err))
+			logger.Debug(errors.New("failed to get list of resources from gclass", err))
 		}
 	}
 
 	dmResLinks, errs := <-dmResChan, <-dmErrChan
 	for _, err := range errs {
 		if err != nil {
-			logger.Error(errors.New("failed to get list of resources from daymap", err))
+			logger.Debug(errors.New("failed to get list of resources from daymap", err))
 		}
 	}
 
