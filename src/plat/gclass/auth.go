@@ -52,7 +52,7 @@ func Auth(creds User) (*classroom.Service, errors.Error) {
 	if e != nil {
 		return nil, errors.New(
 			"failed to decode JSON",
-			errors.New(err.Error(), nil),
+			errors.New(e.Error(), nil),
 		)
 	}
 
