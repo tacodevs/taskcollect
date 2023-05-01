@@ -334,7 +334,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			err = errors.New(e.Error(), nil)
 		}
 
-		if e == nil {
+		if err == nil {
 			w.Header().Set("Location", "/timetable")
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
@@ -348,8 +348,6 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(302)
 			}
 		} else {
-			if e != nil {
-			}
 			logger.Error(errors.New("could not authenticate user", err))
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
