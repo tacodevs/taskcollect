@@ -65,7 +65,10 @@ func auxClassInfo(creds User, link string) (string, string, errors.Error) {
 		err := errors.New(e.Error(), nil)
 		return "", "", errors.New("failed to compile regex", err)
 	}
-	courseId := strings.Split(re.FindString(page), ",")[2]
+	courseId, err := std.Access(strings.Split(re.FindString(page), ","), 2)
+	if err != nil {
+		return "", "", errors.New("cannot get class ID", err)
+	}
 
 	classDiv := `<td><span id="ctl00_ctl00_cp_cp_divHeader" class="Header14" style="padding-left: 20px">`
 	i := strings.Index(page, classDiv)
