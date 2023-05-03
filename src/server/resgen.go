@@ -160,8 +160,8 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 		data.Body.TaskData.DueDate = genDueStr(assignment.Due, creds)
 	}
 
-	if !assignment.Submitted {
-		data.Body.TaskData.Submitted = false
+	if assignment.Submitted {
+		data.Body.TaskData.Submitted = true
 	}
 
 	if assignment.Desc != "" {

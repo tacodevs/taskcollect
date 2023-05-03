@@ -168,8 +168,9 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		task.Score = studSub.AssignedGrade / gc.MaxPoints * 100
 	}
 
-	// task.Submitted will always be false until the Google Classroom
+	// task.Submitted will always be true until the Google Classroom
 	// API supports task submissions.
+	task.Submitted = true
 	/*if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {
 		task.Submitted = true
 	}*/
