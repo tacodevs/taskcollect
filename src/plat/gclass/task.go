@@ -119,9 +119,11 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		Id:       id,
 	}
 
-	if gc.WorkType == "ASSIGNMENT" {
+	// task.Upload will always be false until the Google Classroom API
+	// permits the upload and removal of work submissions.
+	/*if gc.WorkType == "ASSIGNMENT" {
 		task.Upload = true
-	}
+	}*/
 
 	if studSub.AssignmentSubmission != nil {
 		for _, w := range studSub.AssignmentSubmission.Attachments {
@@ -166,9 +168,11 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		task.Score = studSub.AssignedGrade / gc.MaxPoints * 100
 	}
 
-	if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {
+	// task.Submitted will always be false until the Google Classroom
+	// API supports task submissions.
+	/*if studSub.State == "TURNED_IN" || studSub.State == "RETURNED" {
 		task.Submitted = true
-	}
+	}*/
 
 	var hours, minutes, seconds, nanoseconds int
 
