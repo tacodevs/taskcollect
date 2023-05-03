@@ -365,19 +365,21 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 		go gclass.Test(GAuthID, gTok, gTestErr)
 	}
 
-	if gihsAuth(user, pwd) != nil {
+	err = gihsAuth(user, pwd)
+	if err != nil {
+		logger.Debug(errors.New("error in GIHS auth", err))
 		userExists, err := db.findUser(school, user, pwd)
 		if err != nil {
 			return "", errors.New("could not determine if user exists", err)
 		}
 		if !userExists {
-			return "", errors.New("user was not found", plat.ErrAuthFailed.Here())
+			return "", errors.New("user was not found", err)
 		}
 	}
 
 	dmCreds, err := daymap.Auth(school, user, pwd)
 	if err != nil {
-		logger.Warn(errors.New("could not authenticate to Daymap", err))
+		logger.Debug(errors.New("could not authenticate to Daymap", err))
 	}
 
 	siteTokens := map[string]string{
