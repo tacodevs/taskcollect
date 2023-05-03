@@ -221,20 +221,6 @@ var statusDaymapErrorData = pageData{
 	},
 }
 
-var statusGclassErrorData = pageData{
-	PageType: "error",
-	Head: headData{
-		Title: "500 Internal Server Error",
-	},
-	Body: bodyData{
-		ErrorData: errData{
-			Heading: "Google does not allow you to submit tasks, nor upload/remove work.",
-			Message: "Why, you may ask? I don't know! You should ask Google, not me.",
-            InfoLink: "https://codeberg.org/kvo/taskcollect/issues/3",
-		},
-	},
-}
-
 var statusForbiddenData = pageData{
 	PageType: "error",
 	Head: headData{
