@@ -348,7 +348,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(302)
 			}
 		} else {
-			logger.Error(errors.New("could not authenticate user", err))
+			logger.Debug(errors.New("could not authenticate user", err))
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
 		}
