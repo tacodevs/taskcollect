@@ -423,7 +423,6 @@ func genTimetable(creds plat.User) (timetableData, errors.Error) {
 
 			lesson := ttLesson{
 				Class:         day[j].Class,
-				FormattedTime: day[j].Start.Format("15:04") + "–" + day[j].End.Format("15:04"),
 				Height:        height,
 				TopOffset:     topOffset,
 				Room:          day[j].Room,
@@ -433,6 +432,11 @@ func genTimetable(creds plat.User) (timetableData, errors.Error) {
 				BGColor:       hexColor,
 			}
 
+			lesson.FormattedTime = day[j].Start.Format("15:04") + "–" + day[j].End.Format("15:04")
+			lesson.Duration = fmt.Sprintf(
+				"%d mins",
+				int(day[j].End.Sub(day[j].Start).Minutes()),
+			)
 			d.Lessons = append(d.Lessons, lesson)
 		}
 
