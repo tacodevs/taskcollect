@@ -117,7 +117,10 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 	}
 
 	s := l.Start.Format("15:04") + "–" + l.End.Format("15:04")
-	s += ", " + l.Room
+	s += fmt.Sprintf(
+		" (%d mins)",
+		int(l.End.Sub(l.Start).Minutes()),
+	)
 	d.DrawString(s)
 
 	d.Dot = fixed.Point26_6{
@@ -125,7 +128,11 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 		Y: fixed.I(50),
 	}
 
-	d.DrawString(l.Teacher)
+	if l.Teacher != "" {
+		d.DrawString(l.Teacher + ", " + l.Room)
+	} else {
+		d.DrawString(l.Room)
+	}
 	*img = canvas
 }
 
