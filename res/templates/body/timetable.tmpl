@@ -25,9 +25,11 @@
                             {{if ne $lesson.Notice ""}}
                                 <p class="notice">{{$lesson.Notice}}</p>
                             {{end}}
-                            <p class="time-room">{{$lesson.FormattedTime}}, {{$lesson.Room}}</p>
+                            <p class="time-room">{{$lesson.FormattedTime}} ({{$lesson.Duration}})</p>
                             {{if ne $lesson.Teacher ""}}
-                                <p class="teacher">{{$lesson.Teacher}}</p>
+                                <p class="teacher">{{$lesson.Teacher}}, {{$lesson.Room}}</p>
+                            {{else}}
+                                <p class="teacher">{{$lesson.Room}}</p>
                             {{end}}
                         </div>
                     {{end}}

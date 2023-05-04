@@ -62,6 +62,7 @@ type ttDay struct {
 type ttLesson struct {
 	Class         string
 	FormattedTime string
+	Duration      string
 	Height        float64
 	TopOffset     float64
 	Room          string
