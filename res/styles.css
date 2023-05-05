@@ -469,13 +469,27 @@ form[action="/auth"] input[type=submit] {
   padding-bottom: 1.5em;
 }
 #timetable .day > h2 {
+  align-items: center;
+  display: flex;
+  height: 3.35em;
+  justify-content: center;
   margin: 0;
   padding: 1em 0;
   text-align: center;
-  font-size: 1.3rem;
+  font-size: min(1.3rem, 1.3vw);
   background-color: #37373E;
   color: white;
   border-bottom: 2px solid var(--bg-color);
+}
+@media (min-width: 0) and (max-width: 479px) {
+  #timetable .day > h2 {
+    font-size: 1.3rem;
+  }
+}
+@media (min-width: 480px) and (max-width: 767px) {
+  #timetable .day > h2 {
+    font-size: 1.3rem;
+  }
 }
 @media (prefers-color-scheme: dark) {
   #timetable .day > h2 {
