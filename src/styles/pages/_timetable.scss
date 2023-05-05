@@ -30,14 +30,25 @@
         padding-bottom: 1.5em;
 
         >h2 {
+            align-items: center;
+            display: flex;
+            height: 3.35em;
+            justify-content: center;
             margin: 0;
             padding: 1em 0;
-
             text-align: center;
-            font-size: 1.3rem;
+            font-size: min(1.3rem, 1.3vw);
             background-color: #37373E;
             color: white;
             border-bottom: 2px solid var(--bg-color);
+
+            @include bp.xs {
+                font-size: 1.3rem;
+            }
+
+            @include bp.sm {
+                font-size: 1.3rem;
+            }
 
             @media (prefers-color-scheme: dark) {
                 background-color: #37373E;
