@@ -5,11 +5,15 @@ import (
 	"html"
 	"html/template"
 	"image/color"
+	"net/http"
 	"strings"
 	"time"
 
+	htm "codeberg.org/kvo/format/html"
+	"codeberg.org/kvo/format/text"
 	"codeberg.org/kvo/std/errors"
 
+	"main/logger"
 	"main/plat"
 )
 
@@ -165,12 +169,36 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 	}
 
 	if assignment.Desc != "" {
-		taskDesc := assignment.Desc
-		// Escape strings since it will be converted to safe HTML after
-		taskDesc = html.EscapeString(taskDesc)
-		taskDesc = strings.ReplaceAll(taskDesc, "\n", "<br>")
-		data.Body.TaskData.Desc = template.HTML(taskDesc)
+		var err error
+		isHtml := strings.HasPrefix(http.DetectContentType([]byte(assignment.Desc)), "text/html")
+		isLt := strings.HasPrefix(assignment.Desc, "<")
+		if isHtml || isLt {
+			r := strings.NewReader(assignment.Desc)
+			var b strings.Builder
+			var n *htm.Node
+			n, err = htm.Parse(r)
+			if err == nil {
+				err = text.Render(&b, n)
+			}
+			if err == nil {
+				taskDesc := html.EscapeString(b.String())
+				taskDesc = strings.ReplaceAll(taskDesc, "\t", "&emsp;")
+				taskDesc = strings.ReplaceAll(taskDesc, "\n", "<br>")
+				data.Body.TaskData.Desc = template.HTML(taskDesc)
+			}
+		}
+		if err != nil {
+			logger.Debug(err)
+		}
+		if err != nil || !isHtml && !isLt {
+			// Escape strings for conversion to safe HTML.
+			taskDesc := strings.ReplaceAll(assignment.Desc, "<br/>", "")
+			taskDesc = html.EscapeString(taskDesc)
+			taskDesc = strings.ReplaceAll(taskDesc, "\n", "<br>")
+			data.Body.TaskData.Desc = template.HTML(taskDesc)
+		}
 	}
+
 
 	if assignment.ResLinks != nil {
 		data.Body.TaskData.HasResLinks = true
@@ -182,8 +210,6 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 			data.Body.TaskData.ResLinks[name] = url
 		}
 	}
-
-	//logger.Info("%+v\n", data.Body.TaskData.ResLinks)
 
 	if assignment.Upload {
 		data.Body.TaskData.HasUpload = true
@@ -264,11 +290,33 @@ func genResPage(res plat.Resource, creds plat.User) pageData {
 	}
 
 	if res.Desc != "" {
-		resDesc := res.Desc
-		// Escape strings since it will be converted to safe HTML after
-		resDesc = html.EscapeString(resDesc)
-		resDesc = strings.ReplaceAll(resDesc, "\n", "<br>")
-		data.Body.ResourceData.Desc = template.HTML(resDesc)
+		var err error
+		isHtml := strings.HasPrefix(http.DetectContentType([]byte(res.Desc)), "text/html")
+		if isHtml {
+			r := strings.NewReader(res.Desc)
+			var b strings.Builder
+			var n *htm.Node
+			n, err = htm.Parse(r)
+			if err == nil {
+				err = text.Render(&b, n)
+			}
+			if err == nil {
+				resDesc := html.EscapeString(b.String())
+				resDesc = strings.ReplaceAll(resDesc, "\t", "&emsp;")
+				resDesc = strings.ReplaceAll(resDesc, "\n", "<br>")
+				data.Body.ResourceData.Desc = template.HTML(resDesc)
+			}
+		}
+		if err != nil {
+			logger.Debug(err)
+		}
+		if err != nil || !isHtml {
+			// Escape strings for conversion to safe HTML.
+			resDesc := strings.ReplaceAll(res.Desc, "<br/>", "")
+			resDesc = html.EscapeString(resDesc)
+			resDesc = strings.ReplaceAll(resDesc, "\n", "<br>")
+			data.Body.ResourceData.Desc = template.HTML(resDesc)
+		}
 	}
 
 	if res.ResLinks != nil {
