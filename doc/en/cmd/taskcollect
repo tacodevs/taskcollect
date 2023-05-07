@@ -25,7 +25,15 @@ DESCRIPTION
     changed in the config.json file. It is very important to note that on the
     server computer, the Redis server MUST NOT BE EXPOSED TO THE NETWORK. The
     Redis server should only be available on localhost for TaskCollect to
-    operate.
+    operate. The Redis server should have the following configured with at least
+    with the following rules, for security purposes:
+
+        bind 127.0.0.1
+        save ""
+        logfile /path/to/logfile
+
+    Ensure that "/path/to/logfile" is replaced with the absolute path to the
+    log file you intend to use for the Redis server.
 
     ### Google API client
 
