@@ -292,7 +292,8 @@ func genResPage(res plat.Resource, creds plat.User) pageData {
 	if res.Desc != "" {
 		var err error
 		isHtml := strings.HasPrefix(http.DetectContentType([]byte(res.Desc)), "text/html")
-		if isHtml {
+		isLt := strings.HasPrefix(res.Desc, "<")
+		if isHtml || isLt {
 			r := strings.NewReader(res.Desc)
 			var b strings.Builder
 			var n *htm.Node
@@ -310,7 +311,7 @@ func genResPage(res plat.Resource, creds plat.User) pageData {
 		if err != nil {
 			logger.Debug(err)
 		}
-		if err != nil || !isHtml {
+		if err != nil || !isHtml && !isLt {
 			// Escape strings for conversion to safe HTML.
 			resDesc := strings.ReplaceAll(res.Desc, "<br/>", "")
 			resDesc = html.EscapeString(resDesc)
