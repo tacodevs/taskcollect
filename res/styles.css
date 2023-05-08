@@ -835,3 +835,46 @@ input[type=checkbox]:checked {
 input[type=checkbox]:checked::before {
   transform: scale(1);
 }
+
+.loader {
+  margin: auto;
+  top: 50%;
+  bottom: 50%;
+  text-align: center;
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite, wobble 3s linear infinite;
+}
+
+.loader-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% {
+    rotation: 0deg;
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes wobble {
+  50% {
+    border-top-color: #3498db;
+    scale: 1;
+  }
+  80% {
+    border-top-color: orange;
+    scale: 0.8;
+  }
+  100% {
+    border-top-color: #3498db;
+    scale: 1;
+  }
+}
