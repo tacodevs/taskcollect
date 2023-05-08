@@ -849,6 +849,13 @@ input[type=checkbox]:checked::before {
   animation: spin 2s linear infinite, wobble 3s linear infinite;
 }
 
+.loader-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 @keyframes spin {
   0% {
     rotation: 0deg;
