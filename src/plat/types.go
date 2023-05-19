@@ -2,7 +2,6 @@ package plat
 
 import (
 	"image/color"
-	"io"
 	"time"
 )
 
@@ -23,13 +22,6 @@ type Event struct {
 	Category string
 	Color    color.Color
 	Platform string
-}
-
-// File represents a file submission to a platform.
-type File struct {
-	Name     string
-	MimeType string
-	Reader   io.Reader
 }
 
 // Grade represents a grade for a class in a report card.

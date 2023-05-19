@@ -7,7 +7,6 @@ import (
 // Predefined errors for use in TaskCollect.
 var (
 	// Daymap errors
-	ErrDaymapUpload                = errors.New("Daymap task file uploads don't work", nil)
 	ErrGetGradesFailed             = errors.New("failed to get task grades", nil)
 	ErrInvalidDmJson               = errors.New("invalid lessons JSON", nil)
 	ErrInvalidHtmlForm             = errors.New("invalid HTML form", nil)

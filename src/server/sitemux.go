@@ -1,7 +1,7 @@
 package server
 
 import (
-	"io"
+	"mime/multipart"
 	"net/http"
 	"sort"
 
@@ -283,33 +283,14 @@ func submitTask(creds plat.User, platform, taskId string) errors.Error {
 	return err
 }
 
-// Return a slice of plat.File from a multipart MIME file upload request.
-func reqFiles(r *http.Request) ([]plat.File, errors.Error) {
-	defer r.Body.Close()
-	files := []plat.File{}
+// Return an appropriate reader for a multipart MIME file upload request.
+func reqFiles(r *http.Request) (*multipart.Reader, errors.Error) {
 	reader, e := r.MultipartReader()
 	if e != nil {
 		err := errors.New(e.Error(), nil)
-		return nil, err
+		return reader, err
 	}
-
-	part, e := reader.NextPart()
-	for e == nil {
-		file := plat.File{
-			Name:     part.FileName(),
-			MimeType: part.Header.Get("Content-Type"),
-			Reader:   part,
-		}
-		files = append(files, file)
-		part, e = reader.NextPart()
-	}
-	err := errors.New(e.Error(), nil)
-	if e == io.EOF {
-		return files, nil
-	} else {
-		logger.Error(err)
-		return nil, errors.New("failed parsing files from multipart MIME request", err)
-	}
+	return reader, nil
 }
 
 // Upload work to a given platform.

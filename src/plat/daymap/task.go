@@ -1,11 +1,14 @@
 package daymap
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html"
 	"io"
 	"math/rand"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,12 +19,6 @@ import (
 
 	"main/plat"
 )
-
-type chkJson struct {
-	Success bool
-	Error   string
-	FileId  int64
-}
 
 // Return information about a DayMap task by its ID.
 func GetTask(creds User, id string) (plat.Task, errors.Error) {
@@ -295,6 +292,25 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	return task, nil
 }
 
+type chkJson struct {
+	Success bool
+	Error   string
+	FileId  int64
+}
+
+// Generate new block ID for Daymap file upload "chunks".
+func newBlock(n int) string {
+	zeros := "00000"
+	s := zeros + fmt.Sprint(n)
+	s = s[len(s)-3:]
+	b := []byte(s)
+	buf := bytes.NewBufferString("")
+	encoder := base64.NewEncoder(base64.StdEncoding, buf)
+	encoder.Write(b)
+	encoder.Close()
+	return buf.String()
+}
+
 // Return a string of n random characters.
 func randStr(n int) string {
 	rand.Seed(time.Now().UnixNano())
@@ -304,147 +320,238 @@ func randStr(n int) string {
 }
 
 // Upload files from an HTTP request as student file submissions for a DayMap task.
-func UploadWork(creds User, id string, files []plat.File) errors.Error {
-	// TODO: Fix issue #68.
-	return plat.ErrDaymapUpload.Here()
-
+func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 	selectUrl := "https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID="
 	selectUrl += id
 	client := &http.Client{}
+	var e error
 
-	for _, file := range files {
+	file, mimeErr := files.NextPart()
+	for mimeErr == nil {
+		fileName := file.FileName()
 		fileExt := ""
-		dotIndex := strings.LastIndex(file.Name, ".")
+		dotIndex := strings.LastIndex(fileName, ".")
 		if dotIndex != -1 {
-			fileExt = file.Name[dotIndex:]
+			fileExt = fileName[dotIndex:]
+		}
+		blobUrl := "https://glenunga.blob.core.windows.net/daymap/up/%s%s"
+		blobId := fmt.Sprintf(
+			"%s-%s-%s-%s-%s",
+			randStr(8), randStr(4),
+			randStr(4), randStr(4),
+			randStr(12),
+		)
+
+		// Daymap file uploads are series of three repeated requests.
+		// Each third request carries the next "chunk" of the file.
+
+		// Daymap uses 4 MB chunks, so TaskCollect does the same.
+		// NOTE: Ensure that the host has enough memory to support all users!
+		buf := make([]byte, 4000000)
+
+		buflen := 0
+		isLast := 0
+		var blocks []string
+		var chunk io.Reader
+		var s1body []byte
+
+		// Repeat stages 1-3 until the contents of the entire file are sent.
+		for i := 0;; i++ {
+			if isLast == 0 {
+				buflen, e = io.ReadFull(file, buf)
+				if e != nil {
+					isLast = 1
+				}
+				chunk = bytes.NewReader(buf[:buflen])
+			}
+
+			// Stage 1: Retrieve a DayMap upload URL.
+		
+			s1url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx"
+			utc, e := time.LoadLocation("UTC")
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New(`failed to load timezone "UTC"`, err)
+			}
+			timestamp := fmt.Sprintf("%d", time.Now().In(utc).UnixMilli())
+		
+			s1form := url.Values{}
+			s1form.Set("cmd", "UploadSas")
+			s1form.Set("taskId", id)
+			s1form.Set("bloburi", fmt.Sprintf(blobUrl, blobId, fileExt))
+			s1form.Set("_method", "PUT")
+			s1form.Set("qqtimestamp", timestamp)
+		
+			s1url += "?" + s1form.Encode()
+			s1req, e := http.NewRequest("GET", s1url, nil)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("GET request failed", err)
+			}
+		
+			s1req.Header.Set("Accept", "application/json")
+			s1req.Header.Set("Cookie", creds.Token)
+			s1req.Header.Set("Referer", selectUrl)
+		
+			s1resp, e := client.Do(s1req)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("failed to get resp", err)
+			}
+		
+			s1body, e = io.ReadAll(s1resp.Body)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("failed to read resp.Body", err)
+			}
+
+			if isLast == 2 {
+				break
+			}
+
+			// Stage 2: Request the creation of a file on the DayMap file upload server.
+
+			block := newBlock(i)
+			blocks = append(blocks, block)
+			s2url := string(s1body) + `&comp=block&blockid=` + blocks[i]
+
+			s2req, e := http.NewRequest("OPTIONS", s2url, nil)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("OPTIONS request failed", err)
+			}
+	
+			s2req.Header.Set("Accept", "*/*")
+			s2req.Header.Set("Access-Control-Request-Method", "PUT")
+			s2req.Header.Set("Cookie", creds.Token)
+			s2req.Header.Set("Origin", "https://gihs.daymap.net")
+		
+			_, e = client.Do(s2req)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("failed to get resp", err)
+			}
+	
+			// Stage 3: Send file contents and metadata to the DayMap file upload server.
+		
+			s3req, e := http.NewRequest("PUT", s2url, chunk)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("PUT request failed", err)
+			}
+		
+			s3req.Header.Set("Accept", "*/*")
+			s3req.Header.Set("Content-Length", fmt.Sprint(buflen))
+			s3req.Header.Set("Origin", "https://gihs.daymap.net")
+			s3req.Header.Set("x-ms-blob-type", "BlockBlob")
+			s3req.Header.Set("x-ms-meta-LinkID", id)
+			s3req.Header.Set("x-ms-meta-qqfilename", fileName)
+			s3req.Header.Set("x-ms-meta-t", "2")
+
+			_, e = client.Do(s3req)
+			if e != nil {
+				err := errors.New(e.Error(), nil)
+				return errors.New("failed to get resp", err)
+			}
+
+			if isLast == 1 {
+				isLast++
+			}
 		}
 
-		// Stage 1: Retrieve a DayMap upload URL.
-	
-		locUrl := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx"
-		blobUrl := "https://glenunga.blob.core.windows.net/daymap/up/%s%s"
-		blobId := fmt.Sprintf("%s-%s-%s-%s-%s", randStr(8), randStr(4), randStr(4), randStr(4), randStr(12))
-		utc, e := time.LoadLocation("UTC")
-		if e != nil {
-			err := errors.New(e.Error(), nil)
-			return errors.New("failed to load timezone 'UTC'", err)
-		}
-		timestamp := fmt.Sprintf("%d", time.Now().In(utc).UnixMilli())
-	
-		locForm := url.Values{}
-		locForm.Set("cmd", "UploadSas")
-		locForm.Set("taskId", id)
-		locForm.Set("bloburi", fmt.Sprintf(blobUrl, blobId, fileExt))
-		locForm.Set("_method", "PUT")
-		locForm.Set("qqtimestamp", timestamp)
-	
-		locUrl += "?" + locForm.Encode()
-		locReq, e := http.NewRequest("GET", locUrl, nil)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
-			return errors.New("GET request failed", err)
-		}
-	
-		locReq.Header.Set("Accept", "application/json")
-		locReq.Header.Set("Cookie", creds.Token)
-		locReq.Header.Set("Referer", selectUrl)
-	
-		locResp, e := client.Do(locReq)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
-			return errors.New("failed to get resp", err)
-		}
-	
-		locBody, e := io.ReadAll(locResp.Body)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
-			return errors.New("failed to read resp.Body", err)
-		}
-	
-		// Stage 2: Request the creation of a file on the DayMap file upload server.
-	
-		optsUrl := string(locBody)
-		optsReq, e := http.NewRequest("OPTIONS", optsUrl, nil)
+		// Stage 4: Send final OPTIONS request to Daymap file upload server.
+
+		s4url := string(s1body) + `&comp=blocklist`
+		s4req, e := http.NewRequest("OPTIONS", s4url, nil)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("OPTIONS request failed", err)
 		}
 
-		optsReq.Header.Set("Accept", "*/*")
+		s4req.Header.Set("Accept", "*/*")
 		accHeaders := "x-ms-blob-type,x-ms-meta-linkid,x-ms-meta-qqfilename,x-ms-meta-t"
-		optsReq.Header.Set("Access-Control-Request-Headers", accHeaders)
-		optsReq.Header.Set("Access-Control-Request-Method", "PUT")
-		optsReq.Header.Set("Cookie", creds.Token)
-		optsReq.Header.Set("Origin", "https://gihs.daymap.net")
+		s4req.Header.Set("Access-Control-Request-Headers", accHeaders)
+		s4req.Header.Set("Access-Control-Request-Method", "PUT")
+		s4req.Header.Set("Cookie", creds.Token)
+		s4req.Header.Set("Origin", "https://gihs.daymap.net")
 	
-		_, e = client.Do(optsReq)
+		_, e = client.Do(s4req)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to get resp", err)
 		}
 	
-		// Stage 3: Give the DayMap file upload server information on the file to upload.
-	
-		putReq, e := http.NewRequest("PUT", optsUrl, nil)
+		// Stage 5: Send final PUT request to the Daymap file upload server.
+
+		s5form := `<BlockList>`
+		for _, block := range blocks {
+			s5form += fmt.Sprintf(`<Latest>%s</Latest>`, block)
+		}
+		s5form += `</BlockList>`
+		s5data := strings.NewReader(s5form)
+		s5len := fmt.Sprint(len([]byte(s5form)))
+
+		s5req, e := http.NewRequest("PUT", s4url, s5data)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("PUT request failed", err)
 		}
 	
-		putReq.Header.Set("Accept", "*/*")
-		putReq.Header.Set("Content-Type", file.MimeType)
-		putReq.Header.Set("Origin", "https://gihs.daymap.net")
-		putReq.Header.Set("x-ms-blob-type", "BlockBlob")
-		putReq.Header.Set("x-ms-meta-LinkID", id)
-		putReq.Header.Set("x-ms-meta-qqfilename", file.Name)
-		putReq.Header.Set("x-ms-meta-t", "2")
-	
-		_, e = client.Do(putReq)
+		s5req.Header.Set("Accept", "*/*")
+		s5req.Header.Set("Content-Length", s5len)
+		s5req.Header.Set("Content-Type", "text/plain")
+		s5req.Header.Set("Origin", "https://gihs.daymap.net")
+		s5req.Header.Set("x-ms-blob-content-type", "")
+		s5req.Header.Set("x-ms-meta-LinkID", id)
+		s5req.Header.Set("x-ms-meta-qqfilename", fileName)
+		s5req.Header.Set("x-ms-meta-t", "2")
+
+		_, e = client.Do(s5req)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to get resp", err)
 		}
+
+		// Stage 6: Send the concluding POST request to the Daymap server.
 	
-		// Stage 4: Create the file on the DayMap file upload server.
+		s6form := url.Values{}
+		s6form.Set("blob", blobId + fileExt)
+		s6form.Set("uuid", blobId)
+		s6form.Set("name", fileName)
+		s6form.Set("container", "https://glenunga.blob.core.windows.net/daymap/up")
+		s6form.Set("t", "2")
+		s6form.Set("LinkID", id)
 	
-		chkForm := url.Values{}
-		chkForm.Set("blob", blobId + fileExt)
-		chkForm.Set("uuid", blobId)
-		chkForm.Set("name", file.Name)
-		chkForm.Set("container", "https://glenunga.blob.core.windows.net/daymap/up")
-		chkForm.Set("t", "2")
-		chkForm.Set("LinkID", id)
+		s6data := strings.NewReader(s6form.Encode())
+		s6url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx?cmd=UploadSuccess&taskId=" + id
 	
-		chkData := strings.NewReader(chkForm.Encode())
-		chkUrl := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx?cmd=UploadSuccess&taskId=" + id
-	
-		chkReq, e := http.NewRequest("POST", chkUrl, chkData)
+		s6req, e := http.NewRequest("POST", s6url, s6data)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("POST request failed", err)
 		}
 	
-		chkReq.Header.Set("Accept", "application/json")
-		chkReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		chkReq.Header.Set("Cookie", creds.Token)
-		chkReq.Header.Set("Origin", "https://gihs.daymap.net")
-		chkReq.Header.Set("Referer", selectUrl)
-		chkReq.Header.Set("X-Requested-With", "XMLHttpRequest")
+		s6req.Header.Set("Accept", "application/json")
+		s6req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		s6req.Header.Set("Cookie", creds.Token)
+		s6req.Header.Set("Origin", "https://gihs.daymap.net")
+		s6req.Header.Set("Referer", selectUrl)
+		s6req.Header.Set("X-Requested-With", "XMLHttpRequest")
 	
-		chkResp, e := client.Do(chkReq)
+		s6resp, e := client.Do(s6req)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to get resp", err)
 		}
 	
-		chkBody, e := io.ReadAll(chkResp.Body)
+		s6body, e := io.ReadAll(s6resp.Body)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to read resp.Body", err)
 		}
 	
 		jsonResp := chkJson{}
-		e = json.Unmarshal(chkBody, &jsonResp)
+		e = json.Unmarshal(s6body, &jsonResp)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to unmarshal JSON", err)
@@ -453,6 +560,15 @@ func UploadWork(creds User, id string, files []plat.File) errors.Error {
 		if !jsonResp.Success || jsonResp.Error != "" {
 			return errors.New("DayMap returned error", errors.New(jsonResp.Error, nil))
 		}
+
+		file, mimeErr = files.NextPart()
+	}
+
+	err := errors.New(mimeErr.Error(), nil)
+	if mimeErr == io.EOF {
+		return nil
+	} else {
+		return errors.New("failed parsing files from multipart MIME request", err)
 	}
 
 	return nil

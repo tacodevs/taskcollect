@@ -40,11 +40,7 @@ func (h *handler) handleTask(r *http.Request, creds plat.User, platform, id, cmd
 		}
 	} else if cmd == "upload" {
 		err := uploadWork(creds, platform, id, r)
-		if errors.Is(err, plat.ErrDaymapUpload) {
-			logger.Error(errors.New("failed to submit task", err))
-			data = statusDaymapErrorData
-			statusCode = 500
-		} else if err != nil {
+		if err != nil {
 			logger.Debug(errors.New("failed to upload work", err))
 			data = statusServerErrorData
 			statusCode = 500

@@ -1,6 +1,7 @@
 package gclass
 
 import (
+	"mime/multipart"
 	"net/url"
 	"strings"
 	"time"
@@ -242,7 +243,7 @@ func SubmitTask(creds User, id string) errors.Error {
 }
 
 // Upload a file as a user's work for a Google Classroom task.
-func UploadWork(creds User, id string, files []plat.File) errors.Error {
+func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 	// Upload a file as a submission.
 	return plat.ErrGclassApiRestriction
 }
