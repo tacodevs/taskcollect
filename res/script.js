@@ -8,6 +8,11 @@ document.addEventListener('click', function (event) {
 <div class="loader" scale=1></div>
 <div>`
   if (["A", "BUTTON"].includes(event.target.tagName)) {
+	// Skip middle clicks and ctrl+clicks	
+	if (event.ctrlKey || event.which == 2) return;
+	// Skip linked resource inside list
+	if (event.target.parentNode.tagName == "LI") return;
+	
     // Select everything that isn't the navigation bar and remove it.
     var divs = document.querySelectorAll("body > *:not(header)");
     for (i = 0; i < divs.length; i++) {
