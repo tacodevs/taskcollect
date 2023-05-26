@@ -17,7 +17,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: #2a2a2f;
+    --bg-color: #222226;
     --bg-hover-color: #3f3f46;
     --fg-color: #ffffff;
     --input-color: #494953;
