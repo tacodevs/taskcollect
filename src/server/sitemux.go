@@ -80,14 +80,16 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	t := map[string][]plat.Task{}
 	tasks := map[string][]plat.Task{}
 
-	gcTasks, gcErrs := <-gcChan, <-gcErrChan
-	for _, classErrs := range gcErrs {
-		for _, err := range classErrs {
-			if err != nil {
-				logger.Error(errors.New("failed to get task list from gclass", err))
+	for errs := range gcErrChan {
+		for _, i := range errs {
+			for _, j := range i {
+				if j != nil {
+					logger.Error(errors.New("failed to get task list from gclass", j))
+				}
 			}
 		}
 	}
+	gcTasks := <-gcChan
 
 	dmTasks, dmErrs := <-dmChan, <-dmErrChan
 	for _, classErrs := range dmErrs {
