@@ -199,7 +199,6 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 		}
 	}
 
-
 	if assignment.ResLinks != nil {
 		data.Body.TaskData.HasResLinks = true
 
@@ -445,7 +444,11 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, errors.Er
 		data.PageType = "grades"
 		data.Head.Title = "Grades"
 
-		tasks := gradedTasks(creds)
+		tasks, err := schools[creds.School].Graded(creds)
+		if err != nil {
+			return data, errors.New("failed getting graded tasks", err)
+		}
+
 		for _, task := range tasks {
 			data.Body.GradesData.Tasks = append(
 				data.Body.GradesData.Tasks,

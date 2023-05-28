@@ -356,7 +356,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		var s1body []byte
 
 		// Repeat stages 1-3 until the contents of the entire file are sent.
-		for i := 0;; i++ {
+		for i := 0; ; i++ {
 			if isLast == 0 {
 				buflen, e = io.ReadFull(file, buf)
 				if e != nil {
@@ -366,7 +366,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			}
 
 			// Stage 1: Retrieve a DayMap upload URL.
-		
+
 			s1url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx"
 			utc, e := time.LoadLocation("UTC")
 			if e != nil {
@@ -374,31 +374,31 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 				return errors.New(`failed to load timezone "UTC"`, err)
 			}
 			timestamp := fmt.Sprintf("%d", time.Now().In(utc).UnixMilli())
-		
+
 			s1form := url.Values{}
 			s1form.Set("cmd", "UploadSas")
 			s1form.Set("taskId", id)
 			s1form.Set("bloburi", fmt.Sprintf(blobUrl, blobId, fileExt))
 			s1form.Set("_method", "PUT")
 			s1form.Set("qqtimestamp", timestamp)
-		
+
 			s1url += "?" + s1form.Encode()
 			s1req, e := http.NewRequest("GET", s1url, nil)
 			if e != nil {
 				err := errors.New(e.Error(), nil)
 				return errors.New("GET request failed", err)
 			}
-		
+
 			s1req.Header.Set("Accept", "application/json")
 			s1req.Header.Set("Cookie", creds.Token)
 			s1req.Header.Set("Referer", selectUrl)
-		
+
 			s1resp, e := client.Do(s1req)
 			if e != nil {
 				err := errors.New(e.Error(), nil)
 				return errors.New("failed to get resp", err)
 			}
-		
+
 			s1body, e = io.ReadAll(s1resp.Body)
 			if e != nil {
 				err := errors.New(e.Error(), nil)
@@ -420,26 +420,26 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 				err := errors.New(e.Error(), nil)
 				return errors.New("OPTIONS request failed", err)
 			}
-	
+
 			s2req.Header.Set("Accept", "*/*")
 			s2req.Header.Set("Access-Control-Request-Method", "PUT")
 			s2req.Header.Set("Cookie", creds.Token)
 			s2req.Header.Set("Origin", "https://gihs.daymap.net")
-		
+
 			_, e = client.Do(s2req)
 			if e != nil {
 				err := errors.New(e.Error(), nil)
 				return errors.New("failed to get resp", err)
 			}
-	
+
 			// Stage 3: Send file contents and metadata to the DayMap file upload server.
-		
+
 			s3req, e := http.NewRequest("PUT", s2url, chunk)
 			if e != nil {
 				err := errors.New(e.Error(), nil)
 				return errors.New("PUT request failed", err)
 			}
-		
+
 			s3req.Header.Set("Accept", "*/*")
 			s3req.Header.Set("Content-Length", fmt.Sprint(buflen))
 			s3req.Header.Set("Origin", "https://gihs.daymap.net")
@@ -474,13 +474,13 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		s4req.Header.Set("Access-Control-Request-Method", "PUT")
 		s4req.Header.Set("Cookie", creds.Token)
 		s4req.Header.Set("Origin", "https://gihs.daymap.net")
-	
+
 		_, e = client.Do(s4req)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to get resp", err)
 		}
-	
+
 		// Stage 5: Send final PUT request to the Daymap file upload server.
 
 		s5form := `<BlockList>`
@@ -496,7 +496,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			err := errors.New(e.Error(), nil)
 			return errors.New("PUT request failed", err)
 		}
-	
+
 		s5req.Header.Set("Accept", "*/*")
 		s5req.Header.Set("Content-Length", s5len)
 		s5req.Header.Set("Content-Type", "text/plain")
@@ -513,50 +513,50 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		}
 
 		// Stage 6: Send the concluding POST request to the Daymap server.
-	
+
 		s6form := url.Values{}
-		s6form.Set("blob", blobId + fileExt)
+		s6form.Set("blob", blobId+fileExt)
 		s6form.Set("uuid", blobId)
 		s6form.Set("name", fileName)
 		s6form.Set("container", "https://glenunga.blob.core.windows.net/daymap/up")
 		s6form.Set("t", "2")
 		s6form.Set("LinkID", id)
-	
+
 		s6data := strings.NewReader(s6form.Encode())
 		s6url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx?cmd=UploadSuccess&taskId=" + id
-	
+
 		s6req, e := http.NewRequest("POST", s6url, s6data)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("POST request failed", err)
 		}
-	
+
 		s6req.Header.Set("Accept", "application/json")
 		s6req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		s6req.Header.Set("Cookie", creds.Token)
 		s6req.Header.Set("Origin", "https://gihs.daymap.net")
 		s6req.Header.Set("Referer", selectUrl)
 		s6req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	
+
 		s6resp, e := client.Do(s6req)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to get resp", err)
 		}
-	
+
 		s6body, e := io.ReadAll(s6resp.Body)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to read resp.Body", err)
 		}
-	
+
 		jsonResp := chkJson{}
 		e = json.Unmarshal(s6body, &jsonResp)
 		if e != nil {
 			err := errors.New(e.Error(), nil)
 			return errors.New("failed to unmarshal JSON", err)
 		}
-	
+
 		if !jsonResp.Success || jsonResp.Error != "" {
 			return errors.New("DayMap returned error", errors.New(jsonResp.Error, nil))
 		}

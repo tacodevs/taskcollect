@@ -51,6 +51,7 @@ func Run(tcVersion string, tlsConn bool) {
 	}
 
 	logger.Info("Running %v", tcVersion)
+	configMux()
 
 	var password string
 	fmt.Print("Password to Redis database: ")
@@ -67,7 +68,7 @@ func Run(tcVersion string, tlsConn bool) {
 	newRedisDB := initDB(dbAddr, password, dbIdx)
 	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)
 
-	GAuthID, e = os.ReadFile(fp.Join(resPath, "gauth.json"))
+	plat.GAuthID, e = os.ReadFile(fp.Join(resPath, "gauth.json"))
 	if e != nil {
 		err = errors.New(e.Error(), nil)
 		logger.Fatal(errors.New("Google client ID "+plat.ErrFileRead.Error(), err))

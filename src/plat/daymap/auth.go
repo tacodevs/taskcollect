@@ -139,7 +139,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s2cookieRd := http.Cookie{Name: "redirecturi", Value: s2redirect}
 
 	s2cookieRl := http.Cookie{
-		Name: "relaystate",
+		Name:  "relaystate",
 		Value: s2relay,
 	}
 
@@ -177,7 +177,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s2req.Header.Set("Origin", "https://portal.edpass.sa.edu.au")
 	s2req.Header.Set(
 		"Referer",
-		"https://portal.edpass.sa.edu.au/signin/refresh-auth-state/" + s2token,
+		"https://portal.edpass.sa.edu.au/signin/refresh-auth-state/"+s2token,
 	)
 	s2req.Header.Set(
 		"X-Okta-User-Agent-Extended",

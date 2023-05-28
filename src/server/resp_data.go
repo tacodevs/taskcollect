@@ -206,7 +206,7 @@ var statusServerErrorData = pageData{
 }
 
 var daymapErrMsg = `We're trying to figure out how Daymap uploads work, but in ` +
-`the meantime, please go back and use "open task in source platform" to upload work.`
+	`the meantime, please go back and use "open task in source platform" to upload work.`
 
 var statusDaymapErrorData = pageData{
 	PageType: "error",
@@ -215,8 +215,8 @@ var statusDaymapErrorData = pageData{
 	},
 	Body: bodyData{
 		ErrorData: errData{
-			Heading: "Daymap uploads don't currently work",
-			Message: daymapErrMsg,
+			Heading:  "Daymap uploads don't currently work",
+			Message:  daymapErrMsg,
 			InfoLink: "https://codeberg.org/kvo/taskcollect/issues/68",
 		},
 	},
