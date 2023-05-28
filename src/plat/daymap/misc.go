@@ -85,21 +85,16 @@ var tasksFormValues = parseAux(tasksFormStructs)
 // necessary for DayMap data fetching.
 func parseAux(auxStructs [][2][]string) map[string]string {
 	auxValues := map[string]string{}
-
 	for _, array := range auxStructs {
 		var key, value string
-
 		for _, s := range array[0] {
 			key += s
 		}
-
 		for _, s := range array[1] {
 			value += s
 		}
-
 		auxValues[key] = value
 	}
-
 	return auxValues
 }
 
