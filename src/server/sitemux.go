@@ -7,11 +7,34 @@ import (
 
 	"codeberg.org/kvo/std/errors"
 
-	"main/plat/daymap"
-	"main/plat/gclass"
 	"main/logger"
 	"main/plat"
+	"main/plat/daymap"
+	"main/plat/gclass"
 )
+
+// Map of school names to the associated platform multiplexers.
+var schools = map[string]*plat.Mux{}
+
+// configMux configures the school platform multiplexers.
+func configMux() {
+	schools["gihs"] = plat.NewMux()
+	//schools["gihs"].AddAuth(saml.Auth)
+	//schools["gihs"].AddAuth(daymap.Auth)
+	//schools["gihs"].AddAuth(gclass.Auth)
+	//schools["gihs"].AddClasses(daymap.Classes)
+	//schools["gihs"].AddClasses(gclass.Classes)
+	//schools["gihs"].AddDueTasks(daymap.DueTasks)
+	//schools["gihs"].AddDueTasks(gclass.DueTasks)
+	//schools["gihs"].AddEvents(outlook.Events)
+	schools["gihs"].AddGraded(daymap.Graded)
+	schools["gihs"].AddGraded(gclass.Graded)
+	//schools["gihs"].AddItems(daymap.Items)
+	//schools["gihs"].AddItems(gclass.Items)
+	//schools["gihs"].SetLessons(daymap.Lessons)
+	//schools["gihs"].AddMessages(daymap.Messages)
+	//schools["gihs"].SetReports(learnprof.Reports)
+}
 
 func getLessons(creds plat.User) ([][]plat.Lesson, errors.Error) {
 	lessons := [][]plat.Lesson{}
@@ -42,22 +65,17 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	gcErrChan := make(chan [][]errors.Error)
 
 	gcCreds := gclass.User{
-		ClientID: GAuthID,
+		ClientID: plat.GAuthID,
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["gclass"],
 	}
 
-	go gclass.ListTasks(gcCreds, gcChan, gcErrChan)
+	finished := -1
+	go gclass.ListTasks(gcCreds, gcChan, gcErrChan, &finished)
 
 	dmChan := make(chan map[string][]plat.Task)
 	dmErrChan := make(chan [][]errors.Error)
-
-	dmCreds := daymap.User{
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["daymap"],
-	}
-
-	go daymap.ListTasks(dmCreds, dmChan, dmErrChan)
+	go daymap.ListTasks(creds, dmChan, dmErrChan)
 
 	t := map[string][]plat.Task{}
 	tasks := map[string][]plat.Task{}
@@ -138,7 +156,7 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gErrChan := make(chan []errors.Error)
 
 	gcCreds := gclass.User{
-		ClientID: GAuthID,
+		ClientID: plat.GAuthID,
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["gclass"],
 	}
@@ -218,7 +236,7 @@ func getTask(platform, taskId string, creds plat.User) (plat.Task, errors.Error)
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: GAuthID,
+			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -246,7 +264,7 @@ func getResource(platform, resId string, creds plat.User) (plat.Resource, errors
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: GAuthID,
+			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -273,7 +291,7 @@ func submitTask(creds plat.User, platform, taskId string) errors.Error {
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: GAuthID,
+			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -304,7 +322,7 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: GAuthID,
+			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -327,7 +345,7 @@ func removeWork(creds plat.User, platform, taskId string, filenames []string) er
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: GAuthID,
+			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -341,76 +359,4 @@ func removeWork(creds plat.User, platform, taskId string, filenames []string) er
 	}
 
 	return err
-}
-
-// Return graded tasks from all supported platforms.
-func gradedTasks(creds plat.User) []plat.Task {
-	gcChan := make(chan []plat.Task)
-	gcErrChan := make(chan [][]errors.Error)
-
-	gcCreds := gclass.User{
-		ClientID: GAuthID,
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["gclass"],
-	}
-
-	go gclass.GradedTasks(gcCreds, gcChan, gcErrChan)
-
-	dmChan := make(chan []plat.Task)
-	dmErrChan := make(chan [][]errors.Error)
-
-	dmCreds := daymap.User{
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["daymap"],
-	}
-
-	go daymap.GradedTasks(dmCreds, dmChan, dmErrChan)
-
-	unordered := []plat.Task{}
-
-	gcTasks, gcErrs := <-gcChan, <-gcErrChan
-	for _, classErrs := range gcErrs {
-		for _, err := range classErrs {
-			if err != nil {
-				logger.Error(errors.New("failed to get graded tasks from gclass", err))
-			}
-		}
-	}
-
-	dmTasks, dmErrs := <-dmChan, <-dmErrChan
-	for _, classErrs := range dmErrs {
-		for _, err := range classErrs {
-			if err != nil {
-				logger.Error(errors.New("failed to get graded list from daymap", err))
-			}
-		}
-	}
-
-	for _, gcTask := range gcTasks {
-		unordered = append(unordered, plat.Task(gcTask))
-	}
-
-	for _, dmTask := range dmTasks {
-		unordered = append(unordered, plat.Task(dmTask))
-	}
-
-	times := map[int]int64{}
-	taskIndexes := []int{}
-
-	for i, task := range unordered {
-		times[i] = int64(task.Posted.UTC().Unix())
-		taskIndexes = append(taskIndexes, i)
-	}
-
-	sort.SliceStable(taskIndexes, func(i, j int) bool {
-		return times[taskIndexes[i]] > times[taskIndexes[j]]
-	})
-
-	tasks := []plat.Task{}
-
-	for _, i := range taskIndexes {
-		tasks = append(tasks, unordered[i])
-	}
-
-	return tasks
 }

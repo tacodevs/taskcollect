@@ -7,18 +7,25 @@ import (
 	"codeberg.org/kvo/std/errors"
 )
 
+// Global variable which holds an in-memory copy of the Google OAuth client ID
+// file.
+//
+// This is a kluge. Google Classroom auth must be made to function in the same
+// way as authentication for all other supported platforms.
+var GAuthID []byte
+
 // Mux is a platform multiplexer. Methods can be invoked on it to select the
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.
 type Mux struct {
-	auth     []func(User, chan [2]string, chan errors.Error)
-	classes  []func(User, chan []Class, chan errors.Error)
-	duetasks []func(User, chan []Task, chan errors.Error)
-	events   []func(User, chan []Event, chan errors.Error)
-	graded   []func(User, chan []Task, chan errors.Error)
-	items    []func(User, chan []Item, chan errors.Error, []Class)
+	auth     []func(User, chan [2]string, chan errors.Error, *int)
+	classes  []func(User, chan []Class, chan errors.Error, *int)
+	duetasks []func(User, chan []Task, chan errors.Error, *int)
+	events   []func(User, chan []Event, chan errors.Error, *int)
+	graded   []func(User, chan []Task, chan errors.Error, *int)
+	items    []func(User, chan []Item, chan errors.Error, []Class, *int)
 	lessons  func(User, time.Time, time.Time) ([]Lesson, errors.Error)
-	messages []func(User, chan []Message, chan errors.Error)
+	messages []func(User, chan []Message, chan errors.Error, *int)
 	reports  func(User) ([]Report, errors.Error)
 }
 
@@ -29,43 +36,43 @@ func NewMux() *Mux {
 
 // AddAuth adds the authentication function f to m for platform authentication
 // multiplexing.
-func (m *Mux) AddAuth(f func(User, chan [2]string, chan errors.Error)) {
+func (m *Mux) AddAuth(f func(User, chan [2]string, chan errors.Error, *int)) {
 	m.auth = append(m.auth, f)
 }
 
 // AddClasses adds the class list retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddClasses(f func(User, chan []Class, chan errors.Error)) {
+func (m *Mux) AddClasses(f func(User, chan []Class, chan errors.Error, *int)) {
 	m.classes = append(m.classes, f)
 }
 
 // AddDueTasks adds the active tasks retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddDueTasks(f func(User, chan []Task, chan errors.Error)) {
+func (m *Mux) AddDueTasks(f func(User, chan []Task, chan errors.Error, *int)) {
 	m.duetasks = append(m.duetasks, f)
 }
 
 // AddEvents adds the calendar events retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddEvents(f func(User, chan []Event, chan errors.Error)) {
+func (m *Mux) AddEvents(f func(User, chan []Event, chan errors.Error, *int)) {
 	m.events = append(m.events, f)
 }
 
 // AddGraded adds the graded tasks retrieval function f to m for platform
 // mulitplexing.
-func (m *Mux) AddGraded(f func(User, chan []Task, chan errors.Error)) {
+func (m *Mux) AddGraded(f func(User, chan []Task, chan errors.Error, *int)) {
 	m.graded = append(m.graded, f)
 }
 
 // AddItems adds the class tasks/resources retrieval function f to m for
 // platform multiplexing.
-func (m *Mux) AddItems(f func(User, chan []Item, chan errors.Error, []Class)) {
+func (m *Mux) AddItems(f func(User, chan []Item, chan errors.Error, []Class, *int)) {
 	m.items = append(m.items, f)
 }
 
 // AddMessages adds the unread messages retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddMessages(f func(User, chan []Message, chan errors.Error)) {
+func (m *Mux) AddMessages(f func(User, chan []Message, chan errors.Error, *int)) {
 	m.messages = append(m.messages, f)
 }
 
@@ -88,10 +95,12 @@ func (m *Mux) SetReports(f func(User) ([]Report, errors.Error)) {
 // An error is returned if no platform multiplexed by m can verify the
 // authenticity of the provided *creds.
 func (m *Mux) Auth(creds *User) errors.Error {
-	c := make(chan [2]string)
+	ch := make(chan [2]string)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.auth {
-		go f(*creds, c, errs)
+		finished--
+		go f(*creds, ch, errs, &finished)
 	}
 	var err errors.Error
 	valid := false
@@ -104,7 +113,7 @@ func (m *Mux) Auth(creds *User) errors.Error {
 	if !valid {
 		return err
 	}
-	for token := range c {
+	for token := range ch {
 		(*creds).SiteTokens[token[0]] = token[1]
 	}
 	return nil
@@ -113,17 +122,19 @@ func (m *Mux) Auth(creds *User) errors.Error {
 // Classes returns a list of classes from all platforms multiplexed by m.
 func (m *Mux) Classes(creds User) ([]Class, errors.Error) {
 	var classes []Class
-	c := make(chan []Class)
+	ch := make(chan []Class)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.classes {
-		go f(creds, c, errs)
+		finished--
+		go f(creds, ch, errs, &finished)
 	}
 	for err := range errs {
 		if err != nil {
 			return nil, err
 		}
 	}
-	for list := range c {
+	for list := range ch {
 		classes = append(classes, list...)
 	}
 	sort.SliceStable(classes, func(i, j int) bool {
@@ -135,17 +146,19 @@ func (m *Mux) Classes(creds User) ([]Class, errors.Error) {
 // DueTasks returns a list of active tasks from all platforms multiplexed by m.
 func (m *Mux) DueTasks(creds User) ([]Task, errors.Error) {
 	var active []Task
-	c := make(chan []Task)
+	ch := make(chan []Task)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.duetasks {
-		go f(creds, c, errs)
+		finished--
+		go f(creds, ch, errs, &finished)
 	}
 	for err := range errs {
 		if err != nil {
 			return nil, err
 		}
 	}
-	for list := range c {
+	for list := range ch {
 		active = append(active, list...)
 	}
 	sort.SliceStable(active, func(i, j int) bool {
@@ -157,17 +170,19 @@ func (m *Mux) DueTasks(creds User) ([]Task, errors.Error) {
 // Events returns a list of calendar events from all platforms multiplexed by m.
 func (m *Mux) Events(creds User) ([]Event, errors.Error) {
 	var events []Event
-	c := make(chan []Event)
+	ch := make(chan []Event)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.events {
-		go f(creds, c, errs)
+		finished--
+		go f(creds, ch, errs, &finished)
 	}
 	for err := range errs {
 		if err != nil {
 			return nil, err
 		}
 	}
-	for list := range c {
+	for list := range ch {
 		events = append(events, list...)
 	}
 	sort.SliceStable(events, func(i, j int) bool {
@@ -179,17 +194,19 @@ func (m *Mux) Events(creds User) ([]Event, errors.Error) {
 // Graded returns a list of graded tasks from all platforms multiplexed by m.
 func (m *Mux) Graded(creds User) ([]Task, errors.Error) {
 	var graded []Task
-	c := make(chan []Task)
+	ch := make(chan []Task)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.graded {
-		go f(creds, c, errs)
+		finished--
+		go f(creds, ch, errs, &finished)
 	}
 	for err := range errs {
 		if err != nil {
 			return nil, err
 		}
 	}
-	for list := range c {
+	for list := range ch {
 		graded = append(graded, list...)
 	}
 	sort.SliceStable(graded, func(i, j int) bool {
@@ -201,17 +218,19 @@ func (m *Mux) Graded(creds User) ([]Task, errors.Error) {
 // Items returns a list of tasks and resources for all specified classes.
 func (m *Mux) Items(creds User, classes ...Class) ([]Item, errors.Error) {
 	var items []Item
-	c := make(chan []Item)
+	ch := make(chan []Item)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.items {
-		go f(creds, c, errs, classes)
+		finished--
+		go f(creds, ch, errs, classes, &finished)
 	}
 	for err := range errs {
 		if err != nil {
 			return nil, err
 		}
 	}
-	for list := range c {
+	for list := range ch {
 		items = append(items, list...)
 	}
 	sort.SliceStable(items, func(i, j int) bool {
@@ -235,17 +254,19 @@ func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, errors.Error)
 // Messages returns all unread messages from all platforms multiplexed by m.
 func (m *Mux) Messages(creds User) ([]Message, errors.Error) {
 	var messages []Message
-	c := make(chan []Message)
+	ch := make(chan []Message)
 	errs := make(chan errors.Error)
+	var finished int
 	for _, f := range m.messages {
-		go f(creds, c, errs)
+		finished--
+		go f(creds, ch, errs, &finished)
 	}
 	for err := range errs {
 		if err != nil {
 			return nil, err
 		}
 	}
-	for list := range c {
+	for list := range ch {
 		messages = append(messages, list...)
 	}
 	sort.SliceStable(messages, func(i, j int) bool {
@@ -264,4 +285,20 @@ func (m *Mux) Reports(creds User) ([]Report, errors.Error) {
 		return reports[i].Released.After(reports[j].Released)
 	})
 	return reports, nil
+}
+
+// Deliver sends *t to channel c, and closes c if the calling goroutine is the
+// last goroutine to use the channel (i.e. when *done == 0).
+func Deliver[T any](c chan T, t *T, done *int) {
+	finished := *done
+	c <- *t
+	if finished == 0 {
+		close(c)
+	}
+}
+
+// Done specifies that the calling goroutine is finished using a channel shared
+// by multiple goroutines.
+func Done(done *int) {
+	*done++
 }

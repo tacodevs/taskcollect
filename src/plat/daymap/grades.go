@@ -99,7 +99,7 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 }
 
 // Retrieve the grade given to a student for a particular DayMap task.
-func getGrade(creds User, id string, result *taskGrade, e *errors.Error, wg *sync.WaitGroup) {
+func getGrade(creds plat.User, id string, result *taskGrade, e *errors.Error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 	client := &http.Client{}
@@ -112,7 +112,7 @@ func getGrade(creds User, id string, result *taskGrade, e *errors.Error, wg *syn
 		)
 		return
 	}
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -136,11 +136,16 @@ func getGrade(creds User, id string, result *taskGrade, e *errors.Error, wg *syn
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func GradedTasks(creds User, t chan []plat.Task, e chan [][]errors.Error) {
+func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int) {
+	var tasks []plat.Task
+	var err errors.Error
+
+	defer plat.Deliver(c, &tasks, done)
+	defer plat.Deliver(ok, &err, done)
+	defer plat.Done(done)
+
 	webpage, err := tasksPage(creds)
 	if err != nil {
-		t <- nil
-		e <- [][]errors.Error{{err}}
 		return
 	}
 
@@ -264,8 +269,7 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]errors.Error) {
 	}
 
 	if strErr != "" {
-		t <- nil
-		e <- [][]errors.Error{{errors.New(strErr, err)}}
+		err = errors.New(strErr, err)
 		return
 	}
 
@@ -281,8 +285,7 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]errors.Error) {
 	wg.Wait()
 
 	if errors.Join(errs...) != nil {
-		t <- nil
-		e <- [][]errors.Error{errs}
+		err = errors.Join(errs...)
 		return
 	}
 
@@ -296,14 +299,11 @@ func GradedTasks(creds User, t chan []plat.Task, e chan [][]errors.Error) {
 		}
 	}
 
-	tasks := []plat.Task{}
-
 	for _, task := range unsorted {
 		if task.Graded == true {
 			tasks = append(tasks, task)
 		}
 	}
 
-	t <- tasks
-	e <- nil
+	err = nil
 }

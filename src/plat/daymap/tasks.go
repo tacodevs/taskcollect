@@ -13,7 +13,7 @@ import (
 )
 
 // Retrieve a webpage of all DayMap tasks for a user.
-func tasksPage(creds User) (string, errors.Error) {
+func tasksPage(creds plat.User) (string, errors.Error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
 
@@ -23,7 +23,7 @@ func tasksPage(creds User) (string, errors.Error) {
 		return "", errors.New("GET request failed", err)
 	}
 
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
 	resp, e := client.Do(req)
 	if e != nil {
 		err := errors.New(e.Error(), nil)
@@ -118,7 +118,7 @@ func tasksPage(creds User) (string, errors.Error) {
 	}
 
 	fullReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	fullReq.Header.Set("Cookie", creds.Token)
+	fullReq.Header.Set("Cookie", creds.SiteTokens["daymap"])
 
 	full, e := client.Do(fullReq)
 	if e != nil {
@@ -136,7 +136,7 @@ func tasksPage(creds User) (string, errors.Error) {
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]errors.Error) {
+func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors.Error) {
 	var er error
 
 	b, err := tasksPage(creds)

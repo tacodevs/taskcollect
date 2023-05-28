@@ -19,18 +19,11 @@ import (
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/oauth2"
 
-	"main/plat/daymap"
-	"main/plat/gclass"
 	"main/logger"
 	"main/plat"
+	"main/plat/daymap"
+	"main/plat/gclass"
 )
-
-// Global variable which holds an in-memory copy of the Google OAuth client ID
-// file.
-//
-// This is a kluge. Google Classroom auth must be made to function in the same
-// way as authentication for all other supported platforms.
-var GAuthID []byte
 
 // Attempt to get GIHS Daily Access home page using a username and password.
 // Used for authenticating GIHS students.
@@ -362,7 +355,7 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 	gTestErr := make(chan errors.Error)
 
 	if gTok != "" {
-		go gclass.Test(GAuthID, gTok, gTestErr)
+		go gclass.Test(plat.GAuthID, gTok, gTestErr)
 	}
 
 	var dmCreds daymap.User

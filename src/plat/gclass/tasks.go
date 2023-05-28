@@ -113,55 +113,56 @@ func getSubmissions(c *classroom.Course, svc *classroom.Service, tasks *[]plat.T
 }
 
 // Retrieve a list of tasks from Google Classroom for a user.
-func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]errors.Error) {
-	svc, err := Auth(creds)
-	if err != nil {
-		e <- [][]errors.Error{{errors.New("Google auth failed", err)}}
-		return
-	}
-
-	resp, er := svc.Courses.List().CourseStates("ACTIVE").Fields(
-		"courses/name",
-		"courses/id",
-	).Do()
-	if er != nil {
-		err = errors.New(er.Error(), nil)
-		t <- nil
-		e <- [][]errors.Error{{errors.New("failed to get response", err)}}
-		return
-	}
-
-	if len(resp.Courses) == 0 {
-		t <- nil
-		e <- nil
-		return
-	}
-
-	tasks := make([][]plat.Task, len(resp.Courses))
-	errs := make([][]errors.Error, len(resp.Courses))
-	var swg sync.WaitGroup
-
-	for i, c := range resp.Courses {
-		swg.Add(1)
-		go getSubmissions(c, svc, &tasks[i], &errs[i], &swg)
-	}
-
-	swg.Wait()
-
-	for _, classErrs := range errs {
-		if errors.Join(classErrs...) != nil {
-			t <- nil
-			e <- errs
-			return
-		}
-	}
-
+func ListTasks(creds User, c chan map[string][]plat.Task, ok chan [][]errors.Error, done *int) {
 	gcTasks := map[string][]plat.Task{
 		"active":    {},
 		"notDue":    {},
 		"overdue":   {},
 		"submitted": {},
 		"graded":    {},
+	}
+	var err errors.Error
+
+	defer plat.Deliver(c, &gcTasks, done)
+	defer plat.Deliver(ok, &[][]errors.Error{{err}}, done)
+	defer plat.Done(done)
+
+	svc, err := Auth(creds)
+	if err != nil {
+		err = errors.New("Google auth failed", err)
+		return
+	}
+
+	resp, e := svc.Courses.List().CourseStates("ACTIVE").Fields(
+		"courses/name",
+		"courses/id",
+	).Do()
+	if e != nil {
+		err = errors.New(e.Error(), nil)
+		err = errors.New("failed to get response", err)
+		return
+	}
+
+	if len(resp.Courses) == 0 {
+		return
+	}
+
+	tasks := make([][]plat.Task, len(resp.Courses))
+	ers := make([][]errors.Error, len(resp.Courses))
+	var swg sync.WaitGroup
+
+	for i, c := range resp.Courses {
+		swg.Add(1)
+		go getSubmissions(c, svc, &tasks[i], &ers[i], &swg)
+	}
+
+	swg.Wait()
+
+	for _, classErrs := range ers {
+		if errors.Join(classErrs...) != nil {
+			err = errors.Join(classErrs...)
+			return
+		}
 	}
 
 	for x := 0; x < len(tasks); x++ {
@@ -194,7 +195,4 @@ func ListTasks(creds User, t chan map[string][]plat.Task, e chan [][]errors.Erro
 			}
 		}
 	}
-
-	t <- gcTasks
-	e <- nil
 }

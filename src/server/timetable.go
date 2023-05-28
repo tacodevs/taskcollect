@@ -429,14 +429,14 @@ func genTimetable(creds plat.User) (timetableData, errors.Error) {
 			height := math.Round(float64(duration) * 10 / 6)
 
 			lesson := ttLesson{
-				Class:         day[j].Class,
-				Height:        height,
-				TopOffset:     topOffset,
-				Room:          day[j].Room,
-				Teacher:       day[j].Teacher,
-				Notice:        day[j].Notice,
-				Color:         textColor,
-				BGColor:       hexColor,
+				Class:     day[j].Class,
+				Height:    height,
+				TopOffset: topOffset,
+				Room:      day[j].Room,
+				Teacher:   day[j].Teacher,
+				Notice:    day[j].Notice,
+				Color:     textColor,
+				BGColor:   hexColor,
 			}
 
 			lesson.FormattedTime = day[j].Start.Format("15:04") + "–" + day[j].End.Format("15:04")
