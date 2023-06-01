@@ -452,13 +452,21 @@ form[action="/auth"] input[type=submit] {
   margin: 0 auto;
   width: 100%;
   min-height: 1050px;
-  background-color: #D2D2E3;
+  background-color: #c5c5d5;
   color: #000000;
 }
 @media (prefers-color-scheme: dark) {
   #timetable {
     background-color: #505057;
     color: #ffffff;
+  }
+}
+#timetable .today {
+  background: #aac5ee;
+}
+@media (prefers-color-scheme: dark) {
+  #timetable .today {
+    background: #c2cdfc;
   }
 }
 #timetable .day {
@@ -491,9 +499,12 @@ form[action="/auth"] input[type=submit] {
     font-size: 1.3rem;
   }
 }
+#timetable .day h2.today {
+  background: var(--accent-hover);
+}
 @media (prefers-color-scheme: dark) {
-  #timetable .day > h2 {
-    background-color: #37373E;
+  #timetable .day h2.today {
+    background: var(--accent-hover) !important;
   }
 }
 #timetable .day .lessons {
