@@ -13,7 +13,7 @@
     margin: 0 auto;
     width: 100%;
     min-height: 1050px; // Compensate for the height of date at the top
-    background-color: #D2D2E3;
+    background-color: #c5c5d5;
     color: #000000;
 
     @media (prefers-color-scheme: dark) {
@@ -21,6 +21,12 @@
         color: #ffffff;
     }
 
+    .today {
+        background: #aac5ee;
+        @media (prefers-color-scheme: dark) {
+            background: #c2cdfc;
+        }
+    }
 
     .day {
         display: block;
@@ -49,9 +55,12 @@
             @include bp.sm {
                 font-size: 1.3rem;
             }
+        }
 
+        h2.today {
+            background: var(--accent-hover);
             @media (prefers-color-scheme: dark) {
-                background-color: #37373E;
+                background: var(--accent-hover) !important;
             }
         }
 
