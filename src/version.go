@@ -1,3 +1,3 @@
 package main
 
-const tcVersion = "TaskCollect 1.0.6 (build 7192b7b5117981ed489b45e24b9f72ec13176c71)"
+const tcVersion = "TaskCollect 1.0.6 (build 9c6a1baf7d4191ed88fadf144fda63175b1b4279)"
