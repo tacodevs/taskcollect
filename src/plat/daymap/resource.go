@@ -127,7 +127,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	endDiv := fmt.Sprintf(
 		"</div></div></div>\r\n%s\r\n    \r\n </div>\r\n\r\n%s",
 		` <div style="margin: 25px 0px; width:25%;">`,
-		"    </form>\r\n</body>\r\n</html>",
+		"    </form>\r\n\r\n    <script>\r\n",
 	)
 	i = strings.Index(page, endDiv)
 	if i == -1 {
