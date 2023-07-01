@@ -1,6 +1,8 @@
 # TaskCollect
 A web server that multiplexes functionality from educational web platforms for students.
 
+**This branch houses the deprecated Google API branch of TaskCollect. For more information see [this announcement][2].**
+
 ## Description
 
 There are a great number of schools around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to many factors, schools may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to manage the large number of platforms in use by their school to retrieve their homework and available educational resources. This inconvenience could quickly become a serious problem if the number of platforms in use at the school drastically increases.
@@ -87,3 +89,4 @@ For all previous announcements, [see the archives][1].
 
 
 [1]: https://lists.sr.ht/~kvo/taskcollect-announce
+[2]: https://lists.sr.ht/~kvo/taskcollect-announce/%3CCTQIX0K5BGVW.ZMOQONVG723X%40antusb%3E
