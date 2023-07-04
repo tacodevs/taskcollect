@@ -26,7 +26,7 @@
             {{if eq .Body.TaskData.HasResLinks true}}
                 <h4>Linked resources</h4>
                 <ul>
-                    {{range $name, $url := .Body.TaskData.ResLinks}}
+                    {{range $url, $name := .Body.TaskData.ResLinks}}
                         <li><a href="{{$url}}">{{$name}}</a></li>
                     {{end}}
                 </ul>
@@ -44,7 +44,7 @@
                 </form>
                 <h4>Remove file(s)</h4>
                 <form class="task-form" action="/tasks/{{$plat}}/{{$id}}/remove">
-                    {{range $name, $url := .Body.TaskData.WorkLinks}}
+                    {{range $url, $name := .Body.TaskData.WorkLinks}}
                     <label for="{{$name}}" class="form-control">
                         <input type="checkbox" name="{{$name}}" class="left">
                         <a href="{{$url}}" class="left">{{$name}}</a>

@@ -206,7 +206,7 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 		for i := 0; i < len(assignment.ResLinks); i++ {
 			url := assignment.ResLinks[i][0]
 			name := assignment.ResLinks[i][1]
-			data.Body.TaskData.ResLinks[name] = url
+			data.Body.TaskData.ResLinks[url] = name
 		}
 	}
 
@@ -217,7 +217,7 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 		for i := 0; i < len(assignment.WorkLinks); i++ {
 			url := assignment.WorkLinks[i][0]
 			name := assignment.WorkLinks[i][1]
-			data.Body.TaskData.WorkLinks[name] = url
+			data.Body.TaskData.WorkLinks[url] = name
 		}
 	}
 
@@ -326,7 +326,7 @@ func genResPage(res plat.Resource, creds plat.User) pageData {
 		for i := 0; i < len(res.ResLinks); i++ {
 			url := res.ResLinks[i][0]
 			name := res.ResLinks[i][1]
-			data.Body.ResourceData.ResLinks[name] = url
+			data.Body.ResourceData.ResLinks[url] = name
 		}
 	}
 
