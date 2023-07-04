@@ -18,7 +18,7 @@
         <hr>
         <h4>Linked resources</h4>
         <ul>
-            {{range $name, $url := .Body.ResourceData.ResLinks}}
+            {{range $url, $name := .Body.ResourceData.ResLinks}}
                 <li>
                     <a href="{{$url}}">{{$name}}</a>
                 </li>
