@@ -395,16 +395,16 @@ select:focus {
   width: 100%;
 }
 
-form[action="/auth"] {
+#login form {
   margin: auto;
   width: 100%;
   text-align: left;
 }
-form[action="/auth"] h1 {
+#login form h1 {
   text-align: center;
   font-size: 1.5rem;
 }
-form[action="/auth"] h4 {
+#login form h4 {
   padding: 9px 13px;
   background: var(--err-bg);
   color: #ffffff;
@@ -416,9 +416,9 @@ form[action="/auth"] h4 {
   font-family: var(--main-font);
   font-size: 0.9rem;
 }
-form[action="/auth"] input#usr,
-form[action="/auth"] input#pwd,
-form[action="/auth"] select#school {
+#login form input#usr,
+#login form input#pwd,
+#login form select#school {
   margin: 10px 0;
   padding: 6px 10px;
   border: none;
@@ -428,7 +428,7 @@ form[action="/auth"] select#school {
   font-family: var(--main-font);
   font-size: 0.9rem;
 }
-form[action="/auth"] input[type=submit] {
+#login form input[type=submit] {
   margin-top: 14px;
   padding: 10px 20px !important;
   width: 100%;
