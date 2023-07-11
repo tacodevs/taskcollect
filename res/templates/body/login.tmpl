@@ -3,7 +3,7 @@
 <main id="main-content">
     <div id="login">
         <div id="login-logo"><img src="/assets/taskcollect-wordmark.svg" alt="TaskCollect logo"></div>
-        <form method="POST" enctype="application/x-www-form-urlencoded" action="/auth">
+        <form method="POST" enctype="application/x-www-form-urlencoded" action="/auth{{.Body.LoginData.Redirect}}">
             <h1>Login</h1>
             {{if eq .Body.LoginData.Failed true}}
             <h4>Authentication failed</h4>

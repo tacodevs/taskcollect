@@ -44,7 +44,8 @@ type errData struct {
 // Login page
 
 type loginData struct {
-	Failed bool
+	Failed   bool
+	Redirect string
 }
 
 // Timetable

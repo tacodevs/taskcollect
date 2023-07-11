@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	fp "path/filepath"
 	"strings"
@@ -254,6 +255,7 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 // Handle login requests. If the user is already logged in, redirect to the timetable view.
 func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
+	redirect := r.URL.Query().Get("redirect")
 	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
 	if errors.Is(err, plat.ErrInvalidAuth) {
@@ -266,26 +268,24 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := loginPageData
+	if strings.HasPrefix(redirect, "/") {
+		data.Body.LoginData.Redirect = "?" + r.URL.RawQuery
+	}
+
 	if !validAuth {
 		if r.URL.Query().Get("auth") == "failed" {
 			w.WriteHeader(401)
-			data := pageData{
-				PageType: "login",
-				Head: headData{
-					Title: "Login",
-				},
-				Body: bodyData{
-					LoginData: loginData{
-						Failed: true,
-					},
-				},
-			}
+			data.Body.LoginData.Failed = true
 			h.genPage(w, data)
 		} else {
-			h.genPage(w, loginPageData)
+			h.genPage(w, data)
 		}
-	} else {
+	} else if !strings.HasPrefix(redirect, "/") {
 		w.Header().Set("Location", "/timetable")
+		w.WriteHeader(302)
+	} else {
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -317,8 +317,13 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			cookie, err = h.database.auth(r.PostForm)
 		}
 
+		redirect := r.URL.Query().Get("redirect")
+		if !strings.HasPrefix(redirect, "/") {
+			redirect = "/timetable"
+		}
+
 		if err == nil {
-			w.Header().Set("Location", "/timetable")
+			w.Header().Set("Location", redirect)
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		} else {
@@ -327,7 +332,8 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(302)
 		}
 	} else {
-		w.Header().Set("Location", "/timetable")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -359,7 +365,8 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 			h.genPage(w, data)
 		}
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -412,7 +419,8 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
 		h.genPage(w, respBody)
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -442,7 +450,8 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
 		h.genPage(w, respBody)
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -480,7 +489,8 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 			h.genPage(w, webpageData)
 		}
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -518,7 +528,8 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 			h.genPage(w, webpageData)
 		}
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -556,7 +567,8 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 			h.genPage(w, webpageData)
 		}
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -596,7 +608,8 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 			h.genPage(w, webpageData)
 		}
 	} else {
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	}
 }
@@ -616,11 +629,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invalidRes := false
-
-	if res == "/" {
-		invalidRes = true
-	} else if res == "/favicon.ico" {
+	if res == "/favicon.ico" {
 		//w.Header().Set("Cache-Control", "max-age=3600")
 		fullPath := fp.Join(h.database.path, "/icons/favicon.ico")
 		dispatchAsset(w, fullPath, "text/plain")
@@ -628,15 +637,15 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !validAuth {
 		// User is not logged in (and is not on login page)
-		w.Header().Set("Location", "/login")
+		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
+		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	} else if validAuth && res == "/timetable.png" {
 		genTimetableImg(creds, w)
-	} else if validAuth && invalidRes {
-		// Invalid URL while logged in redirects to /timetable
+	} else if validAuth && res == "/" {
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
-	} else if validAuth && !invalidRes {
+	} else if validAuth && res != "/" {
 		// Logged in, and the requested URL is not handled by anything else (it's a 404)
 		w.WriteHeader(404)
 		h.genPage(w, statusNotFoundData)
