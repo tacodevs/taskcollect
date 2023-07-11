@@ -65,7 +65,6 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	gcErrChan := make(chan [][]errors.Error)
 
 	gcCreds := gclass.User{
-		ClientID: plat.GAuthID,
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["gclass"],
 	}
@@ -158,7 +157,6 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gErrChan := make(chan []errors.Error)
 
 	gcCreds := gclass.User{
-		ClientID: plat.GAuthID,
 		Timezone: creds.Timezone,
 		Token:    creds.SiteTokens["gclass"],
 	}
@@ -238,7 +236,6 @@ func getTask(platform, taskId string, creds plat.User) (plat.Task, errors.Error)
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -266,7 +263,6 @@ func getResource(platform, resId string, creds plat.User) (plat.Resource, errors
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -293,7 +289,6 @@ func submitTask(creds plat.User, platform, taskId string) errors.Error {
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -324,7 +319,6 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
@@ -347,7 +341,6 @@ func removeWork(creds plat.User, platform, taskId string, filenames []string) er
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			ClientID: plat.GAuthID,
 			Timezone: creds.Timezone,
 			Token:    creds.SiteTokens["gclass"],
 		}
