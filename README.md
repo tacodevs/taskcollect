@@ -9,7 +9,6 @@ The solution to this problem is TaskCollect: a web server that multiplexes funct
 
 At the moment, TaskCollect acts as a multiplexed interface for the following platforms:
   * Daymap
-  * Google Classroom
 
 Unfortunately, some of the platforms in use by schools (e.g. Daymap) are school-dependent. To counter this, TaskCollect ensures each user is associated with a particular school.
 
@@ -30,7 +29,7 @@ TaskCollect has relatively simple build and deployment mechanisms. The TaskColle
 Clone this Git repository and run `./build.py -u` (or `py build.py -u` on Windows):
 
 ```
-git clone https://codeberg.org/kvo/taskcollect.git
+git clone https://codeberg.org/kvo/taskcollect
 cd taskcollect/
 ./build.py -u
 ```
@@ -48,15 +47,13 @@ Although building TaskCollect from source is simple, deployment is not (unfortun
 
   1. Ensure that the contents of the repository's `res/` folder are copied into `$home/res/taskcollect/` where `$home` is the current user's home directory. This can be done automatically by invoking the build script with the `-U` option, which copies `res/` without building TaskCollect. (Use `-u` if both building and copying `res/`)
 
-  2. Obtain a Google OAuth 2.0 client ID and save it to `$home/res/taskcollect/` (see `doc/en/cmd/taskcollect` for more info)
+  2. If running for the first time, you will need to set up a Redis server. You must ensure you are Redis 7 as no other version will work. Ensure that the Redis server is running and unexposed to the network before you run TaskCollect.
 
-  3. If running for the first time, you will also need to set up a Redis server. You must ensure you are Redis 7 as no other version will work. Ensure that the Redis server is running and unexposed to the network before you run TaskCollect.
+  3. Run the program for your OS and CPU (e.g. `prg/linux/amd64/taskcollect`).
 
-  4. Run the program for your OS and CPU (e.g. `prg/linux/amd64/taskcollect`).
+  4. TaskCollect will ask you for a passphrase to the running Redis server. If you have not set up a password for Redis, it is sufficient to press enter/return at this prompt, and the TaskCollect web server will start. Otherwise, enter the password you configured for Redis to start the web server.
 
-  5. TaskCollect will ask you for a passphrase to the running Redis server. If you have not set up a password for Redis, it is sufficient to press enter/return at this prompt, and the TaskCollect web server will start. Otherwise, enter the password you configured for Redis to start the web server.
-
-TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors. In particular, the firewall should prevent overly frequent requests to TaskCollect, as some APIs that TaskCollect uses enforce a stringent request rate limit. Those deploying TaskCollect should additionally request higher request rate limits for the Google Classroom API to avoid having "ratelimit exceeded" errors.
+TaskCollect and its host system should be protected by a strong firewall to prevent damage from bad actors. In particular, the firewall should prevent overly frequent requests to TaskCollect, as some APIs that TaskCollect uses enforce a stringent request rate limit.
 
 As of v1.0.0, TaskCollect is considered production-ready and its public interface is stable (see `misc/info/impl.md` for more information). If you are deploying TaskCollect, you should consult [the Releases tab](https://codeberg.org/kvo/taskcollect/releases) for official releases. Where possible, select the latest available release in order to ensure you are running the most secure and issue-free version available.
 

@@ -3,26 +3,21 @@ package server
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"io"
 	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"os"
-	fp "path/filepath"
 	"strings"
 	"time"
 
 	"codeberg.org/kvo/std"
 	"codeberg.org/kvo/std/errors"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/oauth2"
 
 	"main/logger"
 	"main/plat"
 	"main/plat/daymap"
-	"main/plat/gclass"
 )
 
 // Attempt to get GIHS Daily Access home page using a username and password.
@@ -222,42 +217,6 @@ func (db *authDB) getCreds(cookies string) (plat.User, errors.Error) {
 	return creds, nil
 }
 
-// Get Google auth token. If a "gclass" token field is found, even if it is blank, it will be returned
-// as an empty string.
-func (db *authDB) getGTok(school, user, pwd string) (string, errors.Error) {
-	ctx := context.Background()
-
-	key := "school:" + school + ":studentID:" + user
-	data := db.client.HGetAll(ctx, key)
-	if data.Err() != nil {
-		err := errors.New(data.Err().Error(), nil)
-		err = errors.New("could not fetch password for user", err)
-		return "", err
-	}
-
-	result, e := data.Result()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
-		return "", errors.New("resulting data could not be read", err)
-	}
-
-	res := db.client.HExists(ctx, key, "gclass")
-	exists, e := res.Result()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
-		return "", errors.New("could not fetch user's gclass data", err)
-	}
-	if !exists {
-		return "", nil
-	}
-
-	if result["password"] == pwd {
-		return result["gclass"], nil
-	}
-
-	return "", nil
-}
-
 // Check if user exists in the database.
 func (db *authDB) findUser(school, user, pwd string) (bool, errors.Error) {
 	exists := false
@@ -347,19 +306,8 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 		user = strings.ToUpper(user)
 	}
 
-	gTok, err := db.getGTok(school, user, pwd)
-	if err != nil {
-		return "", errors.New("gclass token was not found", err)
-	}
-
-	gTestErr := make(chan errors.Error)
-
-	if gTok != "" {
-		go gclass.Test(plat.GAuthID, gTok, gTestErr)
-	}
-
 	var dmCreds daymap.User
-	err = gihsAuth(user, pwd)
+	err := gihsAuth(user, pwd)
 	if err != nil {
 		logger.Debug(errors.New("error in GIHS auth", err))
 		dmCreds, err = daymap.Auth(school, user, pwd)
@@ -399,16 +347,6 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 	cookie += time.Now().UTC().AddDate(0, 0, 3).Format(time.RFC1123)
 	timezone := dmCreds.Timezone
 
-	gAuthStatus := plat.ErrNeedsGAuth.Here()
-
-	if gTok != "" {
-		err = <-gTestErr
-		if err == nil {
-			siteTokens["gclass"] = gTok
-			gAuthStatus = nil
-		}
-	}
-
 	creds := plat.User{
 		Timezone:   timezone,
 		School:     school,
@@ -423,66 +361,7 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 		return "", errors.New("error writing creds", err)
 	}
 
-	return cookie, gAuthStatus
-}
-
-// Return the Google authentication endpoint URL.
-func (db *authDB) gAuthEndpoint() (string, errors.Error) {
-	gcid, e := os.ReadFile(fp.Join(db.path, "gauth.json"))
-	if e != nil {
-		err := errors.New(e.Error(), nil)
-		return "", errors.New("failed to read gauth.json", err)
-	}
-
-	gAuthConfig, err := gclass.AuthConfig(gcid)
-	if err != nil {
-		return "", errors.New("creation of config failed", err)
-	}
-
-	gAuthLoc := gAuthConfig.AuthCodeURL(
-		"state-token",
-		oauth2.ApprovalForce,
-		oauth2.AccessTypeOffline,
-	)
-
-	return gAuthLoc, nil
-}
-
-// Run the Google authentication flow for a user.
-func (db *authDB) runGAuth(creds plat.User, query url.Values) errors.Error {
-	authCode := query.Get("code")
-	var err errors.Error
-
-	clientId, e := os.ReadFile(fp.Join(db.path, "gauth.json"))
-	if e != nil {
-		err = errors.New(e.Error(), nil)
-		return errors.New(plat.ErrFileRead.Here().Error(), err)
-	}
-
-	gAuthConfig, err := gclass.AuthConfig(clientId)
-	if err != nil {
-		return errors.New("failed to get config from JSON", err)
-	}
-
-	gTok, e := gAuthConfig.Exchange(context.TODO(), authCode)
-	if e != nil {
-		err = errors.New(e.Error(), nil)
-		return errors.New("failed to convert auth code into token", err)
-	}
-
-	token, e := json.Marshal(gTok)
-	if e != nil {
-		err = errors.New(e.Error(), nil)
-		return errors.New("failed to encode into JSON", err)
-	}
-
-	creds.SiteTokens["gclass"] = string(token)
-	err = db.writeCreds(creds)
-	if err != nil {
-		return errors.New("failed to write creds", err)
-	}
-
-	return nil
+	return cookie, nil
 }
 
 // Logout a user from TaskCollect.

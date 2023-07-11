@@ -21,7 +21,7 @@ import (
 )
 
 // Run the TaskCollect server.
-func Run(tcVersion string, tlsConn bool) {
+func Run(version string, tlsConn bool) {
 	curUser, e := user.Current()
 	if e != nil {
 		logger.Fatal("cannot determine current user's home folder")
@@ -50,7 +50,7 @@ func Run(tcVersion string, tlsConn bool) {
 		}
 	}
 
-	logger.Info("Running %v", tcVersion)
+	logger.Info("Running %v", version)
 	configMux()
 
 	var password string
@@ -67,12 +67,6 @@ func Run(tcVersion string, tlsConn bool) {
 	password = string(dbPwdInput)
 	newRedisDB := initDB(dbAddr, password, dbIdx)
 	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)
-
-	plat.GAuthID, e = os.ReadFile(fp.Join(resPath, "gauth.json"))
-	if e != nil {
-		err = errors.New(e.Error(), nil)
-		logger.Fatal(errors.New("Google client ID "+plat.ErrFileRead.Error(), err))
-	}
 
 	templates, err := initTemplates(resPath)
 	if err != nil {

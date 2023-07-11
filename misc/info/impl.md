@@ -75,9 +75,3 @@ Logging levels:
 - **DEBUG**: Used by developers to log diagnostic information which is often more verbose than other logging levels. End-users should not be exposed to debug statements.
 
 Logs are always printed to standard output. However, logging to a file can be optionally enabled in the `config.json` file by setting `useLogFile` to `true`. To account for the possibility of opening or writing to the log file resulting in an error, a fail-safe that stops logging to the file after a certain number of errors has been put in place. It is referred to as the `logFileFailLimit` and this is currently set to 20.
-
-## Error handling
-
-Error logging is another important aspect in ensuring the TaskCollect server runs smoothly and if an error were to occur, that it will be reported. The `errors` package adds new functionality to suit the needs of the project such as a custom error wrapper that has the ability to provide more context about where the error originated, what the error type is, and allow for better management of tracing errors.
-
-To prevent the need for two error library imports, Go's standard error library has been implemented right into our own library. 

@@ -7,13 +7,6 @@ import (
 	"codeberg.org/kvo/std/errors"
 )
 
-// Global variable which holds an in-memory copy of the Google OAuth client ID
-// file.
-//
-// This is a kluge. Google Classroom auth must be made to function in the same
-// way as authentication for all other supported platforms.
-var GAuthID []byte
-
 // Mux is a platform multiplexer. Methods can be invoked on it to select the
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.

@@ -307,30 +307,20 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !validAuth {
 		var cookie string
-
 		e := r.ParseForm()
 
 		// If e != nil, the "else" section of the next if/else block will
 		// execute, which returns the "could not authenticate user" error.
-		if e == nil {
-			cookie, err = h.database.auth(r.PostForm)
-		} else {
+		if e != nil {
 			err = errors.New(e.Error(), nil)
+		} else {
+			cookie, err = h.database.auth(r.PostForm)
 		}
 
 		if err == nil {
 			w.Header().Set("Location", "/timetable")
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
-		} else if errors.Is(err, plat.ErrNeedsGAuth) {
-			gAuthLoc, err := h.database.gAuthEndpoint()
-			if err != nil {
-				logger.Debug(errors.New("failed to generate Google auth endpoint URL", err))
-			} else {
-				w.Header().Set("Location", gAuthLoc)
-				w.Header().Set("Set-Cookie", cookie)
-				w.WriteHeader(302)
-			}
 		} else {
 			logger.Debug(errors.New("could not authenticate user", err))
 			w.Header().Set("Location", "/login?auth=failed")
@@ -639,13 +629,6 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	if !validAuth {
 		// User is not logged in (and is not on login page)
 		w.Header().Set("Location", "/login")
-		w.WriteHeader(302)
-	} else if validAuth && res == "/gauth" {
-		err = h.database.runGAuth(creds, r.URL.Query())
-		if err != nil {
-			logger.Debug(errors.New("Google auth flow failed", err))
-		}
-		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)
 	} else if validAuth && res == "/timetable.png" {
 		genTimetableImg(creds, w)
