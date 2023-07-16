@@ -630,12 +630,9 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res == "/favicon.ico" {
-		//w.Header().Set("Cache-Control", "max-age=3600")
 		fullPath := fp.Join(h.database.path, "/icons/favicon.ico")
 		dispatchAsset(w, fullPath, "text/plain")
-	}
-
-	if !validAuth {
+	} else if !validAuth {
 		// User is not logged in (and is not on login page)
 		redirect := "/login?redirect=" + url.QueryEscape(r.URL.String())
 		w.Header().Set("Location", redirect)
