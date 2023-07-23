@@ -153,7 +153,7 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 			)
 		}
 
-		if strings.Contains(class, "Mentor") {
+		if strings.Contains(class, "Mentor Group") {
 			continue
 		}
 
