@@ -1,3 +1,3 @@
 package main
 
-const tcVersion = "TaskCollect 1.0.6 (build 5360294529c7b965be1220a8174a9af09d00e8ff)"
+const tcVersion = `TaskCollect 1.0.6 (build 6b215e85b8aa6422774d8ea21bdc0ba90cf143d0), branch "google-api"`
