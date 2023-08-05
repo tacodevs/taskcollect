@@ -16,6 +16,7 @@ import (
 
 type dmJsonEntry struct {
 	Text   string
+	Type   string
 	Id     int
 	Start  string
 	Finish string
@@ -79,6 +80,10 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 	lessons := make([][]plat.Lesson, 5)
 
 	for _, l := range dmJson {
+		if l.Type != "Lesson" {
+			continue
+		}
+
 		lesson := plat.Lesson{}
 		lesson.Start, e = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
 
