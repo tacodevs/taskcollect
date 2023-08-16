@@ -1,0 +1,56 @@
+COMMANDS                                                             TASKCOLLECT
+
+NAME
+    taskcollect - multiplex functionality from web platforms for students
+
+INVOCATION
+    taskcollect [-w]
+
+DESCRIPTION
+    TaskCollect starts a web server on TCP port 443 which provides a web
+    interface for school students. The web interface provides functionality
+    essential for student interaction with teacher-assigned resources, tasks,
+    etc., communicating with users' schools' web platforms as necessary.
+
+    TaskCollect uses Redis 7 as its user credentials database and will not
+    operate without it. To get started, install Redis 7 and set up the Redis
+    server with a password. While a password is not necessarily required, it
+    is heavily recommended. When setting up the Redis database, no further 
+    information needs to be provided, as TaskCollect populates it automatically.
+    Upon running TaskCollect, it will prompt you for the password to the Redis 
+    database and will attempt to connect to the Redis server. The default
+    address is localhost:6379 with a database index of 0, although this can be
+    changed in the config.json file. It is very important to note that on the
+    server computer, the Redis server MUST NOT BE EXPOSED TO THE NETWORK. The
+    Redis server should only be available on localhost for TaskCollect to
+    operate. The Redis server should have the following configured with at least
+    with the following rules, for security purposes:
+
+        bind 127.0.0.1
+        save ""
+        logfile /path/to/logfile
+
+    Ensure that "/path/to/logfile" is replaced with the absolute path to the
+    log file you intend to use for the Redis server.
+
+    TaskCollect also requires two WOFF2 font files, "mainfont.woff2" and
+    "navfont.woff2". The main interface font (mainfont.woff2) is Lato Regular,
+    while the navigation bar font (navbar.woff2) is Red Hat Display Medium. Both
+    of these fonts files must be present in the resources folder.
+
+OPTIONS
+    -w    Run TaskCollect without TLS support. TaskCollect will start on port
+          8080 and all connections will be unencrypted. For personal and
+          and development use only. DO NOT USE IN PRODUCTION.
+
+FILES
+    $home/res/taskcollect/logs/                       Log files (if enabled)
+    $home/res/taskcollect/cert.pem                    TLS certificate
+    $home/res/taskcollect/config.json                 Configuration file
+    $home/res/taskcollect/key.pem                     TLS private key
+    $home/res/taskcollect/mainfont.woff2              Main web interface font
+    $home/res/taskcollect/navfont.woff2               Navigation bar font
+    $home/res/taskcollect/styles.css                  Webpage styling rules
+
+SOURCE
+    /src/taskcollect/

@@ -1,0 +1,166 @@
+@use "../breakpoints" as bp;
+@use "../variables" as *;
+
+#timetable-img {
+    display: block;
+    margin: 0 auto;
+    padding: 2px;
+}
+
+#timetable {
+    display: inline-flex;
+    flex-wrap: wrap;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 1050px; // Compensate for the height of date at the top
+    background-color: #c5c5d5;
+    color: #000000;
+
+    @media (prefers-color-scheme: dark) {
+        background-color: #505057;
+        color: #ffffff;
+    }
+
+    .today {
+        background: #aac5ee;
+        @media (prefers-color-scheme: dark) {
+            background: #c2cdfc;
+        }
+    }
+
+    .day {
+        display: block;
+        overflow-y: auto;
+        width: 20%;
+        border-left: 2px solid var(--bg-color);
+        padding-bottom: 1.5em;
+
+        >h2 {
+            align-items: center;
+            display: flex;
+            height: 3.35em;
+            justify-content: center;
+            margin: 0;
+            padding: 1em 0;
+            text-align: center;
+            font-size: min(1.3rem, 1.3vw);
+            background-color: #37373E;
+            color: white;
+            border-bottom: 2px solid var(--bg-color);
+
+            @include bp.xs {
+                font-size: 1.3rem;
+            }
+
+            @include bp.sm {
+                font-size: 1.3rem;
+            }
+        }
+
+        h2.today {
+            background: var(--accent-hover);
+            @media (prefers-color-scheme: dark) {
+                background: var(--accent-hover) !important;
+            }
+        }
+
+        .lessons {
+            position: relative;
+        }
+
+        .lessons>.lesson {
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            min-height: 90px;
+            background-color: #ffffff;
+            padding: 5px;
+            width: 95%;
+            //border: 0px solid #000000;
+            box-sizing: border-box;
+
+            .class-name {
+                margin-top: 2px;
+                margin-bottom: 5px;
+                font-size: 1.1rem;
+                font-weight: bold;
+            }
+
+            .notice,
+            .teacher,
+            .time-room {
+                font-size: 0.9em;
+                margin: 5px 0;
+            }
+
+            .notice {
+                font-weight: bold;
+            }
+        }
+    }
+
+    .day:first-child {
+        border-left: none;
+    }
+
+    @include bp.xs {
+        padding: 0;
+
+        .day {
+            width: 100%;
+            border-left: none;
+            border-bottom: 2px solid var(--bg-color);
+        }
+
+        .yesterday {
+            display: none;
+        }
+
+        .lessons>.lesson {
+            position: static !important;
+            top: 0px !important;
+            min-height: 90px !important;
+        }
+
+        .lessons>.lesson:first-child {
+            margin-top: 1.2em;
+        }
+    }
+
+    @include bp.sm {
+        padding: 0;
+
+        .day {
+            width: 100%;
+            border-left: none;
+            border-bottom: 2px solid var(--bg-color);
+        }
+
+        .yesterday {
+            display: none;
+        }
+
+        .lessons>.lesson {
+            position: static !important;
+            top: 0px !important;
+            min-height: 90px !important;
+        }
+
+        .lessons>.lesson:first-child {
+            margin-top: 1.2em;
+        }
+    }
+
+    @include bp.md {
+        //
+    }
+
+    @include bp.lg {
+        //
+    }
+
+    @include bp.xl {
+        //
+    }
+}

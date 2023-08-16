@@ -1,0 +1,193 @@
+@use "breakpoints" as bp;
+@use "variables" as *;
+
+:root {
+    --font-size: 16px;
+    --main-font: "Lato", sans-serif;
+    --nav-font: "Red Hat Display", sans-serif;
+    --login-font-size: 1rem;
+
+    --accent-color: #{$tc-blue};
+    --accent-hover: #{$accent-hover};
+    --accent-click: #{$accent-click};
+    --bg-color: #{$light-theme-bg};
+    --bg-hover-color: #{$light-theme-bg-hover};
+    --fg-color: #{$light-theme-fg};
+    --input-color: #{$light-theme-input};
+    --link-color: #{$light-theme-link};
+    --hr-color: #{$light-theme-hr};
+    --err-bg: #{$light-theme-err-bg};
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #{$dark-theme-bg};
+        --bg-hover-color: #{$dark-theme-bg-hover};
+        --fg-color: #{$dark-theme-fg};
+        --input-color: #{$dark-theme-input};
+        --link-color: #{$dark-theme-link};
+        --hr-color: #{$dark-theme-hr};
+        --err-bg: #{$dark-theme-err-bg};
+    }
+}
+
+html {
+    box-sizing: border-box;
+    height: 100%;
+    font-size: var(--font-size);
+    font-family: sans-serif;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-size: var(--font-size);
+    font-family: var(--main-font);
+    background: var(--bg-color);
+    color: var(--fg-color);
+}
+
+#root {
+    width: 100%;
+    height: calc(100% - $headerHeight);
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+// Primary use is to override the height for the login screen since there is no navbar.
+.full-height {
+    height: 100% !important;
+}
+
+main#main-content {
+    width: 100%;
+    padding: 2em 4% 3.75em 4%;
+}
+
+footer {
+    width: 100%;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+}
+
+a {
+    color: var(--link-color);
+}
+
+hr {
+    border: 0;
+    border-bottom: 1px solid var(--hr-color);
+    margin: 20px 0;
+}
+
+select,
+input {
+    border: 1px solid #aaaaaa;
+}
+
+select {
+    background: var(--input-color);
+    color: var(--fg-color);
+    font-family: var(--main-font);
+}
+
+input {
+    background: var(--input-color);
+    color: var(--fg-color);
+    font-family: var(--main-font);
+}
+
+input[type="submit"] {
+    color: #ffffff;
+}
+
+summary:hover {
+    cursor: pointer;
+}
+
+details div,
+summary {
+    border-top: 1px solid var(--input-color);
+    padding: 10px;
+}
+
+details div:hover,
+summary:hover {
+    background: var(--bg-hover-color);
+}
+
+details div {
+    border-color: var(--fg-color);
+    margin: 0 30px;
+
+    &:first-child {
+        margin-top: 30px;
+    }
+
+    &:last-child {
+        border-bottom: 1px solid var(--fg-color);
+        margin-bottom: 30px;
+    }
+}
+
+details div * {
+    margin: 5px 10px;
+}
+
+details div * a {
+    color: var(--fg-color);
+    margin: 0;
+    text-decoration: none;
+}
+
+details div * a:hover {
+    text-decoration: underline;
+}
+
+details:last-child:not([open]) summary {
+    border-bottom: 1px solid var(--input-color);
+}
+
+details div h5.datetime {
+    float: right;
+}
+
+.dispname,
+.mobile-dispname {
+    font-family: var(--main-font);
+}
+
+.mobile-dispname {
+    font-size: 80%;
+    margin-top: 0 !important;
+}
+
+.unbold {
+    font-weight: normal;
+}
+
+hr#logout {
+    margin: 20px;
+    width: 85%;
+}
+
+li {
+    margin: 0.2em 0;
+}

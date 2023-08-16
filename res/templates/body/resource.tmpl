@@ -1,0 +1,31 @@
+{{define "resource"}}
+{{template "header" . -}}
+<div id="root">
+<main id="main-content">
+    <div>
+    <a style="float: right;" href="{{.Body.ResourceData.URL}}">View resource in source platform</a>
+    <h1>{{.Body.ResourceData.Name}}</h1>
+    <h3>{{.Body.ResourceData.Class}}</h3>
+    </div>
+    <hr>
+    <h4>Posted {{.Body.ResourceData.Posted}}</h4>
+    {{if ne .Body.ResourceData.Desc ""}}
+        <hr>
+        <h4>Resource information</h4>
+        <p>{{.Body.ResourceData.Desc}}</p>
+    {{end}}
+    {{if eq .Body.ResourceData.HasResLinks true}}
+        <hr>
+        <h4>Linked resources</h4>
+        <ul>
+            {{range $url, $name := .Body.ResourceData.ResLinks}}
+                <li>
+                    <a href="{{$url}}">{{$name}}</a>
+                </li>
+            {{end}}
+        </ul>
+    {{end}}
+</main>
+<footer></footer>
+</div>
+{{end}}

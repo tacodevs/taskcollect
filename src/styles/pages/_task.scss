@@ -1,0 +1,282 @@
+@use "../breakpoints" as bp;
+
+// Local variables
+$checkbox-dim: 1.2em;
+
+.task-header {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+
+    background-color: var(--bg-color);
+    padding: 2em 0px 1em 30px;
+
+    .task-title>h1 {
+        margin-top: 0;
+    }
+
+    .topright {
+        order: 2;
+        position: relative;
+        float: right;
+        margin-right: 30px;
+        margin-left: auto;
+    }
+
+    @include bp.xs {
+
+        .task-title,
+        .topright {
+            width: 100%;
+        }
+    }
+
+    @include bp.sm {
+
+        .task-title,
+        .topright {
+            width: 100%;
+        }
+    }
+
+    @include bp.md {
+
+        .task-title,
+        .topright {
+            width: 100%;
+        }
+    }
+
+    @include bp.lg {
+
+        .task-title,
+        .topright {
+            width: 100%;
+        }
+    }
+}
+
+.task-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    column-gap: 1px;
+    row-gap: 1px;
+    background-color: var(--fg-color);
+
+    @include bp.xs {
+        grid-template-columns: auto;
+    }
+
+    @include bp.sm {
+        grid-template-columns: auto;
+    }
+
+    @include bp.md {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @include bp.lg {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @include bp.xl {
+        grid-template-columns: repeat(3, minmax(0, 1fr))
+    }
+
+}
+
+.task-grade {
+    text-align: center;
+    width: auto;
+    display: inline-block;
+    max-height: inherit;
+    background-color: var(--bg-color);
+
+    @include bp.xs {
+        padding: 15px 30px;
+    }
+
+    @include bp.sm {
+        padding: 15px 30px;
+    }
+
+    @include bp.md {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        padding: 15px 30px;
+    }
+
+    @include bp.lg {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        padding: 0px 30px;
+    }
+
+    @include bp.xl {
+        padding: 0px 30px;
+    }
+}
+
+.grid-element {
+    width: auto;
+    display: inline-block;
+    max-height: inherit;
+    background-color: var(--bg-color);
+
+    @include bp.xs {
+        padding: 15px 30px;
+    }
+
+    @include bp.sm {
+        padding: 15px 30px;
+    }
+
+    @include bp.md {
+        padding: 15px 30px;
+    }
+
+    @include bp.lg {
+        padding: 0px 30px;
+    }
+
+    @include bp.xl {
+        padding: 0px 30px;
+    }
+}
+
+.task-container:hover {
+    background-color: var(--fg-color);
+}
+
+.task-container> :hover {
+    background-color: var(--bg-color);
+}
+
+#grade {
+    display: inline-block;
+    width: 150px;
+    height: auto;
+    margin: 25px 0px !important;
+    padding: 0 !important;
+    border: 2px solid var(--fg-color);
+    border-radius: 10px;
+    font-size: 2rem;
+
+    &:hover {
+        background: var(--bg-color);
+    }
+
+    h1 {
+        font-size: 3rem;
+        line-height: 3.75rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        line-height: 1.25rem;
+    }
+
+    // Unused
+    #submission {
+        position: relative;
+        background-color: var(--accent-color);
+        color: #ffffff;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+}
+
+#submission:hover {
+    background-color: var(--accent-hover);
+}
+
+#submission:active {
+    background-color: var(--accent-click);
+}
+
+#teacher-comment {
+    text-align: left;
+}
+
+.linebreak {
+    height: 0;
+    width: 0;
+    margin-bottom: 20px;
+}
+
+.secondary {
+    margin-top: 1em;
+    background: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    padding: 12px 0px;
+    font-size: 1rem;
+}
+
+.task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+
+    .form-control {
+        display: flex;
+        font-weight: bold;
+        line-height: 1.5;
+
+        +.form-control {
+            margin-top: 0.5em;
+        }
+
+        .left {
+            position: relative;
+            margin: 0px 10px;
+            left: 15px;
+        }
+
+        .left[type="checkbox"] {
+            margin-top: 5px;
+            min-width: $checkbox-dim;
+        }
+
+    }
+}
+
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: var(--form-background);
+    margin: 0.1em 0 0 0;
+
+    font: inherit;
+    color: currentColor;
+    width: $checkbox-dim;
+    height: $checkbox-dim;
+    border: 0.15em solid currentColor;
+    border-radius: 5px;
+    transform: translateY(-0.075em);
+    background: var(--bg-color);
+    display: grid;
+    place-content: center;
+
+    &::before {
+        content: "";
+        width: 0.65em;
+        height: 0.65em;
+        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        transform: scale(0);
+        transform-origin: bottom left;
+        transition: 120ms transform ease-in-out;
+        box-shadow: inset 1em 1em var(--fg-color);
+        background-color: CanvasText;
+    }
+
+    &:checked {
+        background: var(--accent-hover);
+    }
+
+    &:checked::before {
+        transform: scale(1);
+    }
+
+}
