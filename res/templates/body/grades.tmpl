@@ -1,0 +1,23 @@
+{{define "grades"}}
+{{template "header" . -}}
+
+<div id="root">
+<main id="main-content">
+    <h1>Grades</h1>
+    <details>
+        <summary>
+            Expand to list
+        </summary>
+        {{range $index, $task := .Body.GradesData.Tasks}}
+            <div>
+                <h5 class="datetime">Grade: {{$task.Grade}}</h5>
+                <p><a href="/tasks/{{$task.Platform}}/{{$task.Id}}">{{$task.Name}}</a></p>
+                <h5>{{$task.Class}}</h5>
+                <h5><a href="{{$task.URL}}">Open in source platform</a></h5>
+            </div>
+        {{end}}
+    </details>
+</main>
+<footer></footer>
+</div>
+{{end}}

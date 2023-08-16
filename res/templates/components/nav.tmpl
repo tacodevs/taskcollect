@@ -1,0 +1,31 @@
+{{define "nav"}}
+<nav>
+    <div id="left-nav">
+        <ul>
+            <li><a href="/timetable">Timetable</a></li>
+            <li><a href="/tasks">Tasks</a></li>
+            <li><a href="/res">Resources</a></li>
+            <li><a href="/grades">Grades</a></li>
+        </ul>
+    </div>
+    <div id="right-nav">
+        <ul>
+            <li><span class="dispname">{{.User.Name}} — </span><a href="/logout">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+<div id="hamburger-icon" onclick="toggleMobileMenu(this)">
+    <div class="bar1"></div>
+    <div class="bar2"></div>
+    <div class="bar3"></div>
+    <ul class="mobile-menu">
+        <li><a href="/timetable">Timetable</a></li>
+        <li><a href="/tasks">Tasks</a></li>
+        <li><a href="/res">Resources</a></li>
+        <li><a href="/grades">Grades</a></li>
+        <hr id="logout">
+        <li><a href="/logout">Logout</a></li>
+		<li class="mobile-dispname"><span class="unbold">Logged in as </span>{{.User.Name}}</li>
+    </ul>
+</div>
+{{end}}

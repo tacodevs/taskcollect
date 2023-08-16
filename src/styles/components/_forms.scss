@@ -1,0 +1,40 @@
+@mixin styling-1 {
+    border-radius: 5px;
+    font-family: var(--main-font);
+    font-size: 0.9rem;
+}
+
+input[type="submit"],
+input[type="file"]::file-selector-button {
+    @include styling-1;
+    background: var(--accent-color);
+    border: none;
+    color: #ffffff;
+    outline: 0 !important;
+    padding: 7px 15px;
+
+    &:hover {
+        transition: 0.2s;
+        background: var(--accent-hover);
+        cursor: pointer;
+    }
+
+    &:active {
+        background: var(--accent-click);
+        cursor: pointer;
+    }
+
+}
+
+input[type="file"] {
+    margin: 10px 5px 10px 0;
+    background: var(--bg-color);
+    border: none;
+    font-family: var(--main-font);
+    font-size: 0.9rem;
+}
+
+input:focus,
+select:focus {
+    outline-color: var(--accent-color);
+}
