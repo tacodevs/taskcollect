@@ -283,11 +283,10 @@ func (m *Mux) Reports(creds User) ([]Report, errors.Error) {
 // Deliver sends *t to channel c, and closes c if the calling goroutine is the
 // last goroutine to use the channel (i.e. when *done == 0).
 func Deliver[T any](c chan T, t *T, done *int) {
-	finished := *done
-	c <- *t
-	if finished == 0 {
-		close(c)
+	if *done == 0 {
+		defer close(c)
 	}
+	c <- *t
 }
 
 // Done specifies that the calling goroutine is finished using a channel shared
