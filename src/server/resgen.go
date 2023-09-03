@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	htm "codeberg.org/kvo/format/html"
-	"codeberg.org/kvo/format/text"
-	"codeberg.org/kvo/std/errors"
+	htm "git.sr.ht/~kvo/format/html"
+	"git.sr.ht/~kvo/format/text"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/logger"
 	"main/plat"

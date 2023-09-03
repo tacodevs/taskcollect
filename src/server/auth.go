@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/kvo/std"
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/libgo/errors"
 	"github.com/redis/go-redis/v9"
 
 	"main/logger"
@@ -295,7 +295,7 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 	user := query.Get("usr")
 	pwd := query.Get("pwd")
 
-	if std.Contains([]string{user, pwd}, "") {
+	if defs.Has([]string{user, pwd}, "") {
 		err := errors.New("username or password is empty", plat.ErrAuthFailed.Here())
 		return "", err
 	}

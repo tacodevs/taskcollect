@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/kvo/std"
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/plat"
 )
@@ -714,7 +714,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		fname := b[:i]
 		b = b[i:]
 
-		if std.Contains(filenames, fname) {
+		if defs.Has(filenames, fname) {
 			rwForm.Set(name, "del")
 		}
 
@@ -726,7 +726,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 	rwForm.Set("__EVENTARGUMENT", "")
 
 	rwData := strings.NewReader(rwForm.Encode())
-	if _, err := std.Access([]byte(rwUrl), 1); err != nil {
+	if _, err := defs.Get([]byte(rwUrl), 1); err != nil {
 		return errors.New("invalid task HTML response", err)
 	}
 	rwfurl := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]

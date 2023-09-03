@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/kvo/std"
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/libgo/errors"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -211,7 +211,7 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 
 	for i := 0; i < len(lessons); i++ {
 		for j := 0; j < len(lessons[i]); j++ {
-			if !std.Contains(classes, lessons[i][j].Class) {
+			if !defs.Has(classes, lessons[i][j].Class) {
 				classes = append(classes, lessons[i][j].Class)
 			}
 		}
@@ -360,7 +360,7 @@ func genTimetable(creds plat.User) (timetableData, errors.Error) {
 
 	for i := 0; i < len(lessons); i++ {
 		for j := 0; j < len(lessons[i]); j++ {
-			if !std.Contains(classes, lessons[i][j].Class) {
+			if !defs.Has(classes, lessons[i][j].Class) {
 				classes = append(classes, lessons[i][j].Class)
 			}
 		}

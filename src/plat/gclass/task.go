@@ -3,7 +3,7 @@ package gclass
 import (
 	"mime/multipart"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/plat"
 )

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"codeberg.org/kvo/std"
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/plat"
 )
@@ -162,11 +162,11 @@ func GetResource(creds User, id string) (plat.Resource, errors.Error) {
 	var res plat.Resource
 	var err errors.Error
 
-	courseId, err := std.Access(idSlice, 0)
+	courseId, err := defs.Get(idSlice, 0)
 	if err != nil {
 		return plat.Resource{}, errors.New("invalid resource ID", err)
 	}
-	resId, err := std.Access(idSlice, 1)
+	resId, err := defs.Get(idSlice, 1)
 	if err != nil {
 		return plat.Resource{}, errors.New("invalid resource ID", err)
 	}

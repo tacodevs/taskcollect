@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sort"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/logger"
 	"main/plat"
