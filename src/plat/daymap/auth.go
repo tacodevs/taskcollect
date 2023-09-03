@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/logger"
 )

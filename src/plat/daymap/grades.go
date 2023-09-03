@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/plat"
 )

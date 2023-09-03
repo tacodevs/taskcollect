@@ -3,7 +3,7 @@ package daymap
 import (
 	"strings"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 )
 
 // Arbitrary strings generation mandatory for making requests to Daymap.

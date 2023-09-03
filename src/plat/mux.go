@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 )
 
 // Mux is a platform multiplexer. Methods can be invoked on it to select the

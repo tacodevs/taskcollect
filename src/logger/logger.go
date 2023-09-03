@@ -11,7 +11,7 @@ import (
 
 	"main/plat"
 
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/errors"
 )
 
 var buf bytes.Buffer

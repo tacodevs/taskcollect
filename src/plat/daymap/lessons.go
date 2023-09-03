@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/kvo/std"
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/plat"
 )
@@ -180,7 +180,7 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 			continue
 		}
 
-		if _, err := std.Access(lessons, i); err != nil {
+		if _, err := defs.Get(lessons, i); err != nil {
 			return nil, errors.New("number of days with lessons exceeded 5", err)
 		}
 

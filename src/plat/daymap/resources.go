@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/kvo/std"
-	"codeberg.org/kvo/std/errors"
+	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/libgo/errors"
 
 	"main/plat"
 )
@@ -65,7 +65,7 @@ func auxClassInfo(creds User, link string) (string, string, errors.Error) {
 		err := errors.New(e.Error(), nil)
 		return "", "", errors.New("failed to compile regex", err)
 	}
-	courseId, err := std.Access(strings.Split(re.FindString(page), ","), 2)
+	courseId, err := defs.Get(strings.Split(re.FindString(page), ","), 2)
 	if err != nil {
 		return "", "", errors.New("cannot get class ID", err)
 	}
@@ -167,7 +167,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *errors.Error, w
 				return
 			}
 		} else {
-			if _, err = std.Access([]byte(b), len(div)); err != nil {
+			if _, err = defs.Get([]byte(b), len(div)); err != nil {
 				*e = errors.New("invalid HTML response", err)
 				return
 			}
@@ -177,7 +177,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *errors.Error, w
 		}
 
 		i = len(div)
-		if _, err = std.Access([]byte(b), i); err != nil {
+		if _, err = defs.Get([]byte(b), i); err != nil {
 			*e = errors.New("invalid HTML response", err)
 			return
 		}
@@ -216,7 +216,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *errors.Error, w
 			}
 		}
 
-		if _, err = std.Access([]byte(b), i); err != nil {
+		if _, err = defs.Get([]byte(b), i); err != nil {
 			*e = errors.New("invalid HTML response", err)
 			return
 		}
@@ -231,7 +231,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *errors.Error, w
 
 		resource.Id = id + "-" + resource.Id
 		*res = append(*res, resource)
-		if _, err = std.Access([]byte(b), i); err != nil {
+		if _, err = defs.Get([]byte(b), i); err != nil {
 			*e = errors.New("invalid HTML response", err)
 			return
 		}
