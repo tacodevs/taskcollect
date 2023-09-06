@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"git.sr.ht/~kvo/libgo/errors"
 
@@ -109,8 +110,11 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID="
 	link := "https://gihs.daymap.net/daymap/student/portfolio.aspx/AssessmentReport"
 	referrer := "https://gihs.daymap.net/daymap/student/portfolio.aspx?tab=Assessment_Results"
-	form := `{"id":5303,"classId":0,"viewMode":"tabular","allCompleted":false,"taskType":0,"fromDate":"2023-01-30T00:00:00.000Z","toDate":"2023-12-15T00:00:00.000Z"}`
-	data := strings.NewReader(form)
+	form := `{"id":5303,"classId":0,"viewMode":"tabular","allCompleted":false,"taskType":0,`
+	times := `"fromDate":"YYYY-01-01T00:00:00.000Z","toDate":"YYYY-12-31T23:59:59.999Z"}`
+	year := strconv.Itoa(time.Now().In(creds.Timezone).Year())
+	times = strings.ReplaceAll(times, "YYYY", year)
+	data := strings.NewReader(form + times)
 
 	req, e := http.NewRequest("POST", link, data)
 	if e != nil {
