@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
-	"time"
 
 	"git.sr.ht/~kvo/libgo/errors"
 
@@ -98,43 +96,6 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 	return result, nil
 }
 
-// Retrieve the grade given to a student for a particular DayMap task.
-func getGrade(creds plat.User, id string, result *taskGrade, e *errors.Error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", taskUrl, nil)
-	if err != nil {
-		*e = errors.New(
-			"GET request failed",
-			errors.New(err.Error(), nil),
-		)
-		return
-	}
-	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
-
-	resp, err := client.Do(req)
-	if err != nil {
-		*e = errors.New(
-			"failed to get resp",
-			errors.New(err.Error(), nil),
-		)
-		return
-	}
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		*e = errors.New(
-			"failed to read resp.Body",
-			errors.New(err.Error(), nil),
-		)
-		return
-	}
-	page := string(respBody)
-	*result, *e = findGrade(&page)
-}
-
 // Retrieve a list of graded tasks from DayMap for a user.
 func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int) {
 	var tasks []plat.Task
@@ -144,166 +105,133 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 	defer plat.Deliver(ok, &err, done)
 	defer plat.Done(done)
 
-	webpage, err := tasksPage(creds)
-	if err != nil {
+	client := &http.Client{}
+	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID="
+	link := "https://gihs.daymap.net/daymap/student/portfolio.aspx/AssessmentReport"
+	referrer := "https://gihs.daymap.net/daymap/student/portfolio.aspx?tab=Assessment_Results"
+	form := `{"id":5303,"classId":0,"viewMode":"tabular","allCompleted":false,"taskType":0,"fromDate":"2023-01-30T00:00:00.000Z","toDate":"2023-12-15T00:00:00.000Z"}`
+	data := strings.NewReader(form)
+
+	req, e := http.NewRequest("POST", link, data)
+	if e != nil {
+		err = errors.New(
+			"GET request failed",
+			errors.New(e.Error(), nil),
+		)
 		return
 	}
 
-	page := Page(webpage)
-	unsorted := []plat.Task{}
-	graded := []string{}
-	strErr := ""
-	err = page.Advance(`href="javascript:ViewAssignment(`)
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
+	req.Header.Set("Origin", "https://gihs.daymap.net")
+	req.Header.Set("Referer", referrer)
 
-	for err == nil {
-		var postStr, dueStr, taskLine string
-		var local time.Time
-
-		task := plat.Task{
-			Platform: "daymap",
-		}
-
-		task.Id, err = page.UpTo(`)">`)
-		if err != nil {
-			strErr = "failed getting task ID"
-			break
-		}
-		task.Link = "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + task.Id
-
-		err = page.Advance(`<td>`)
-		if err != nil {
-			strErr = "failed advancing past task ID"
-			break
-		}
-
-		task.Class, err = page.UpTo(`</td>`)
-		if err != nil {
-			strErr = "failed getting class name"
-			break
-		}
-
-		err = page.Advance(`</td>`)
-		if err != nil {
-			strErr = "failed advancing past class name"
-			break
-		}
-
-		err = page.Advance(`</td><td>`)
-		if err != nil {
-			strErr = "failed advancing past summative/formative info"
-			break
-		}
-
-		task.Name, err = page.UpTo(`</td><td>`)
-		if err != nil {
-			strErr = "failed getting task name"
-			break
-		}
-
-		err = page.Advance(`</td><td>`)
-		if err != nil {
-			strErr = "failed advancing to post date"
-			break
-		}
-
-		postStr, err = page.UpTo(`</td><td>`)
-		var e error
-		local, e = time.Parse("2/01/06", postStr)
-		if e != nil {
-			strErr = "failed to parse post date"
-			break
-		}
-		task.Posted = time.Date(
-			local.Year(),
-			local.Month(),
-			local.Day(),
-			local.Hour(),
-			local.Minute(),
-			local.Second(),
-			local.Nanosecond(),
-			creds.Timezone,
+	resp, e := client.Do(req)
+	if e != nil {
+		err = errors.New(
+			"failed to get resp",
+			errors.New(e.Error(), nil),
 		)
+		return
+	}
 
-		err = page.Advance(`</td><td>`)
-		if err != nil {
-			strErr = "failed advancing to due date"
-			break
-		}
-
-		dueStr, err = page.UpTo(`</td><td>`)
-		local, e = time.Parse("2/01/06", dueStr)
-		if e != nil {
-			strErr = "failed to parse due date"
-			break
-		}
-		task.Due = time.Date(
-			local.Year(),
-			local.Month(),
-			local.Day(),
-			local.Hour(),
-			local.Minute(),
-			local.Second(),
-			local.Nanosecond(),
-			creds.Timezone,
+	respBody, e := io.ReadAll(resp.Body)
+	if e != nil {
+		err = errors.New(
+			"failed to read resp.Body",
+			errors.New(e.Error(), nil),
 		)
+		return
+	}
 
-		taskLine, err = page.UpTo("\n")
-		if err != nil {
-			strErr = "failed getting task info line"
-			break
-		}
+	page := string(respBody)
+	lines := strings.Split(page, "\n")
+	class := ""
 
-		i := strings.Index(taskLine, `Results have been published`)
+	for _, line := range lines {
+		i := strings.Index(line, `<tr><th colspan='5' align='left'>`)
 		if i != -1 {
-			task.Submitted = true
-			graded = append(graded, task.Id)
-		}
-
-		i = strings.Index(taskLine, `Your work has been received`)
-		if i != -1 && !task.Submitted {
-			task.Submitted = true
-		}
-
-		unsorted = append(unsorted, task)
-		err = page.Advance(`href="javascript:ViewAssignment(`)
-	}
-
-	if strErr != "" {
-		err = errors.New(strErr, err)
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	results := make([]taskGrade, len(graded))
-	errs := make([]errors.Error, len(graded))
-
-	for i, id := range graded {
-		wg.Add(1)
-		getGrade(creds, id, &results[i], &errs[i], &wg)
-	}
-
-	wg.Wait()
-
-	if errors.Join(errs...) != nil {
-		err = errors.Join(errs...)
-		return
-	}
-
-	for i, task := range unsorted {
-		for j, id := range graded {
-			if task.Id == id {
-				unsorted[i].Graded = results[j].Exists
-				unsorted[i].Grade = results[j].Grade
-				unsorted[i].Score = results[j].Mark
+			i += len(`<tr><th colspan='5' align='left'>`)
+			line = line[i:]
+			i = strings.Index(line, " (")
+			if i == -1 {
+				err = plat.ErrInvalidResp.Here()
+				return
 			}
+			class = line[:i]
+			continue
 		}
-	}
 
-	for _, task := range unsorted {
-		if task.Graded == true {
-			tasks = append(tasks, task)
+		if !strings.HasPrefix(line, `<tr><td><a href="javascript:OpenTask(`) {
+			continue
 		}
-	}
+		task := plat.Task{Class: class, Platform: "daymap"}
+		i = len(`<tr><td><a href="javascript:OpenTask(`)
+		line = line[i:]
 
-	err = nil
+		i = strings.Index(line, `);">`)
+		if i == -1 {
+			err = plat.ErrInvalidResp.Here()
+			return
+		}
+		task.Id = line[:i]
+		task.Link = taskUrl + task.Id
+		i += len(`);">`)
+		line = line[i:]
+
+		i = strings.Index(line, `</a>`)
+		if i == -1 {
+			err = plat.ErrInvalidResp.Here()
+			return
+		}
+		task.Name = line[:i]
+
+		for j := 0; j < 2; j++ {
+			i = strings.Index(line, `<td nowrap>`)
+			if i == -1 {
+				err = plat.ErrInvalidResp.Here()
+				return
+			}
+			i += len(`<td nowrap>`)
+			line = line[i:]
+		}
+
+		i = strings.Index(line, `</td>`)
+		if i == -1 {
+			err = plat.ErrInvalidResp.Here()
+			return
+		}
+		task.Grade = line[:i]
+
+		i = strings.Index(line, `<td nowrap>`)
+		if i == -1 {
+			err = plat.ErrInvalidResp.Here()
+			return
+		}
+		i += len(`<td nowrap>`)
+		line = line[i:]
+
+		i = strings.Index(line, `</td>`)
+		if i == -1 {
+			err = plat.ErrInvalidResp.Here()
+			return
+		}
+		mark := line[:i]
+		marks := strings.Split(mark, "/")
+
+		top, err := strconv.ParseFloat(marks[0], 64)
+		if err != nil {
+			err = errors.New("numerator float64 conversion failed", nil)
+			return
+		}
+
+		bottom, err := strconv.ParseFloat(marks[1], 64)
+		if err != nil {
+			err = errors.New("denominator float64 conversion failed", nil)
+			return
+		}
+
+		task.Score = top / bottom * 100
+		tasks = append(tasks, task)
+	}
 }
