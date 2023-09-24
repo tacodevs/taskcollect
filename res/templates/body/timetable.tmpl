@@ -20,7 +20,7 @@
         {{end}}
                 <div class="lessons">
                     {{range $i, $lesson := $day.Lessons}}
-                        <div class="lesson" style="min-height: {{$lesson.Height}}px; top: {{$lesson.TopOffset}}px; color: {{$lesson.Color}}; background-color: {{$lesson.BGColor}};">
+                        <div class="lesson" style="height: {{$lesson.Height}}px; top: {{$lesson.TopOffset}}px; color: {{$lesson.Color}}; background-color: {{$lesson.BGColor}};">
                             <h3 class="class-name">{{$lesson.Class}}</h3>
                             {{if ne $lesson.Notice ""}}
                                 <p class="notice">{{$lesson.Notice}}</p>

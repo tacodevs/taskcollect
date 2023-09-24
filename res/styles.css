@@ -515,8 +515,7 @@ select:focus {
   left: 0;
   right: 0;
   margin: 0 auto;
-  min-height: 90px;
-  background-color: #ffffff;
+  overflow: scroll;
   padding: 5px;
   width: 95%;
   box-sizing: border-box;
