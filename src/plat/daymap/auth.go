@@ -707,7 +707,7 @@ func Auth(school, usr, pwd string) (User, errors.Error) {
 	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	_, authToken, err := get(page, usr, pwd)
 	if err != nil {
-		return User{}, errors.New("could not authenticate user with DayMap", err)
+		return User{}, errors.New("GET dayplan.aspx failed", err)
 	}
 
 	creds := User{
