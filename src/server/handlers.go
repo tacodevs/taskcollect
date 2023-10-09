@@ -327,7 +327,7 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		} else {
-			logger.Debug(errors.New("could not authenticate user", err))
+			logger.Debug(errors.New("auth failed", err))
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
 		}

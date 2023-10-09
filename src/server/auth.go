@@ -30,7 +30,7 @@ func gihsAuth(username, password string) errors.Error {
 	jar, e := cookiejar.New(nil)
 	if e != nil {
 		err := errors.New(e.Error(), nil)
-		return errors.New("failed to create cookiejar", err)
+		return errors.New("error creating cookiejar", err)
 	}
 
 	client := &http.Client{Jar: jar}
@@ -44,7 +44,7 @@ func gihsAuth(username, password string) errors.Error {
 	s1body, e := io.ReadAll(s1.Body)
 	if e != nil {
 		err := errors.New(e.Error(), nil)
-		return errors.New("failed to read s1.Body", err)
+		return errors.New("error reading s1.Body", err)
 	}
 
 	s1page := string(s1body)
@@ -63,7 +63,7 @@ func gihsAuth(username, password string) errors.Error {
 
 	idIndex := strings.Index(s1page, "&client-request-id=")
 	if idIndex == -1 {
-		err := errors.New("could not find client request ID", nil)
+		err := errors.New("missing client request ID", nil)
 		return err
 	}
 
@@ -71,7 +71,7 @@ func gihsAuth(username, password string) errors.Error {
 	idEnd += idIndex
 
 	if idEnd == -1 {
-		err := errors.New("client request ID has no end", nil)
+		err := errors.New("unterminated client request ID", nil)
 		return err
 	}
 
@@ -83,14 +83,14 @@ func gihsAuth(username, password string) errors.Error {
 	s2req, e := http.NewRequest("POST", s2url, s2data)
 	if e != nil {
 		err := errors.New(e.Error(), nil)
-		return errors.New("(s2) POST request failed", err)
+		return errors.New("malformed stage 2 POST", err)
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s2, e := client.Do(s2req)
 	if e != nil {
 		err := errors.New(e.Error(), nil)
-		return errors.New("s2req", err)
+		return errors.New("stage 2 POST failed", err)
 	}
 
 	// Stage 3 - Check if authentication was successful.
@@ -98,7 +98,7 @@ func gihsAuth(username, password string) errors.Error {
 	if s2.StatusCode == 200 && s2.Header.Get("X-Frame-Options") == "" {
 		return nil
 	}
-	return errors.New("received non-200 response from GIHS SAML", nil)
+	return errors.New("saml returned non-200 response", nil)
 }
 
 type authDB struct {
@@ -203,7 +203,7 @@ func (db *authDB) getCreds(cookies string) (plat.User, errors.Error) {
 		creds.Timezone, e = time.LoadLocation("Australia/Adelaide")
 		if e != nil {
 			err := errors.New(e.Error(), nil)
-			return plat.User{}, errors.New("could not load timezone location data", err)
+			return plat.User{}, errors.New("cannot load timezone data", err)
 		}
 
 		creds.SiteTokens = map[string]string{
@@ -309,16 +309,16 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 	var dmCreds daymap.User
 	err := gihsAuth(user, pwd)
 	if err != nil {
-		logger.Debug(errors.New("error in GIHS auth", err))
+		logger.Debug(errors.New("gihs auth failed", err))
 		dmCreds, err = daymap.Auth(school, user, pwd)
 		if err != nil {
-			logger.Debug(errors.New("could not authenticate to Daymap", err))
+			logger.Debug(errors.New("daymap auth failed", err))
 			userExists, err := db.findUser(school, user, pwd)
 			if err != nil {
-				return "", errors.New("could not determine if user exists", err)
+				return "", errors.New("cannot check if user exists", err)
 			}
 			if !userExists {
-				return "", errors.New("user was not found", err)
+				return "", errors.New("user not found", err)
 			}
 		}
 	}
