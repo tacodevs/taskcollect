@@ -1,7 +1,7 @@
 package daymap
 
 import (
-	"io"
+	"bufio"
 	"net/http"
 	"strconv"
 	"strings"
@@ -139,20 +139,10 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 		return
 	}
 
-	respBody, e := io.ReadAll(resp.Body)
-	if e != nil {
-		err = errors.New(
-			"failed to read resp.Body",
-			errors.New(e.Error(), nil),
-		)
-		return
-	}
-
-	page := string(respBody)
-	lines := strings.Split(page, "\n")
+	scanner := bufio.NewScanner(resp.Body)
 	class := ""
-
-	for _, line := range lines {
+	for scanner.Scan() {
+		line := scanner.Text()
 		i := strings.Index(line, `<tr><th colspan='5' align='left'>`)
 		if i != -1 {
 			i += len(`<tr><th colspan='5' align='left'>`)
@@ -223,19 +213,33 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 		mark := line[:i]
 		marks := strings.Split(mark, "/")
 
-		top, err := strconv.ParseFloat(marks[0], 64)
-		if err != nil {
-			err = errors.New("numerator float64 conversion failed", nil)
-			return
+		if len(marks) == 2 {
+			top, e := strconv.ParseFloat(marks[0], 64)
+			if err != nil {
+				err = errors.New(
+					"numerator float64 conversion failed",
+					errors.New(e.Error(), nil),
+				)
+				return
+			}
+			bottom, e := strconv.ParseFloat(marks[1], 64)
+			if e != nil {
+				err = errors.New(
+					"denominator float64 conversion failed",
+					errors.New(e.Error(), nil),
+				)
+				return
+			}
+			task.Score = top / bottom * 100
 		}
 
-		bottom, err := strconv.ParseFloat(marks[1], 64)
-		if err != nil {
-			err = errors.New("denominator float64 conversion failed", nil)
-			return
-		}
-
-		task.Score = top / bottom * 100
 		tasks = append(tasks, task)
+	}
+	if e := scanner.Err(); e != nil {
+		err = errors.New(
+			"error reading response body",
+			errors.New(e.Error(), nil),
+		)
+		return
 	}
 }
