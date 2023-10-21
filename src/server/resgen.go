@@ -123,7 +123,7 @@ func genTask(assignment plat.Task, noteType string, creds plat.User) taskItem {
 		task.Grade = "N/A"
 		if assignment.Grade != "" && assignment.Score == 0.0 {
 			task.Grade = fmt.Sprintf("%s", assignment.Grade)
-		 else if assignment.Grade != "" && assignment.Score != 0.0 {
+		} else if assignment.Grade != "" && assignment.Score != 0.0 {
 			task.Grade = fmt.Sprintf("%s (%.f%%)", assignment.Grade, assignment.Score)
 		} else if assignment.Score != 0.0 {
 			task.Grade = fmt.Sprintf("%.f%%", assignment.Score)
