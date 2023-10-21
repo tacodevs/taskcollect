@@ -120,15 +120,15 @@ func genTask(assignment plat.Task, noteType string, creds plat.User) taskItem {
 	case "posted":
 		task.Posted = genPostStr(assignment.Posted, creds)
 	case "grade":
-        task.Grade = "N/A"
-        if assignment.Grade != "" && assignment.Score == 0.0 {
-            task.Grade = fmt.Sprintf("%s", assignment.Grade)
-        } else if assignment.Grade != "" && assignment.Score != 0.0 {
-            task.Grade = fmt.Sprintf("%s (%.f%%)", assignment.Grade, assignment.Score)
-        } else if assignment.Score != 0.0 {
-            task.Grade = fmt.Sprintf("%.f%%", assignment.Score)
-        }
-    }
+		task.Grade = "N/A"
+		if assignment.Grade != "" && assignment.Score == 0.0 {
+			task.Grade = fmt.Sprintf("%s", assignment.Grade)
+		 else if assignment.Grade != "" && assignment.Score != 0.0 {
+			task.Grade = fmt.Sprintf("%s (%.f%%)", assignment.Grade, assignment.Score)
+		} else if assignment.Score != 0.0 {
+			task.Grade = fmt.Sprintf("%.f%%", assignment.Score)
+		}
+	}
 
 	return task
 }
