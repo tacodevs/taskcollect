@@ -63,7 +63,7 @@ We will be releasing a proposal for TaskCollect v2 which will address these mold
 
 To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to this email address: ~kvo/taskcollect-announce+subscribe@lists.sr.ht
 
-For all previous announcements, [see the archives][5].
+For all previous announcements, [see the archives][4].
 
 ## Contact us
 
