@@ -41,9 +41,9 @@ Run-time dependencies:
 
 ## Contributing
 
-Confirmed issues and feature requests may be reported on the [issue tracker][1]. If your issue has not been confirmed, please send an email to [tsakcollect-discuss][2] to discuss your query first.
+Confirmed issues and feature requests may be reported on the [issue tracker][1]. If your issue has not been confirmed, please send an email to [taskcollect-discuss][2] to discuss your query first.
 
-Contributions are welcome! You can send us a pull request, or if you are unsure where to start, or send an email to [taskcollect-devel][3] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [tsakcollect-discuss][2].
+Contributions are welcome! You can send us a pull request, or if you are unsure where to start, or send an email to [taskcollect-devel][3] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [taskcollect-discuss][2].
 
 Tests can be run using `test.py`. For more information, run `./test.py help`.
 
@@ -73,6 +73,6 @@ The list archives are hidden to protect the privacy of educational institutions.
 
 
 [1]: https://todo.sr.ht/~kvo/taskcollect
-[2]: ~kvo/taskcollect-discuss@lists.sr.ht
-[3]: ~kvo/taskcollect-devel@lists.sr.ht
+[2]: mailto:~kvo/taskcollect-discuss@lists.sr.ht
+[3]: mailto:~kvo/taskcollect-devel@lists.sr.ht
 [4]: https://lists.sr.ht/~kvo/taskcollect-announce
