@@ -94,7 +94,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
-				logger.Error(errors.New("failed to get task list from daymap", err))
+				logger.Debug(errors.New("failed to get task list from daymap", err))
 			}
 		}
 	}
