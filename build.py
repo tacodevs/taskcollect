@@ -156,7 +156,7 @@ def main(argc: int, argv: list[str]):
     if argc == 1:
         os_name = platform.system().lower()
         arch = platform.machine().lower()
-        if arch in ["i386", "x86"]:
+        if arch in ["i386", "i486", "i586", "i686", "x86"]:
             arch = "386"
         elif arch in ["x64", "x86_64"]:
             arch = "amd64"

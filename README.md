@@ -41,9 +41,11 @@ Run-time dependencies:
 
 ## Contributing
 
-Confirmed issues and feature requests may be reported on the [issue tracker][1]. If your issue has not been confirmed, please send an email to [taskcollect-discuss][2] to discuss your query first.
+TaskCollect development occurs on [SourceHut][1]. Mirrors may exist elsewhere (e.g. the official mirrors on [Codeberg][2] and [GitHub][3]), but contributions will only be accepted through SourceHut.
 
-Contributions are welcome! You can send us a pull request, or if you are unsure where to start, or send an email to [taskcollect-devel][3] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [taskcollect-discuss][2].
+Confirmed issues and feature requests may be reported on the [issue tracker][4]. If your issue has not been confirmed, please send an email to [taskcollect-discuss][5] to discuss your query first.
+
+Contributions are welcome! You can send us a pull request, or if you are unsure where to start, or send an email to [taskcollect-devel][6] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [taskcollect-discuss][5].
 
 Tests can be run using `test.py`. For more information, run `./test.py help`.
 
@@ -61,18 +63,21 @@ We will be releasing a proposal for TaskCollect v2 which will address these mold
 
 ## Announcements
 
-To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to this email address: ~kvo/taskcollect-announce+subscribe@lists.sr.ht
+To keep up with official TaskCollect announcements, subscribe to the announcements mailing list by sending an email to this email address: <~kvo/taskcollect-announce+subscribe@lists.sr.ht>
 
-For all previous announcements, [see the archives][4].
+For all previous announcements, [see the archives][7].
 
 ## Contact us
 
-If you have a query, please send an email to the official mailing list: ~kvo/taskcollect-discuss@lists.sr.ht
+If you have a query, please send an email to the official mailing list: <~kvo/taskcollect-discuss@lists.sr.ht>
 
 The list archives are hidden to protect the privacy of educational institutions.
 
 
-[1]: https://todo.sr.ht/~kvo/taskcollect
-[2]: mailto:~kvo/taskcollect-discuss@lists.sr.ht
-[3]: mailto:~kvo/taskcollect-devel@lists.sr.ht
-[4]: https://lists.sr.ht/~kvo/taskcollect-announce
+[1]: https://sr.ht/~kvo/taskcollect
+[2]: https://codeberg.org/kvo/taskcollect
+[3]: https://github.com/kv-o/taskcollect
+[4]: https://todo.sr.ht/~kvo/taskcollect
+[5]: mailto:~kvo/taskcollect-discuss@lists.sr.ht
+[6]: mailto:~kvo/taskcollect-devel@lists.sr.ht
+[7]: https://lists.sr.ht/~kvo/taskcollect-announce
