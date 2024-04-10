@@ -19,7 +19,7 @@ type taskGrade struct {
 }
 
 // Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(webpage *string) (taskGrade, errors.Error) {
+func findGrade(webpage *string) (taskGrade, error) {
 	var grade string
 	var percent float64
 	i := strings.Index(*webpage, "Grade:")
@@ -28,7 +28,7 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
+			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		*webpage = (*webpage)[i:]
@@ -37,7 +37,7 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
+			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		grade = (*webpage)[:i]
@@ -50,7 +50,7 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
+			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		*webpage = (*webpage)[i:]
@@ -59,7 +59,7 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
+			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		markStr := (*webpage)[:i]
@@ -68,7 +68,7 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
-			return taskGrade{}, plat.ErrInvalidTaskResp.Here()
+			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		st := markStr[:x]
@@ -76,18 +76,12 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 
 		it, err := strconv.ParseFloat(st, 64)
 		if err != nil {
-			return taskGrade{}, errors.New(
-				"(1) string to float64 conversion failed",
-				errors.New(err.Error(), nil),
-			)
+			return taskGrade{}, errors.New("(1) string to float64 conversion failed", err)
 		}
 
 		ib, err := strconv.ParseFloat(sb, 64)
 		if err != nil {
-			return taskGrade{}, errors.New(
-				"(2) string to float64 conversion failed",
-				errors.New(err.Error(), nil),
-			)
+			return taskGrade{}, errors.New("(2) string to float64 conversion failed", err)
 		}
 
 		percent = it / ib * 100
@@ -98,9 +92,9 @@ func findGrade(webpage *string) (taskGrade, errors.Error) {
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int) {
+func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 	var tasks []plat.Task
-	var err errors.Error
+	var err error
 
 	defer plat.Deliver(c, &tasks, done)
 	defer plat.Deliver(ok, &err, done)
@@ -116,12 +110,9 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 	times = strings.ReplaceAll(times, "YYYY", year)
 	data := strings.NewReader(form + times)
 
-	req, e := http.NewRequest("POST", link, data)
-	if e != nil {
-		err = errors.New(
-			"GET request failed",
-			errors.New(e.Error(), nil),
-		)
+	req, err := http.NewRequest("POST", link, data)
+	if err != nil {
+		err = errors.New("GET request failed", err)
 		return
 	}
 
@@ -130,12 +121,9 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 	req.Header.Set("Origin", "https://gihs.daymap.net")
 	req.Header.Set("Referer", referrer)
 
-	resp, e := client.Do(req)
-	if e != nil {
-		err = errors.New(
-			"failed to get resp",
-			errors.New(e.Error(), nil),
-		)
+	resp, err := client.Do(req)
+	if err != nil {
+		err = errors.New("failed to get resp", err)
 		return
 	}
 
@@ -149,7 +137,7 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 			line = line[i:]
 			i = strings.Index(line, " (")
 			if i == -1 {
-				err = plat.ErrInvalidResp.Here()
+				err = errors.Raise(plat.ErrInvalidResp)
 				return
 			}
 			class = line[:i]
@@ -165,7 +153,7 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 
 		i = strings.Index(line, `);">`)
 		if i == -1 {
-			err = plat.ErrInvalidResp.Here()
+			err = errors.Raise(plat.ErrInvalidResp)
 			return
 		}
 		task.Id = line[:i]
@@ -175,7 +163,7 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 
 		i = strings.Index(line, `</a>`)
 		if i == -1 {
-			err = plat.ErrInvalidResp.Here()
+			err = errors.Raise(plat.ErrInvalidResp)
 			return
 		}
 		task.Name = line[:i]
@@ -183,7 +171,7 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 		for j := 0; j < 2; j++ {
 			i = strings.Index(line, `<td nowrap>`)
 			if i == -1 {
-				err = plat.ErrInvalidResp.Here()
+				err = errors.Raise(plat.ErrInvalidResp)
 				return
 			}
 			i += len(`<td nowrap>`)
@@ -192,14 +180,14 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			err = plat.ErrInvalidResp.Here()
+			err = errors.Raise(plat.ErrInvalidResp)
 			return
 		}
 		task.Grade = line[:i]
 
 		i = strings.Index(line, `<td nowrap>`)
 		if i == -1 {
-			err = plat.ErrInvalidResp.Here()
+			err = errors.Raise(plat.ErrInvalidResp)
 			return
 		}
 		i += len(`<td nowrap>`)
@@ -207,27 +195,21 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			err = plat.ErrInvalidResp.Here()
+			err = errors.Raise(plat.ErrInvalidResp)
 			return
 		}
 		mark := line[:i]
 		marks := strings.Split(mark, "/")
 
 		if len(marks) == 2 {
-			top, e := strconv.ParseFloat(marks[0], 64)
+			top, err := strconv.ParseFloat(marks[0], 64)
 			if err != nil {
-				err = errors.New(
-					"numerator float64 conversion failed",
-					errors.New(e.Error(), nil),
-				)
+				err = errors.New("numerator float64 conversion failed", err)
 				return
 			}
-			bottom, e := strconv.ParseFloat(marks[1], 64)
-			if e != nil {
-				err = errors.New(
-					"denominator float64 conversion failed",
-					errors.New(e.Error(), nil),
-				)
+			bottom, err := strconv.ParseFloat(marks[1], 64)
+			if err != nil {
+				err = errors.New("denominator float64 conversion failed", err)
 				return
 			}
 			task.Score = top / bottom * 100
@@ -235,11 +217,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan errors.Error, done *int
 
 		tasks = append(tasks, task)
 	}
-	if e := scanner.Err(); e != nil {
-		err = errors.New(
-			"error reading response body",
-			errors.New(e.Error(), nil),
-		)
+	if err := scanner.Err(); err != nil {
+		err = errors.New("error reading response body", err)
 		return
 	}
 }

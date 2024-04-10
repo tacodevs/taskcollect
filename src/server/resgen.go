@@ -19,7 +19,7 @@ import (
 
 var gradeColors = []color.RGBA{
 	{0xc9, 0x16, 0x14, 0xff}, // Red, #c91614
-	{0xd9, 0x6b, 0x0a, 0xff}, // Amber/Orange, #d96b0a
+	{0xd9, 0x6b, 0x0a, 0xff}, // Amber, #d96b0a
 	{0xf6, 0xde, 0x0a, 0xff}, // Yellow, #f6de0a
 	{0x03, 0x6e, 0x05, 0xff}, // Green, #036e05
 }
@@ -353,7 +353,7 @@ func genHtmlResLink(className string, res []plat.Resource, creds plat.User) resC
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, creds plat.User) (pageData, errors.Error) {
+func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 	var data pageData
 	data.User.Name = creds.DispName
 

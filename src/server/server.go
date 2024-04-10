@@ -22,8 +22,8 @@ import (
 
 // Run the TaskCollect server.
 func Run(version string, tlsConn bool) {
-	curUser, e := user.Current()
-	if e != nil {
+	curUser, err := user.Current()
+	if err != nil {
 		logger.Fatal("cannot determine current user's home folder")
 	}
 
@@ -55,9 +55,8 @@ func Run(version string, tlsConn bool) {
 
 	var password string
 	fmt.Print("Password to Redis database: ")
-	dbPwdInput, e := term.ReadPassword(int(os.Stdin.Fd()))
-	if e != nil {
-		err = errors.New(e.Error(), nil)
+	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
 		logger.Fatal(errors.New("could not get password input", err))
 	}
 	fmt.Println()
@@ -101,31 +100,30 @@ func Run(version string, tlsConn bool) {
 
 	if tlsConn {
 		logger.Info("Running on port 443")
-		e = http.ListenAndServeTLS(":443", certFile, keyFile, mux)
+		err = http.ListenAndServeTLS(":443", certFile, keyFile, mux)
 	} else {
 		logger.Warn("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
-		e = http.ListenAndServe(":8080", mux)
+		err = http.ListenAndServe(":8080", mux)
 	}
 
-	if e != nil {
-		logger.Fatal(errors.New(e.Error(), nil))
+	if err != nil {
+		logger.Fatal(err)
 	}
 }
 
 // Create and manage necessary HTML files from template files.
-func initTemplates(resPath string) (*template.Template, errors.Error) {
+func initTemplates(resPath string) (*template.Template, error) {
 	// Create "./templates/" dir if it does not exist
 	tmplPath := fp.Join(resPath, "templates")
-	e := os.MkdirAll(tmplPath, os.ModePerm)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	err := os.MkdirAll(tmplPath, os.ModePerm)
+	if err != nil {
 		return nil, errors.New("could not make 'templates' directory", err)
 	}
 
 	tmplResPath := tmplPath
 
 	var files []string
-	e = fp.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
+	err = fp.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -138,8 +136,7 @@ func initTemplates(resPath string) (*template.Template, errors.Error) {
 		files = append(files, path)
 		return nil
 	})
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	if err != nil {
 		logger.Fatal(errors.New("error walking the template/ directory", err))
 	}
 
@@ -216,7 +213,7 @@ type databaseConfig struct {
 }
 
 // Get user configuration options from config.json
-func getConfig(cfgPath string) (config, errors.Error) {
+func getConfig(cfgPath string) (config, error) {
 	// Default config
 	result := config{
 		loggingConfig{
@@ -228,50 +225,43 @@ func getConfig(cfgPath string) (config, errors.Error) {
 		},
 	}
 
-	jsonFile, e := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
+	if err != nil {
 		return result, errors.New("failed to open config.json", err)
 	}
 
-	b, e := io.ReadAll(jsonFile)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	b, err := io.ReadAll(jsonFile)
+	if err != nil {
 		return result, errors.New("failed to read config.json", err)
 	}
 
-	e = jsonFile.Close()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	err = jsonFile.Close()
+	if err != nil {
 		return result, errors.New("failed to close config.json", err)
 	}
 
-	jsonFile, e = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
+	if err != nil {
 		return result, errors.New("failed to open config.json", err)
 	}
 	defer jsonFile.Close()
 
 	if len(b) > 0 {
-		e = json.Unmarshal(b, &result)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		err = json.Unmarshal(b, &result)
+		if err != nil {
 			return result, errors.New("failed to unmarshal config.json", err)
 		}
 	} else {
 		logger.Info("Using default configuration settings. These can be edited in the config.json file")
 	}
 
-	rawJson, e := json.MarshalIndent(result, "", "    ")
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	rawJson, err := json.MarshalIndent(result, "", "    ")
+	if err != nil {
 		return config{}, errors.New("failed to marshal config.json", err)
 	}
 
-	_, e = jsonFile.Write(rawJson)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	_, err = jsonFile.Write(rawJson)
+	if err != nil {
 		return result, errors.New("failed to write to config.json", err)
 	}
 

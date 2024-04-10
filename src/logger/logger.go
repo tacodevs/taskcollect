@@ -31,24 +31,18 @@ var (
 
 // Set up the logger to use a config file. Invoking it will start logging to file as well as console.
 // Must provide the path to where the log files should go.
-func UseConfigFile(logPath string) errors.Error {
+func UseConfigFile(logPath string) error {
 	useLogFile = true
 
 	err := os.MkdirAll(logPath, os.ModePerm)
 	if err != nil {
-		return errors.New(
-			"failed to create directory",
-			errors.New(err.Error(), nil),
-		)
+		return errors.New("failed to create directory", err)
 	}
 
 	logFileName = filepath.Join(logPath, time.Now().Format("2006-01-02_150405")+".log")
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		return errors.New(
-			"could not open log file",
-			errors.New(err.Error(), nil),
-		)
+		return errors.New("could not open log file", err)
 	}
 	defer logFile.Close()
 
@@ -66,10 +60,7 @@ func write() {
 		logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
 			logFileFailCount += 1
-			Error(errors.New(
-				"could not open log file",
-				errors.New(err.Error(), nil),
-			))
+			Error(errors.New("could not open log file", err))
 		}
 		defer logFile.Close()
 
@@ -77,10 +68,7 @@ func write() {
 		_, err = f.WriteString(buf.String())
 		if err != nil {
 			logFileFailCount += 1
-			Error(errors.New(
-				"could not write to log file",
-				errors.New(err.Error(), nil),
-			))
+			Error(errors.New("could not write to log file", err))
 		}
 		f.Flush()
 

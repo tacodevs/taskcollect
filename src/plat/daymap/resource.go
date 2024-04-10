@@ -14,14 +14,14 @@ import (
 )
 
 // Get a file resource from DayMap for a user.
-func fileRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
+func fileRes(creds User, courseId, id string) (plat.Resource, error) {
 	res := plat.Resource{}
 	res.Platform = "daymap"
 	res.Id = courseId + "-f" + id
 	res.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + id
 
 	var resources []plat.Resource
-	var err errors.Error
+	var err error
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go getClassRes(creds, courseId, &resources, &err, &wg)
@@ -44,29 +44,26 @@ func fileRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 }
 
 // Get a plan resource from DayMap for a user.
-func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
+func planRes(creds User, courseId, id string) (plat.Resource, error) {
 	res := plat.Resource{}
 	res.Platform = "daymap"
 	res.Id = courseId + "-" + id
 	res.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + id
 
 	client := &http.Client{}
-	req, e := http.NewRequest("GET", res.Link, nil)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	req, err := http.NewRequest("GET", res.Link, nil)
+	if err != nil {
 		return plat.Resource{}, errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
-	resp, e := client.Do(req)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	resp, err := client.Do(req)
+	if err != nil {
 		return plat.Resource{}, errors.New("failed to get resp", err)
 	}
 
-	respBody, e := io.ReadAll(resp.Body)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return plat.Resource{}, errors.New("failed to read resp.Body", err)
 	}
 
@@ -74,7 +71,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	nameDiv := `<div id="ctl00_cp_divPlan"><div><h3>`
 	i := strings.Index(page, nameDiv)
 	if i == -1 {
-		return plat.Resource{}, plat.ErrInvalidResp.Here()
+		return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 	}
 
 	i += len(nameDiv)
@@ -82,7 +79,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	fileDiv := `</h3></div><br>`
 	i = strings.Index(page, fileDiv)
 	if i == -1 {
-		return plat.Resource{}, plat.ErrInvalidResp.Here()
+		return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 	}
 
 	res.Name = page[:i]
@@ -91,7 +88,7 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	descDiv := fmt.Sprintf(`<div  ><div class="lpAll" id="Note%s">`, id)
 	i = strings.Index(page, descDiv)
 	if i == -1 {
-		return plat.Resource{}, plat.ErrInvalidResp.Here()
+		return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 	}
 
 	fileSect := page[:i]
@@ -102,20 +99,20 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 		fileSect = fileSect[i:]
 		i = strings.Index(fileSect, ");")
 		if i == -1 {
-			return plat.Resource{}, plat.ErrInvalidResp.Here()
+			return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 		}
 		rlLink := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + fileSect[:i]
 		fileSect = fileSect[i:]
 
 		i = strings.Index(fileSect, "&nbsp;")
 		if i == -1 {
-			return plat.Resource{}, plat.ErrInvalidResp.Here()
+			return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 		}
 		i += len("&nbsp;")
 		fileSect = fileSect[i:]
 		i = strings.Index(fileSect, "</a>")
 		if i == -1 {
-			return plat.Resource{}, plat.ErrInvalidResp.Here()
+			return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 		}
 		rlName := fileSect[:i]
 		fileSect = fileSect[i:]
@@ -131,14 +128,13 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 	)
 	i = strings.Index(page, endDiv)
 	if i == -1 {
-		return plat.Resource{}, plat.ErrInvalidResp.Here()
+		return plat.Resource{}, errors.Raise(plat.ErrInvalidResp)
 	}
 
 	res.Desc = page[:i]
 
 	var resources []plat.Resource
 	var wg sync.WaitGroup
-	var err errors.Error
 	wg.Add(1)
 	go getClassRes(creds, courseId, &resources, &err, &wg)
 	wg.Wait()
@@ -157,10 +153,10 @@ func planRes(creds User, courseId, id string) (plat.Resource, errors.Error) {
 }
 
 // Get a resource from DayMap for a user.
-func GetResource(creds User, id string) (plat.Resource, errors.Error) {
+func GetResource(creds User, id string) (plat.Resource, error) {
 	idSlice := strings.Split(id, "-")
 	var res plat.Resource
-	var err errors.Error
+	var err error
 
 	courseId, err := defs.Get(idSlice, 0)
 	if err != nil {

@@ -1,13 +1,11 @@
 package gclass
 
 import (
-	"git.sr.ht/~kvo/libgo/errors"
-
 	"main/plat"
 )
 
 // Retrieve a list of tasks from Google Classroom for a user.
-func ListTasks(creds User, c chan map[string][]plat.Task, ok chan [][]errors.Error, done *int) {
+func ListTasks(creds User, c chan map[string][]plat.Task, ok chan [][]error, done *int) {
 	gcTasks := map[string][]plat.Task{
 		"active":    {},
 		"notDue":    {},
@@ -15,9 +13,9 @@ func ListTasks(creds User, c chan map[string][]plat.Task, ok chan [][]errors.Err
 		"submitted": {},
 		"graded":    {},
 	}
-	var err errors.Error
+	var err error
 
 	defer plat.Deliver(c, &gcTasks, done)
-	defer plat.Deliver(ok, &[][]errors.Error{{err}}, done)
+	defer plat.Deliver(ok, &[][]error{{err}}, done)
 	defer plat.Done(done)
 }

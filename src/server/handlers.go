@@ -127,44 +127,25 @@ func (h *handler) handleTaskReq(r *http.Request, creds plat.User) (int, pageData
 
 // Generate the HTML page (and write that data to http.ResponseWriter).
 func (h *handler) genPage(w http.ResponseWriter, data pageData) {
-	e := h.templates.ExecuteTemplate(w, "page", data)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	err := h.templates.ExecuteTemplate(w, "page", data)
+	if err != nil {
 		logger.Debug(errors.New("template execution failed", err))
 	}
-
-	// TESTING CODE:
-
-	/*
-		var processed bytes.Buffer
-		err := templates.ExecuteTemplate(&processed, "page", data)
-		outputPath := "./result.txt"
-		f, _ := os.Create(outputPath)
-		a := bufio.NewWriter(f)
-		a.WriteString(processed.String())
-		a.Flush()
-		if err != nil {
-			logger.Debug("Errors:")
-			logger.Debug(err)
-		}
-	*/
 }
 
 // Responds to the client with the requested resources.
 func dispatchAsset(w http.ResponseWriter, fullPath string, mimeType string) {
 	w.Header().Set("Content-Type", mimeType+`, charset="utf-8"`)
 
-	file, e := os.Open(fullPath)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	file, err := os.Open(fullPath)
+	if err != nil {
 		logger.Error(errors.New("could not open "+fullPath, err))
 		w.WriteHeader(500)
 	}
 	defer file.Close()
 
-	_, e = io.Copy(w, file)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	_, err = io.Copy(w, file)
+	if err != nil {
 		logger.Debug(errors.New("could not copy contents of "+fullPath, err))
 		w.WriteHeader(500)
 	}
@@ -307,13 +288,11 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !validAuth {
 		var cookie string
-		e := r.ParseForm()
+		err := r.ParseForm()
 
-		// If e != nil, the "else" section of the next if/else block will
+		// If err != nil, the "else" section of the next if/else block will
 		// execute, which returns the "could not authenticate user" error.
-		if e != nil {
-			err = errors.New(e.Error(), nil)
-		} else {
+		if err == nil {
 			cookie, err = h.database.auth(r.PostForm)
 		}
 

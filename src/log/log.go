@@ -31,7 +31,7 @@
 // Structured logging is not yet implemented. This may be added in a future
 // version of the package, with support for encoding and decoding structured
 // logs.
-package logger
+package log
 
 import (
 	"fmt"
