@@ -36,7 +36,7 @@ func configMux() {
 	//schools["gihs"].SetReports(learnprof.Reports)
 }
 
-func getLessons(creds plat.User) ([][]plat.Lesson, errors.Error) {
+func getLessons(creds plat.User) ([][]plat.Lesson, error) {
 	lessons := [][]plat.Lesson{}
 
 	dmCreds := daymap.User{
@@ -62,7 +62,7 @@ func getLessons(creds plat.User) ([][]plat.Lesson, errors.Error) {
 
 func getTasks(creds plat.User) map[string][]plat.Task {
 	gcChan := make(chan map[string][]plat.Task)
-	gcErrChan := make(chan [][]errors.Error)
+	gcErrChan := make(chan [][]error)
 
 	gcCreds := gclass.User{
 		Timezone: creds.Timezone,
@@ -73,7 +73,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	go gclass.ListTasks(gcCreds, gcChan, gcErrChan, &finished)
 
 	dmChan := make(chan map[string][]plat.Task)
-	dmErrChan := make(chan [][]errors.Error)
+	dmErrChan := make(chan [][]error)
 	go daymap.ListTasks(creds, dmChan, dmErrChan)
 
 	t := map[string][]plat.Task{}
@@ -154,7 +154,7 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 
 func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	gResChan := make(chan []plat.Resource)
-	gErrChan := make(chan []errors.Error)
+	gErrChan := make(chan []error)
 
 	gcCreds := gclass.User{
 		Timezone: creds.Timezone,
@@ -164,7 +164,7 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	go gclass.ListRes(gcCreds, gResChan, gErrChan)
 
 	dmResChan := make(chan []plat.Resource)
-	dmErrChan := make(chan []errors.Error)
+	dmErrChan := make(chan []error)
 
 	dmCreds := daymap.User{
 		Timezone: creds.Timezone,
@@ -229,9 +229,9 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 }
 
 // Get a task from the given platform.
-func getTask(platform, taskId string, creds plat.User) (plat.Task, errors.Error) {
+func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
 	assignment := plat.Task{}
-	err := plat.ErrNoPlatform.Here()
+	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
@@ -256,9 +256,9 @@ func getTask(platform, taskId string, creds plat.User) (plat.Task, errors.Error)
 }
 
 // Get a resource from the given platform.
-func getResource(platform, resId string, creds plat.User) (plat.Resource, errors.Error) {
+func getResource(platform, resId string, creds plat.User) (plat.Resource, error) {
 	res := plat.Resource{}
-	err := plat.ErrNoPlatform.Here()
+	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
@@ -283,8 +283,8 @@ func getResource(platform, resId string, creds plat.User) (plat.Resource, errors
 }
 
 // Submit task to a given platform.
-func submitTask(creds plat.User, platform, taskId string) errors.Error {
-	err := plat.ErrNoPlatform.Here()
+func submitTask(creds plat.User, platform, taskId string) error {
+	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
@@ -299,23 +299,22 @@ func submitTask(creds plat.User, platform, taskId string) errors.Error {
 }
 
 // Return an appropriate reader for a multipart MIME file upload request.
-func reqFiles(r *http.Request) (*multipart.Reader, errors.Error) {
-	reader, e := r.MultipartReader()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+func reqFiles(r *http.Request) (*multipart.Reader, error) {
+	reader, err := r.MultipartReader()
+	if err != nil {
 		return reader, err
 	}
 	return reader, nil
 }
 
 // Upload work to a given platform.
-func uploadWork(creds plat.User, platform string, id string, r *http.Request) errors.Error {
+func uploadWork(creds plat.User, platform string, id string, r *http.Request) error {
 	files, err := reqFiles(r)
 	if err != nil {
 		return err
 	}
 
-	err = plat.ErrNoPlatform.Here()
+	err = errors.Raise(plat.ErrNoPlatform)
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
@@ -335,8 +334,8 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 }
 
 // Remove work from a given platform.
-func removeWork(creds plat.User, platform, taskId string, filenames []string) errors.Error {
-	err := plat.ErrNoPlatform.Here()
+func removeWork(creds plat.User, platform, taskId string, filenames []string) error {
+	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":

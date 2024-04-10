@@ -22,28 +22,25 @@ import (
 
 // Attempt to get GIHS Daily Access home page using a username and password.
 // Used for authenticating GIHS students.
-func gihsAuth(username, password string) errors.Error {
+func gihsAuth(username, password string) error {
 	// Stage 1 - Get a Daily Access redirect to SAML.
 
 	// A persistent cookie jar is required for the entire process.
 
-	jar, e := cookiejar.New(nil)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	jar, err := cookiejar.New(nil)
+	if err != nil {
 		return errors.New("error creating cookiejar", err)
 	}
 
 	client := &http.Client{Jar: jar}
 
-	s1, e := client.Get("https://da.gihs.sa.edu.au")
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	s1, err := client.Get("https://da.gihs.sa.edu.au")
+	if err != nil {
 		return errors.New("GET request failed", err)
 	}
 
-	s1body, e := io.ReadAll(s1.Body)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	s1body, err := io.ReadAll(s1.Body)
+	if err != nil {
 		return errors.New("error reading s1.Body", err)
 	}
 
@@ -80,16 +77,14 @@ func gihsAuth(username, password string) errors.Error {
 
 	// Send the POST request with the generated form data.
 
-	s2req, e := http.NewRequest("POST", s2url, s2data)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	s2req, err := http.NewRequest("POST", s2url, s2data)
+	if err != nil {
 		return errors.New("malformed stage 2 POST", err)
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	s2, e := client.Do(s2req)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	s2, err := client.Do(s2req)
+	if err != nil {
 		return errors.New("stage 2 POST failed", err)
 	}
 
@@ -118,21 +113,20 @@ func initDB(addr string, pwd string, idx int) *redis.Client {
 	ctx := context.Background()
 	res := redisDB.Ping(ctx)
 	if res.Err() != nil {
-		err := errors.New(res.Err().Error(), nil)
-		logger.Fatal(errors.New("incorrect password", err))
+		logger.Fatal(errors.New("incorrect password", res.Err()))
 	}
 
 	return redisDB
 }
 
 // Attempt to get pre-existing user credentials.
-func (db *authDB) getCreds(cookies string) (plat.User, errors.Error) {
+func (db *authDB) getCreds(cookies string) (plat.User, error) {
 	creds := plat.User{}
 	var token string
 
 	start := strings.Index(cookies, "token=")
 	if start == -1 {
-		return plat.User{}, plat.ErrInvalidAuth.Here()
+		return plat.User{}, errors.Raise(plat.ErrInvalidAuth)
 	}
 
 	start += 6
@@ -149,42 +143,36 @@ func (db *authDB) getCreds(cookies string) (plat.User, errors.Error) {
 	userToken := "studentToken:" + token
 	tokenExists := db.client.Exists(ctx, userToken)
 	if tokenExists.Err() != nil {
-		err := errors.New(tokenExists.Err().Error(), nil)
-		err = errors.New("failed to get student data via token", err)
-		return creds, err
+		return creds, errors.New("failed to get student data via token", tokenExists.Err())
 	}
-	exists, e := tokenExists.Result()
-	if e != nil {
-		return creds, plat.ErrInvalidAuth.Here()
+	exists, err := tokenExists.Result()
+	if err != nil {
+		return creds, errors.Raise(plat.ErrInvalidAuth)
 	}
 	if exists != 1 {
-		return creds, plat.ErrInvalidAuth.Here()
+		return creds, errors.Raise(plat.ErrInvalidAuth)
 	}
 
 	studentID := db.client.HGetAll(ctx, userToken)
 	if studentID.Err() != nil {
-		//err := errors.New(studentID.Err().Error(), nil)
-		//err = errors.New("a token does not exist for current user", err)
+		//err = errors.New("a token does not exist for current user", studentID.Err())
 		//return creds, err
-		return creds, plat.ErrInvalidAuth.Here()
+		return creds, errors.Raise(plat.ErrInvalidAuth)
 	}
-	res, e := studentID.Result()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	res, err := studentID.Result()
+	if err != nil {
 		logger.Debug(err)
-		return creds, plat.ErrInvalidAuth.Here()
+		return creds, errors.Raise(plat.ErrInvalidAuth)
 	}
 
 	key := "school:" + res["school"] + ":studentID:" + res["studentID"]
 	studentData := db.client.HGetAll(ctx, key)
 	if studentData.Err() != nil {
-		err := errors.New(studentData.Err().Error(), nil)
-		err = errors.New("failed to get student data", err)
+		err = errors.New("failed to get student data", studentData.Err())
 		return creds, err
 	}
-	result, e := studentData.Result()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	result, err := studentData.Result()
+	if err != nil {
 		return creds, errors.New("resulting data could not be read", err)
 	}
 
@@ -200,9 +188,8 @@ func (db *authDB) getCreds(cookies string) (plat.User, errors.Error) {
 	}
 
 	if creds.School == "gihs" {
-		creds.Timezone, e = time.LoadLocation("Australia/Adelaide")
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		creds.Timezone, err = time.LoadLocation("Australia/Adelaide")
+		if err != nil {
 			return plat.User{}, errors.New("cannot load timezone data", err)
 		}
 
@@ -211,28 +198,25 @@ func (db *authDB) getCreds(cookies string) (plat.User, errors.Error) {
 			"gclass": result["gclass"],
 		}
 	} else {
-		return plat.User{}, errors.New("invalid school", plat.ErrInvalidAuth.Here())
+		return plat.User{}, errors.New("invalid school", errors.Raise(plat.ErrInvalidAuth))
 	}
 
 	return creds, nil
 }
 
 // Check if user exists in the database.
-func (db *authDB) findUser(school, user, pwd string) (bool, errors.Error) {
+func (db *authDB) findUser(school, user, pwd string) (bool, error) {
 	exists := false
 	ctx := context.Background()
 
 	key := "school:" + school + ":studentID:" + user
 	data := db.client.HGetAll(ctx, key)
 	if data.Err() != nil {
-		err := errors.New(data.Err().Error(), nil)
-		err = errors.New("could not fetch data for user", err)
-		return exists, err
+		return exists, errors.New("could not fetch data for user", data.Err())
 	}
 
-	result, e := data.Result()
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	result, err := data.Result()
+	if err != nil {
 		return exists, errors.New("resulting data could not be read", err)
 	}
 
@@ -244,7 +228,7 @@ func (db *authDB) findUser(school, user, pwd string) (bool, errors.Error) {
 }
 
 // Create new user or update pre-existing user in the database.
-func (db *authDB) writeCreds(creds plat.User) errors.Error {
+func (db *authDB) writeCreds(creds plat.User) error {
 	ctx := context.Background()
 
 	studentIDKey := "school:" + creds.School + ":studentID:" + creds.Username
@@ -283,12 +267,12 @@ func (db *authDB) writeCreds(creds plat.User) errors.Error {
 }
 
 // Authenticate a user to TaskCollect.
-func (db *authDB) auth(query url.Values) (string, errors.Error) {
+func (db *authDB) auth(query url.Values) (string, error) {
 	school := query.Get("school")
 
 	// NOTE: Options for other schools could be added in the future
 	if school != "gihs" {
-		err := errors.New("school was not GIHS", plat.ErrAuthFailed.Here())
+		err := errors.New("school was not GIHS", errors.Raise(plat.ErrAuthFailed))
 		return "", err
 	}
 
@@ -296,7 +280,7 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 	pwd := query.Get("pwd")
 
 	if defs.Has([]string{user, pwd}, "") {
-		err := errors.New("username or password is empty", plat.ErrAuthFailed.Here())
+		err := errors.New("username or password is empty", errors.Raise(plat.ErrAuthFailed))
 		return "", err
 	}
 
@@ -365,7 +349,7 @@ func (db *authDB) auth(query url.Values) (string, errors.Error) {
 }
 
 // Logout a user from TaskCollect.
-func (db *authDB) logout(creds plat.User) errors.Error {
+func (db *authDB) logout(creds plat.User) error {
 	token := creds.Token
 
 	// Clear tokens

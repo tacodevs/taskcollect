@@ -24,7 +24,7 @@ type dmJsonEntry struct {
 }
 
 // Get a list of lessons for the week from DayMap for a user.
-func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
+func GetLessons(creds User) ([][]plat.Lesson, error) {
 	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)
 
@@ -55,25 +55,22 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 
 	client := &http.Client{}
 
-	req, e := http.NewRequest("GET", lessonsUrl, nil)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	req, err := http.NewRequest("GET", lessonsUrl, nil)
+	if err != nil {
 		return nil, errors.New("GET request for lessonsUrl failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
-	resp, e := client.Do(req)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	resp, err := client.Do(req)
+	if err != nil {
 		return nil, errors.New("failed to get resp", err)
 	}
 
 	dmJson := []dmJsonEntry{}
 
-	e = json.NewDecoder(resp.Body).Decode(&dmJson)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	err = json.NewDecoder(resp.Body).Decode(&dmJson)
+	if err != nil {
 		return nil, errors.New("failed to decode JSON", err)
 	}
 
@@ -85,20 +82,19 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 		}
 
 		lesson := plat.Lesson{}
-		lesson.Start, e = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
+		lesson.Start, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
 
-		if e != nil {
+		if err != nil {
 			startIdx := strings.Index(l.Start, "(") + 1
 			endIdx := strings.Index(l.Start, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, plat.ErrInvalidDmJson.Here()
+				return nil, errors.Raise(plat.ErrInvalidDmJson)
 			}
 
 			startStr := l.Start[startIdx:endIdx]
-			startInt, e := strconv.Atoi(startStr)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			startInt, err := strconv.Atoi(startStr)
+			if err != nil {
 				return nil, errors.New("(1) string -> int conversion failed", err)
 			}
 
@@ -108,21 +104,19 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 			endIdx = strings.Index(l.Finish, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, plat.ErrInvalidDmJson.Here()
+				return nil, errors.Raise(plat.ErrInvalidDmJson)
 			}
 
 			finishStr := l.Finish[startIdx:endIdx]
-			finishInt, e := strconv.Atoi(finishStr)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			finishInt, err := strconv.Atoi(finishStr)
+			if err != nil {
 				return nil, errors.New("(2) string -> int conversion failed", err)
 			}
 
 			lesson.End = time.Unix(int64(finishInt), 0)
 		} else {
-			lesson.End, e = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Finish, creds.Timezone)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			lesson.End, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Finish, creds.Timezone)
+			if err != nil {
 				return nil, errors.New("failed to parse time", err)
 			}
 		}
@@ -130,9 +124,8 @@ func GetLessons(creds User) ([][]plat.Lesson, errors.Error) {
 		class := l.Title
 		class = strings.TrimSpace(class)
 
-		re, e := regexp.Compile("[0-9][A-Z]+[0-9]+")
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		re, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
+		if err != nil {
 			return nil, errors.New("failed to compile regex", err)
 		}
 

@@ -110,7 +110,7 @@ type Extractor interface {
 // Advance advances page past the substring bound in page, discarding the
 // contents of page before the substring bound. If bound does not exist in page,
 // an error is returned.
-func (page *Page) Advance(bound string) errors.Error {
+func (page *Page) Advance(bound string) error {
 	strPage := string(*page)
 	i := strings.Index(strPage, bound)
 	if i == -1 {
@@ -124,7 +124,7 @@ func (page *Page) Advance(bound string) errors.Error {
 // UpTo extracts substring sub (which starts from the beginning of page and
 // is enclosed by substring bound on the right) from page. If bound does not
 // exist in page, an error is returned.
-func (page Page) UpTo(bound string) (string, errors.Error) {
+func (page Page) UpTo(bound string) (string, error) {
 	i := strings.Index(string(page), bound)
 	if i == -1 {
 		return "", errors.New("can't find substring", nil)

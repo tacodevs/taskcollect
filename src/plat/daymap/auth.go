@@ -23,51 +23,42 @@ type User struct {
 	Token    string
 }
 
-// Auxiliary structures for the get function.
+// Auxiliary structures for the fetch function.
 
 type s7struct struct {
 	Status       string
 	SessionToken string
 }
 
-// get retrieves the webpage at URL link from DayMap using username and
+// fetch retrieves the webpage at URL link from Daymap using username and
 // password. Returns the desired webpage as a string, as well as the cookies
 // provided with the webpage, and an error (if any occurs), in that order.
 //
-// get's primary purpose is to authenticate to Daymap. The cookies returned by
-// get can be used as a web session token for further retrieval of resources.
+// fetch's primary purpose is to authenticate to Daymap. The cookies returned by
+// fetch can be used as a web session token for further retrieval of resources.
 //
-// get is vulnerable to obsoletion as the authentication mechanism for Daymap
+// fetch is vulnerable to obsoletion as the authentication mechanism for Daymap
 // frequently changes.
-func get(link, username, password string) (string, string, errors.Error) {
-	// Stage 1 - Get a DayMap redirect to EdPass.
+func fetch(link, username, password string) (string, string, error) {
+	// Stage 1 - Get a Daymap redirect to EdPass.
 
 	// A persistent cookie jar is required for the entire process.
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 1 cookie jar",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 1 cookie jar", err)
 	}
 
 	client := &http.Client{Jar: jar}
 
 	s1, err := client.Get(link)
 	if err != nil {
-		return "", "", errors.New(
-			"stage 1 request failed",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("stage 1 request failed", err)
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 1 response body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 1 response body", err)
 	}
 
 	s1page := string(s1body)
@@ -88,10 +79,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 	}
 	s2redirect, err := strconv.Unquote(fmt.Sprintf(`"%s"`, s1page[:s2index]))
 	if err != nil {
-		return "", "", errors.New(
-			"cannot unquote stage 2 redirect URL",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot unquote stage 2 redirect URL", err)
 	}
 
 	// Extract Okta key from EdPass redirect URL.
@@ -120,20 +108,14 @@ func get(link, username, password string) (string, string, errors.Error) {
 	}
 	s2token, err := strconv.Unquote(fmt.Sprintf(`"%s"`, s1page[:s2index]))
 	if err != nil {
-		return "", "", errors.New(
-			"cannot unquote stage 2 state token",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot unquote stage 2 state token", err)
 	}
 
 	// Bake new cookies for stage 2.
 
 	s2dom, err := url.Parse("https://portal.edpass.sa.edu.au/")
 	if err != nil {
-		return "", "", errors.New(
-			"failed parsing stage 2 target domain",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("failed parsing stage 2 target domain", err)
 	}
 
 	s2cookieRd := http.Cookie{Name: "redirecturi", Value: s2redirect}
@@ -151,10 +133,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s2jstok, err := json.Marshal(s2token)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot marshal stage 2 token as JSON",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot marshal stage 2 token as JSON", err)
 	}
 	s2data := bytes.NewReader([]byte(
 		fmt.Sprintf(`{"stateToken":%s}`, string(s2jstok)),
@@ -166,10 +145,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 		s2data,
 	)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 2 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 2 request", err)
 	}
 
 	s2req.Header.Set("Accept", "application/json")
@@ -186,10 +162,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	_, err = client.Do(s2req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 2 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 2 request", err)
 	}
 
 	// Stage 3 - Send POST request to HRD EdPass IDPDiscovery.
@@ -198,10 +171,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 		"POST", "https://hrd.edpass.sa.edu.au/api/IDPDiscovery", nil,
 	)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 3 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 3 request", err)
 	}
 
 	s3req.Header.Set("Origin", "https://portal.edpass.sa.edu.au")
@@ -209,10 +179,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	_, err = client.Do(s3req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 3 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 3 request", err)
 	}
 
 	// Stage 4 - Get SAML details from EdPass.
@@ -223,10 +190,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s4req, err := http.NewRequest("GET", s4url, nil)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 4 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 4 request", err)
 	}
 
 	s4req.Header.Set("Origin", "https://portal.edpass.sa.edu.au")
@@ -234,18 +198,12 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s4, err := client.Do(s4req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 4 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 4 request", err)
 	}
 
 	s4body, err := io.ReadAll(s4.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 4 body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 4 body", err)
 	}
 
 	s4page := string(s4body)
@@ -304,10 +262,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s5req, err := http.NewRequest("POST", s5url, s5data)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 5 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 5 request", err)
 	}
 
 	s5req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -316,10 +271,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	_, err = client.Do(s5req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 5 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 5 request", err)
 	}
 
 	// Stage 6 - Request a nonce from EdPass.
@@ -327,10 +279,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s6url := "https://edpass-0927.okta.com/api/v1/internal/device/nonce"
 	s6req, err := http.NewRequest("POST", s6url, nil)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 6 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 6 request", err)
 	}
 
 	s6req.Header.Set("Origin", "https://edpass-0927.okta.com/api/v1/internal/device/nonce")
@@ -338,10 +287,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	_, err = client.Do(s6req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 6 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 6 request", err)
 	}
 
 	// Stage 7 - Authenticate to EdPass.
@@ -349,17 +295,11 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s7tmpl := `{"password":%s,"username":%s,"options":{"warnBeforePasswordExpired":true,"multiOptionalFactorEnroll":true}}`
 	s7usr, err := json.Marshal(strings.TrimPrefix(username, `CURRIC\`))
 	if err != nil {
-		return "", "", errors.New(
-			"cannot marshal username as JSON",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot marshal username as JSON", err)
 	}
 	s7pwd, err := json.Marshal(password)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot marshal password as JSON",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot marshal password as JSON", err)
 	}
 	s7data := strings.NewReader(
 		fmt.Sprintf(s7tmpl, string(s7pwd), string(s7usr)),
@@ -368,10 +308,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s7url := "https://edpass-0927.okta.com/api/v1/authn"
 	s7req, err := http.NewRequest("POST", s7url, s7data)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 7 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 7 request", err)
 	}
 
 	s7req.Header.Set("Accept", "application/json")
@@ -381,18 +318,12 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s7, err := client.Do(s7req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 7 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 7 request", err)
 	}
 
 	s7body, err := io.ReadAll(s7.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 7 body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 7 body", err)
 	}
 
 	s7json := s7struct{}
@@ -415,10 +346,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s8url := "https://edpass-0927.okta.com/login/sessionCookieRedirect"
 	s8req, err := http.NewRequest("POST", s8url, s8data)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 8 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 8 request", err)
 	}
 
 	s8req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -427,18 +355,12 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s8, err := client.Do(s8req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 8 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 8 request", err)
 	}
 
 	s8body, err := io.ReadAll(s8.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 8 body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 8 body", err)
 	}
 
 	s8page := string(s8body)
@@ -496,10 +418,7 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s9req, err := http.NewRequest("POST", s9url, s9data)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 9 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 9 request", err)
 	}
 
 	s9req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -508,18 +427,12 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s9, err := client.Do(s9req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 9 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 9 request", err)
 	}
 
 	s9body, err := io.ReadAll(s9.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 9 body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 9 body", err)
 	}
 
 	s9page := string(s9body)
@@ -577,33 +490,24 @@ func get(link, username, password string) (string, string, errors.Error) {
 
 	s10req, err := http.NewRequest("POST", s10url, s10data)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 10 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 10 request", err)
 	}
 
 	s10req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	s10, err := client.Do(s10req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 10 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 10 request", err)
 	}
 
 	s10body, err := io.ReadAll(s10.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 10 body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 10 body", err)
 	}
 
 	s10page := string(s10body)
 
-	// Stage 11 - Parse OpenIdConnect form and POST to "/DayMap".
+	// Stage 11 - Parse OpenIdConnect form and POST to "/Daymap".
 
 	// Parse the OpenIdConnect HTML form.
 
@@ -649,28 +553,19 @@ func get(link, username, password string) (string, string, errors.Error) {
 	s11url := "https://gihs.daymap.net/Daymap/"
 	s11req, err := http.NewRequest("POST", s11url, s11data)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot create stage 11 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot create stage 11 request", err)
 	}
 
 	s11req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	s11, err := client.Do(s11req)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot execute stage 11 request",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot execute stage 11 request", err)
 	}
 
 	s11body, err := io.ReadAll(s11.Body)
 	if err != nil {
-		return "", "", errors.New(
-			"cannot read stage 11 body",
-			errors.New(err.Error(), nil),
-		)
+		return "", "", errors.New("cannot read stage 11 body", err)
 	}
 
 	s11page := string(s11body)
@@ -695,19 +590,19 @@ func get(link, username, password string) (string, string, errors.Error) {
 	return s11page, authToken, nil
 }
 
-// Authenticate to DayMap and retrieve a session token (an HTTP cookie).
-func Auth(school, usr, pwd string) (User, errors.Error) {
+// Authenticate to Daymap and retrieve a session token (an HTTP cookie).
+func Auth(school, usr, pwd string) (User, error) {
 	timezone, e := time.LoadLocation("Australia/Adelaide")
 	if e != nil {
 		err := errors.New(e.Error(), nil)
 		logger.Error(errors.New("failed to load timezone", err))
 	}
 
-	// TODO: Implement DayMap auth for other schools as well
+	// TODO: Implement Daymap auth for other institutions as well
 	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	_, authToken, err := get(page, usr, pwd)
+	_, authToken, err := fetch(page, usr, pwd)
 	if err != nil {
-		return User{}, errors.New("GET dayplan.aspx failed", err)
+		return User{}, errors.New("fetch dayplan.aspx failed", err)
 	}
 
 	creds := User{

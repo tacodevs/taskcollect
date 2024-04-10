@@ -13,26 +13,23 @@ import (
 )
 
 // Retrieve a webpage of all DayMap tasks for a user.
-func tasksPage(creds plat.User) (string, errors.Error) {
+func tasksPage(creds plat.User) (string, error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
 
-	req, e := http.NewRequest("GET", tasksUrl, nil)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	req, err := http.NewRequest("GET", tasksUrl, nil)
+	if err != nil {
 		return "", errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
-	resp, e := client.Do(req)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	resp, err := client.Do(req)
+	if err != nil {
 		return "", errors.New("failed to get resp", err)
 	}
 
-	respBody, e := io.ReadAll(resp.Body)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return "", errors.New("failed to read resp.Body", err)
 	}
 
@@ -46,7 +43,7 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 		i = strings.Index(b, ">")
 
 		if i == -1 {
-			return "", plat.ErrInvalidResp.Here()
+			return "", errors.Raise(plat.ErrInvalidResp)
 		}
 
 		inputTag := b[:i]
@@ -54,7 +51,7 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			return "", plat.ErrInvalidResp.Here()
+			return "", errors.Raise(plat.ErrInvalidResp)
 		}
 
 		i += len(`type="`)
@@ -62,7 +59,7 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			return "", plat.ErrInvalidResp.Here()
+			return "", errors.Raise(plat.ErrInvalidResp)
 		}
 
 		inputType = inputType[:i]
@@ -75,7 +72,7 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			return "", plat.ErrInvalidResp.Here()
+			return "", errors.Raise(plat.ErrInvalidResp)
 		}
 
 		i += len(`name="`)
@@ -83,7 +80,7 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			return "", plat.ErrInvalidResp.Here()
+			return "", errors.Raise(plat.ErrInvalidResp)
 		}
 
 		name = name[:i]
@@ -95,7 +92,7 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				return "", plat.ErrInvalidResp.Here()
+				return "", errors.Raise(plat.ErrInvalidResp)
 			}
 
 			value = value[:i]
@@ -111,38 +108,33 @@ func tasksPage(creds plat.User) (string, errors.Error) {
 
 	tdata := strings.NewReader(taskForm.Encode())
 
-	fullReq, e := http.NewRequest("POST", tasksUrl, tdata)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
+	if err != nil {
 		return "", errors.New("POST request failed", err)
 	}
 
 	fullReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	fullReq.Header.Set("Cookie", creds.SiteTokens["daymap"])
 
-	full, e := client.Do(fullReq)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	full, err := client.Do(fullReq)
+	if err != nil {
 		return "", errors.New("failed to get full resp", err)
 	}
 
-	fullBody, e := io.ReadAll(full.Body)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
-		return "", errors.New("failed to real full.Body", err)
+	fullBody, err := io.ReadAll(full.Body)
+	if err != nil {
+		return "", errors.New("failed to read full.Body", err)
 	}
 
 	return string(fullBody), nil
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors.Error) {
-	var er error
-
+func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error) {
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
-		e <- [][]errors.Error{{errors.New("failed retrieving tasks page", err)}}
+		e <- [][]error{{errors.New("failed retrieving tasks page", err)}}
 		return
 	}
 
@@ -160,7 +152,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
@@ -171,7 +163,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
@@ -181,7 +173,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
@@ -192,7 +184,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
@@ -202,7 +194,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
@@ -213,17 +205,16 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
 		postedString := b[:i]
 
-		task.Posted, er = time.ParseInLocation("2/01/06", postedString, creds.Timezone)
-		if er != nil {
-			err := errors.New(er.Error(), nil)
+		task.Posted, err = time.ParseInLocation("2/01/06", postedString, creds.Timezone)
+		if err != nil {
 			t <- nil
-			e <- [][]errors.Error{{errors.New("failed to parse time (postedString)", err)}}
+			e <- [][]error{{errors.New("failed to parse time (postedString)", err)}}
 			return
 		}
 
@@ -233,17 +224,16 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 
 		dueString := b[:i]
 
-		task.Due, er = time.ParseInLocation("2/01/06", dueString, creds.Timezone)
-		if er != nil {
-			err := errors.New(er.Error(), nil)
+		task.Due, err = time.ParseInLocation("2/01/06", dueString, creds.Timezone)
+		if err != nil {
 			t <- nil
-			e <- [][]errors.Error{{errors.New("failed to parse time (dueString)", err)}}
+			e <- [][]error{{errors.New("failed to parse time (dueString)", err)}}
 			return
 		}
 
@@ -261,7 +251,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]errors
 
 		if i == -1 {
 			t <- nil
-			e <- [][]errors.Error{{plat.ErrInvalidResp.Here()}}
+			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
 			return
 		}
 

@@ -53,18 +53,16 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 		}
 	}
 
-	boldFont, e := freetype.ParseFont(gobold.TTF)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	boldFont, err := freetype.ParseFont(gobold.TTF)
+	if err != nil {
 		logger.Error(errors.New("font (bold) parsing failed", err))
 		*img = canvas
 		daymapWG.Done()
 		return
 	}
 
-	regFont, e := freetype.ParseFont(goregular.TTF)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	regFont, err := freetype.ParseFont(goregular.TTF)
+	if err != nil {
 		logger.Error(errors.New("font (reg) parsing failed", err))
 		*img = canvas
 		daymapWG.Done()
@@ -277,9 +275,8 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 		}
 	}
 
-	boldFont, e := freetype.ParseFont(gobold.TTF)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	boldFont, err := freetype.ParseFont(gobold.TTF)
+	if err != nil {
 		logger.Error(errors.New("font (bold) parsing failed", err))
 		w.WriteHeader(500)
 		return
@@ -335,8 +332,7 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 		draw.Draw(canvas, r, days[i], sr.Min, draw.Src)
 	}
 
-	if e := png.Encode(w, canvas); e != nil {
-		err = errors.New(e.Error(), nil)
+	if err := png.Encode(w, canvas); err != nil {
 		logger.Error(errors.New("timetable image encoding failed", err))
 		w.WriteHeader(500)
 		return
@@ -344,7 +340,7 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 }
 
 // Generate data for the HTML timetable.
-func genTimetable(creds plat.User) (timetableData, errors.Error) {
+func genTimetable(creds plat.User) (timetableData, error) {
 	data := timetableData{}
 
 	lessons, err := getLessons(creds)

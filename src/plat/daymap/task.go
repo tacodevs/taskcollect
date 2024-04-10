@@ -21,7 +21,7 @@ import (
 )
 
 // Return information about a DayMap task by its ID.
-func GetTask(creds User, id string) (plat.Task, errors.Error) {
+func GetTask(creds User, id string) (plat.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 
 	task := plat.Task{
@@ -32,23 +32,20 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 
 	client := &http.Client{}
 
-	req, e := http.NewRequest("GET", taskUrl, nil)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	req, err := http.NewRequest("GET", taskUrl, nil)
+	if err != nil {
 		return plat.Task{}, errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
-	resp, e := client.Do(req)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	resp, err := client.Do(req)
+	if err != nil {
 		return plat.Task{}, errors.New("failed to get resp", err)
 	}
 
-	respBody, e := io.ReadAll(resp.Body)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return plat.Task{}, errors.New("failed to read resp.Body", err)
 	}
 
@@ -61,14 +58,14 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	i := strings.Index(b, "ctl00_ctl00_cp_cp_divResults")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
 	i = strings.Index(b, "SectionHeader")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -77,7 +74,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	task.Name = b[:i]
@@ -85,7 +82,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -94,7 +91,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	task.Class = b[:i]
@@ -102,7 +99,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -111,7 +108,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -124,20 +121,19 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		dueStr := b[:i]
 		b = b[i:]
 
 		if !strings.Contains(dueStr, ":") {
-			task.Due, e = time.ParseInLocation("2/01/2006", dueStr, creds.Timezone)
+			task.Due, err = time.ParseInLocation("2/01/2006", dueStr, creds.Timezone)
 		} else {
-			task.Due, e = time.ParseInLocation("2/01/2006 3:04 PM", dueStr, creds.Timezone)
+			task.Due, err = time.ParseInLocation("2/01/2006 3:04 PM", dueStr, creds.Timezone)
 		}
 
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		if err != nil {
 			return plat.Task{}, errors.New("failed to parse time", err)
 		}
 	}
@@ -149,14 +145,14 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		i = strings.Index(b, "<div><div>")
 
 		if i == -1 {
-			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
 		i = strings.Index(b, "</div></div></div></div>")
 
 		if i == -1 {
-			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		wlHtml := b[:i]
@@ -169,7 +165,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 			x = strings.Index(wlHtml, `"`)
 
 			if x == -1 {
-				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			wll := wlHtml[:x]
@@ -178,7 +174,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 			x = strings.Index(wlHtml, "&nbsp;")
 
 			if x == -1 {
-				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			x += len("&nbsp;")
@@ -186,7 +182,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 			x = strings.Index(wlHtml, "</a>")
 
 			if x == -1 {
-				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			name := wlHtml[:x]
@@ -213,7 +209,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		task.Comment = b[:i]
@@ -233,7 +229,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		}
 
 		if i == -1 {
-			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		rlHtml := b[:i]
@@ -246,7 +242,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 			x = strings.Index(rlHtml, ")")
 
 			if x == -1 {
-				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			rlId := rlHtml[:x]
@@ -255,7 +251,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 			x = strings.Index(rlHtml, "&nbsp;")
 
 			if x == -1 {
-				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			x += len("&nbsp;")
@@ -263,7 +259,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 			x = strings.Index(rlHtml, "</a>")
 
 			if x == -1 {
-				return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			name := rlHtml[:x]
@@ -282,7 +278,7 @@ func GetTask(creds User, id string) (plat.Task, errors.Error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, plat.ErrInvalidTaskResp.Here()
+			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		task.Desc = b[:i]
@@ -320,7 +316,7 @@ func randStr(n int) string {
 }
 
 // Upload files from an HTTP request as student file submissions for a DayMap task.
-func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
+func UploadWork(creds User, id string, files *multipart.Reader) error {
 	selectUrl := "https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID="
 	selectUrl += id
 	client := &http.Client{}
@@ -368,9 +364,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			// Stage 1: Retrieve a DayMap upload URL.
 
 			s1url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx"
-			utc, e := time.LoadLocation("UTC")
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			utc, err := time.LoadLocation("UTC")
+			if err != nil {
 				return errors.New(`failed to load timezone "UTC"`, err)
 			}
 			timestamp := fmt.Sprintf("%d", time.Now().In(utc).UnixMilli())
@@ -383,9 +378,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			s1form.Set("qqtimestamp", timestamp)
 
 			s1url += "?" + s1form.Encode()
-			s1req, e := http.NewRequest("GET", s1url, nil)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			s1req, err := http.NewRequest("GET", s1url, nil)
+			if err != nil {
 				return errors.New("GET request failed", err)
 			}
 
@@ -393,15 +387,13 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			s1req.Header.Set("Cookie", creds.Token)
 			s1req.Header.Set("Referer", selectUrl)
 
-			s1resp, e := client.Do(s1req)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			s1resp, err := client.Do(s1req)
+			if err != nil {
 				return errors.New("failed to get resp", err)
 			}
 
-			s1body, e = io.ReadAll(s1resp.Body)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			s1body, err = io.ReadAll(s1resp.Body)
+			if err != nil {
 				return errors.New("failed to read resp.Body", err)
 			}
 
@@ -415,9 +407,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			blocks = append(blocks, block)
 			s2url := string(s1body) + `&comp=block&blockid=` + blocks[i]
 
-			s2req, e := http.NewRequest("OPTIONS", s2url, nil)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			s2req, err := http.NewRequest("OPTIONS", s2url, nil)
+			if err != nil {
 				return errors.New("OPTIONS request failed", err)
 			}
 
@@ -426,17 +417,15 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			s2req.Header.Set("Cookie", creds.Token)
 			s2req.Header.Set("Origin", "https://gihs.daymap.net")
 
-			_, e = client.Do(s2req)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			_, err = client.Do(s2req)
+			if err != nil {
 				return errors.New("failed to get resp", err)
 			}
 
 			// Stage 3: Send file contents and metadata to the DayMap file upload server.
 
-			s3req, e := http.NewRequest("PUT", s2url, chunk)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			s3req, err := http.NewRequest("PUT", s2url, chunk)
+			if err != nil {
 				return errors.New("PUT request failed", err)
 			}
 
@@ -448,9 +437,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 			s3req.Header.Set("x-ms-meta-qqfilename", fileName)
 			s3req.Header.Set("x-ms-meta-t", "2")
 
-			_, e = client.Do(s3req)
-			if e != nil {
-				err := errors.New(e.Error(), nil)
+			_, err = client.Do(s3req)
+			if err != nil {
 				return errors.New("failed to get resp", err)
 			}
 
@@ -462,9 +450,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		// Stage 4: Send final OPTIONS request to Daymap file upload server.
 
 		s4url := string(s1body) + `&comp=blocklist`
-		s4req, e := http.NewRequest("OPTIONS", s4url, nil)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		s4req, err := http.NewRequest("OPTIONS", s4url, nil)
+		if err != nil {
 			return errors.New("OPTIONS request failed", err)
 		}
 
@@ -475,9 +462,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		s4req.Header.Set("Cookie", creds.Token)
 		s4req.Header.Set("Origin", "https://gihs.daymap.net")
 
-		_, e = client.Do(s4req)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		_, err = client.Do(s4req)
+		if err != nil {
 			return errors.New("failed to get resp", err)
 		}
 
@@ -491,9 +477,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		s5data := strings.NewReader(s5form)
 		s5len := fmt.Sprint(len([]byte(s5form)))
 
-		s5req, e := http.NewRequest("PUT", s4url, s5data)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		s5req, err := http.NewRequest("PUT", s4url, s5data)
+		if err != nil {
 			return errors.New("PUT request failed", err)
 		}
 
@@ -506,9 +491,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		s5req.Header.Set("x-ms-meta-qqfilename", fileName)
 		s5req.Header.Set("x-ms-meta-t", "2")
 
-		_, e = client.Do(s5req)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		_, err = client.Do(s5req)
+		if err != nil {
 			return errors.New("failed to get resp", err)
 		}
 
@@ -525,9 +509,8 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		s6data := strings.NewReader(s6form.Encode())
 		s6url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx?cmd=UploadSuccess&taskId=" + id
 
-		s6req, e := http.NewRequest("POST", s6url, s6data)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		s6req, err := http.NewRequest("POST", s6url, s6data)
+		if err != nil {
 			return errors.New("POST request failed", err)
 		}
 
@@ -538,22 +521,19 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 		s6req.Header.Set("Referer", selectUrl)
 		s6req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
-		s6resp, e := client.Do(s6req)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		s6resp, err := client.Do(s6req)
+		if err != nil {
 			return errors.New("failed to get resp", err)
 		}
 
-		s6body, e := io.ReadAll(s6resp.Body)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		s6body, err := io.ReadAll(s6resp.Body)
+		if err != nil {
 			return errors.New("failed to read resp.Body", err)
 		}
 
 		jsonResp := chkJson{}
-		e = json.Unmarshal(s6body, &jsonResp)
-		if e != nil {
-			err := errors.New(e.Error(), nil)
+		err = json.Unmarshal(s6body, &jsonResp)
+		if err != nil {
 			return errors.New("failed to unmarshal JSON", err)
 		}
 
@@ -575,28 +555,25 @@ func UploadWork(creds User, id string, files *multipart.Reader) errors.Error {
 }
 
 // Remove the specified student file submissions from a DayMap task.
-func RemoveWork(creds User, id string, filenames []string) errors.Error {
+func RemoveWork(creds User, id string, filenames []string) error {
 	removeUrl := "https://gihs.daymap.net/daymap/student/attachments.aspx?Type=1&LinkID="
 	removeUrl += id
 	client := &http.Client{}
 
-	req, e := http.NewRequest("GET", removeUrl, nil)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	req, err := http.NewRequest("GET", removeUrl, nil)
+	if err != nil {
 		return errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
-	resp, e := client.Do(req)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	resp, err := client.Do(req)
+	if err != nil {
 		return errors.New("failed to get resp", err)
 	}
 
-	respBody, e := io.ReadAll(resp.Body)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return errors.New("failed to read resp.Body", err)
 	}
 
@@ -604,14 +581,14 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 	i := strings.Index(b, "<form")
 
 	if i == -1 {
-		return plat.ErrInvalidTaskResp.Here()
+		return errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
 	i = strings.Index(b, ` action="`)
 
 	if i == -1 {
-		return plat.ErrInvalidTaskResp.Here()
+		return errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -620,7 +597,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 	i = strings.Index(b, `"`)
 
 	if i == -1 {
-		return plat.ErrInvalidTaskResp.Here()
+		return errors.Raise(plat.ErrInvalidTaskResp)
 	}
 
 	rwUrl := b[:i]
@@ -635,7 +612,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, ` type=`)
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
@@ -644,7 +621,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, ` `)
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		inputType := b[:i]
@@ -652,7 +629,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, `name="`)
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
@@ -661,7 +638,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, `"`)
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		name = b[:i]
@@ -670,7 +647,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, "\n")
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		valTest := b[:i]
@@ -683,7 +660,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 			i = strings.Index(b, `"`)
 
 			if i == -1 {
-				return plat.ErrInvalidTaskResp.Here()
+				return errors.Raise(plat.ErrInvalidTaskResp)
 			}
 
 			value = b[:i]
@@ -699,7 +676,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, `<span name=filename>`)
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
@@ -708,7 +685,7 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		i = strings.Index(b, `</span>`)
 
 		if i == -1 {
-			return plat.ErrInvalidTaskResp.Here()
+			return errors.Raise(plat.ErrInvalidTaskResp)
 		}
 
 		fname := b[:i]
@@ -730,18 +707,16 @@ func RemoveWork(creds User, id string, filenames []string) errors.Error {
 		return errors.New("invalid task HTML response", err)
 	}
 	rwfurl := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]
-	post, e := http.NewRequest("POST", rwfurl, rwData)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	post, err := http.NewRequest("POST", rwfurl, rwData)
+	if err != nil {
 		return errors.New("POST request failed", err)
 	}
 
 	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	post.Header.Set("Cookie", creds.Token)
 
-	_, e = client.Do(post)
-	if e != nil {
-		err := errors.New(e.Error(), nil)
+	_, err = client.Do(post)
+	if err != nil {
 		return errors.New("error returning response body", err)
 	}
 
