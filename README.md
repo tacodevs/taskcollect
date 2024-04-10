@@ -47,6 +47,8 @@ Confirmed issues and feature requests may be reported on the [issue tracker][4].
 
 Contributions are welcome! You can send us a pull request, or if you are unsure where to start, or send an email to [taskcollect-devel][6] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [taskcollect-discuss][5].
 
+All contributors are required to "sign-off" their commits (using `git commit -s`) to indicate that they have agreed to the [Developer Certificate of Origin][8].
+
 Tests can be run using `test.py`. For more information, run `./test.py help`.
 
 ## Moldy spots
@@ -81,3 +83,4 @@ The list archives are hidden to protect the privacy of educational institutions.
 [5]: mailto:~kvo/taskcollect-discuss@lists.sr.ht
 [6]: mailto:~kvo/taskcollect-devel@lists.sr.ht
 [7]: https://lists.sr.ht/~kvo/taskcollect-announce
+[8]: https://developercertificate.org/
