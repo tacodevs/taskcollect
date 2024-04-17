@@ -1,6 +1,6 @@
 var loaderBody = `<div class="loader-container">
 <div class="loader" scale=1></div>
-<div>`
+</div>`;
 
 function toggleMobileMenu(menu) {
   menu.classList.toggle("open");
