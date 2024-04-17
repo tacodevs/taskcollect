@@ -102,7 +102,6 @@ def update_res_files():
 
     assets = [
         "styles.css", "script.js",
-        "taskcollect-logo.svg", "taskcollect-wordmark.svg",
         "icons/apple-touch-icon.png", "icons/favicon.ico",
         "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg"
     ]
@@ -112,6 +111,11 @@ def update_res_files():
         dst = res_dst.joinpath(asset)
         shutil.copy(src, dst)
         print(f"  Copied {src} -> {dst}")
+
+    # Transfer brand files
+    shutil.copy(res_src.joinpath("brand/logo.svg"), res_dst.joinpath("taskcollect-logo.svg"))
+    shutil.copy(res_src.joinpath("brand/wordmark.svg"), res_dst.joinpath("taskcollect-wordmark.svg"))
+    print("  Copied brand files")
 
     # Transfer fonts
     shutil.copy(res_src.joinpath("fonts/Lato/mainfont.woff2"), res_dst.joinpath("mainfont.woff2"))
