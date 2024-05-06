@@ -1,20 +1,17 @@
 # TaskCollect
-A web server that multiplexes functionality from educational web platforms for students.
+Lightweight, web-based, multiplexed frontend for online educational platforms. 
 
 ## Description
 
-There are a great number of educational institutions around the world that provide educational resources, homework, methods for communication, etc. through networked technologies, in particular web-based educational platforms. However, due to many factors, institutions may employ multiple platforms in their education programs, typically with noticeable overlaps in functionality. In such cases, students have no choice but to manage the large number of platforms in use by their institution to retrieve their homework and available educational resources. This inconvenience could quickly become a serious problem if the number of platforms in use at the institution drastically increases.
+Many educational institutions around the world use web-based educational platforms. However, these platforms may have numerous problems — they may be bloated, unreliably engineered, unintuitive, and so on. Furthermore, they may have duplicate functionality, which would make managing learning across multiple platforms extremely difficult. With each new confusing buggy platform, the amount of time wasted trying to manage learning outgrows the amount of learning actually done.
 
-The solution to this problem is TaskCollect: a web server that multiplexes functionality from educational web platforms, which provides a single, reliable, and intuitive web interface for students.
+The solution to this problem is TaskCollect: a lightweight, web-based frontend that multiplexes functionality from educational web platforms, in a single, reliable, and intuitive web interface.
 
-At the moment, TaskCollect acts as a multiplexed interface for the following platforms:
-  * Daymap
-  * Google Classroom (via the `google-api` branch)
+TaskCollect currently supports the following institutions and platforms:
 
-Unfortunately, some of the platforms in use by institutions (e.g. Daymap) are institution-dependent. To counter this, TaskCollect ensures each user is associated with a particular institution.
-
-TaskCollect currently supports users from the following institutions:
-  * Glenunga International High School
+  - Glenunga International High School
+     - Daymap
+     - Google Classroom (deprecated)
 
 ## Setup
 
@@ -22,7 +19,7 @@ Build dependencies:
   * Git
   * Go 1.20+
   * Python 3.9+ (build, test, etc. scripts)
-  * Sass 1.57+ (must be installed from npm)
+  * Dart Sass 1.57+
 
 Clone this Git repository and run the build script with `./build.py -u`:
 
@@ -38,6 +35,8 @@ For more information on how to use the build script, run `./build.py help`.
 
 Run-time dependencies:
   * Redis 7
+
+Use `./run.py` to start the TaskCollect server (`./run.py -w` for development purposes).
 
 ## Contributing
 
