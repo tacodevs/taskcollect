@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"git.sr.ht/~kvo/libgo/defs"
-	"git.sr.ht/~kvo/libgo/errors"
+	"git.sr.ht/~kvo/go-std/defs"
+	"git.sr.ht/~kvo/go-std/errors"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"

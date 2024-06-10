@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"git.sr.ht/~kvo/libgo/defs"
-	"git.sr.ht/~kvo/libgo/errors"
+	"git.sr.ht/~kvo/go-std/defs"
+	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/plat"
 )

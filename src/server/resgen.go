@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	htm "git.sr.ht/~kvo/format/html"
-	"git.sr.ht/~kvo/format/text"
-	"git.sr.ht/~kvo/libgo/errors"
+	htm "git.sr.ht/~kvo/go-format/html"
+	"git.sr.ht/~kvo/go-format/text"
+	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
 	"main/plat"
