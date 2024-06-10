@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"git.sr.ht/~kvo/libgo/errors"
+	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/plat"
 )

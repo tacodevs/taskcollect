@@ -1,7 +1,7 @@
 package plat
 
 import (
-	"git.sr.ht/~kvo/libgo/errors"
+	"git.sr.ht/~kvo/go-std/errors"
 )
 
 // Predefined errors for use in TaskCollect.

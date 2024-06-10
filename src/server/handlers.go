@@ -9,7 +9,7 @@ import (
 	fp "path/filepath"
 	"strings"
 
-	"git.sr.ht/~kvo/libgo/errors"
+	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
 	"main/plat"

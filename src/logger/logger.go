@@ -11,7 +11,7 @@ import (
 
 	"main/plat"
 
-	"git.sr.ht/~kvo/libgo/errors"
+	"git.sr.ht/~kvo/go-std/errors"
 )
 
 var buf bytes.Buffer

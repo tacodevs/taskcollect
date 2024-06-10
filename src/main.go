@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"git.sr.ht/~kvo/libgo/defs"
+	"git.sr.ht/~kvo/go-std/defs"
 
 	"main/logger"
 	"main/plat"
