@@ -77,7 +77,7 @@ The list archives are hidden to protect the privacy of educational institutions.
 
 [1]: https://sr.ht/~kvo/taskcollect
 [2]: https://codeberg.org/kvo/taskcollect
-[3]: https://github.com/kv-o/taskcollect
+[3]: https://github.com/tacodevs/taskcollect
 [4]: https://todo.sr.ht/~kvo/taskcollect
 [5]: mailto:~kvo/taskcollect-discuss@lists.sr.ht
 [6]: mailto:~kvo/taskcollect-devel@lists.sr.ht
