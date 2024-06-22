@@ -1,7 +1,7 @@
-git.sr.ht/~kvo/go-format v0.0.0-20240610063643-0c50c0a479c0 h1:MF0Gh1hCKvBAczP8SM/PEsAEQ+ZV24nkKHn223r3cqk=
-git.sr.ht/~kvo/go-format v0.0.0-20240610063643-0c50c0a479c0/go.mod h1:DQoKv22ASTuI7JZx+hhtBq6SmCAIb8ZJy7GApJz3XgU=
-git.sr.ht/~kvo/go-std v0.0.0-20240610061731-42a8554af6b1 h1:twhFtdDeignXoaWCEGxFtMnc5dxDoNnj8pps7WN386E=
-git.sr.ht/~kvo/go-std v0.0.0-20240610061731-42a8554af6b1/go.mod h1:YGjTbgse3yZbMPVoNJpX5MziBfgUbbbi8cbTUHZdCfk=
+git.sr.ht/~kvo/go-format v0.0.0-20240610063643-f61358fba126 h1:LvIjpDeYid2HUKR1YaI3GjyLH7FZpMt9x4Zhimj/A7w=
+git.sr.ht/~kvo/go-format v0.0.0-20240610063643-f61358fba126/go.mod h1:DQoKv22ASTuI7JZx+hhtBq6SmCAIb8ZJy7GApJz3XgU=
+git.sr.ht/~kvo/go-std v0.0.0-20240610061731-83b5a08482a8 h1:RsvSLJFMH/xNCjFvlfyVj2WoJ2/5+P62697y/Sq65X0=
+git.sr.ht/~kvo/go-std v0.0.0-20240610061731-83b5a08482a8/go.mod h1:YGjTbgse3yZbMPVoNJpX5MziBfgUbbbi8cbTUHZdCfk=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
