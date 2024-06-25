@@ -416,6 +416,7 @@ select:focus {
   font-family: var(--main-font);
   font-size: 0.9rem;
 }
+#login form input#email,
 #login form input#usr,
 #login form input#pwd,
 #login form select#school {
