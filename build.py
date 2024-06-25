@@ -33,7 +33,7 @@ def build(os_name: str, arch: str):
 
     output = f"../prg/{os_name}/{arch}/taskcollect{ext}"
     source = "."
-    cmd = ["go", "build", "-ldflags=-s -w", "-o", output, source]
+    cmd = ["go", "build", "-o", output, source]
 
     env = os.environ
     env["CGO_ENABLED"] = "0"
