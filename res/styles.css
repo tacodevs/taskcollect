@@ -61,7 +61,7 @@ body {
 }
 
 main#main-content {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   padding: 2em 4% 3.75em 4%;
 }
