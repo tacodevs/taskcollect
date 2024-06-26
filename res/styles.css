@@ -61,6 +61,7 @@ body {
 }
 
 main#main-content {
+  height: 100vh;
   width: 100%;
   padding: 2em 4% 3.75em 4%;
 }
@@ -359,7 +360,7 @@ select:focus {
 #login {
   margin: auto;
   max-width: 26%;
-  height: 92vh;
+  min-height: 100%;
   text-align: left;
   display: flex;
   justify-content: center;
