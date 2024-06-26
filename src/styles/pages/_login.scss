@@ -5,12 +5,14 @@
     box-sizing: border-box;
     width: 100%;
 }
-
 #login {
     margin: auto;
     max-width: 26%;
+    height: 92vh;
     text-align: left;
-
+    display: flex;
+    justify-content: center;
+    align-items: center;
     @include bp.xs {
         max-width: 86%;
     }
@@ -36,7 +38,7 @@
     width: 100%;
     margin-top: 1em;
 
-    >img {
+    > img {
         width: 100%;
     }
 }
@@ -62,7 +64,7 @@
         @include forms.styling-1;
     }
 
-	input#email,
+    input#email,
     input#usr,
     input#pwd,
     select#school {
