@@ -359,7 +359,11 @@ select:focus {
 #login {
   margin: auto;
   max-width: 26%;
+  height: 92vh;
   text-align: left;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 @media (min-width: 0) and (max-width: 479px) {
   #login {
