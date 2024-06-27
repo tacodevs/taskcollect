@@ -48,8 +48,6 @@ Contributions are welcome! You can send us a pull request, or if you are unsure 
 
 All contributors are required to "sign-off" their commits (using `git commit -s`) to indicate that they have agreed to the [Developer Certificate of Origin][8].
 
-Tests can be run using `test.py`. For more information, run `./test.py help`.
-
 ## Moldy spots
 
 TaskCollect currently has a lot of moldy spots that need to be fixed:
