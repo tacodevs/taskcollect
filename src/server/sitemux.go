@@ -11,6 +11,7 @@ import (
 	"main/plat"
 	"main/plat/daymap"
 	"main/plat/gclass"
+	"main/plat/saml"
 )
 
 // Map of school names to the associated platform multiplexers.
@@ -19,8 +20,8 @@ var schools = map[string]*plat.Mux{}
 // configMux configures the school platform multiplexers.
 func configMux() {
 	schools["gihs"] = plat.NewMux()
-	//schools["gihs"].AddAuth(saml.Auth)
-	//schools["gihs"].AddAuth(daymap.Auth)
+	schools["gihs"].AddAuth(saml.Auth)
+	schools["gihs"].AddAuth(daymap.Auth)
 	//schools["gihs"].AddAuth(gclass.Auth)
 	//schools["gihs"].AddClasses(daymap.Classes)
 	//schools["gihs"].AddClasses(gclass.Classes)

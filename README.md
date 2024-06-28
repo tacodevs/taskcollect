@@ -7,12 +7,6 @@ Many educational institutions around the world use web-based educational platfor
 
 The solution to this problem is TaskCollect: a lightweight, web-based frontend that multiplexes functionality from educational web platforms, in a single, reliable, and intuitive web interface.
 
-TaskCollect currently supports the following institutions and platforms:
-
-  - Glenunga International High School
-     - Daymap
-     - Google Classroom (deprecated)
-
 ## Setup
 
 Build dependencies:
@@ -32,9 +26,6 @@ cd taskcollect/
 For more information on how to use the build script, run `./build.py help`.
 
 ## Usage
-
-Run-time dependencies:
-  * Redis 7
 
 Use `./run.py` to start the TaskCollect server (`./run.py -w` for development purposes).
 

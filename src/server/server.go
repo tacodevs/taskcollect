@@ -14,7 +14,7 @@ import (
 
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
-	"golang.org/x/term"
+//	"golang.org/x/term"
 
 	"main/logger"
 	"main/plat"
@@ -53,7 +53,7 @@ func Run(version string, tlsConn bool) {
 	logger.Info("Running %v", version)
 	configMux()
 
-	var password string
+	/*var password string
 	fmt.Print("Password to Redis database: ")
 	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
@@ -65,7 +65,10 @@ func Run(version string, tlsConn bool) {
 	dbIdx := result.Database.Index
 	password = string(dbPwdInput)
 	newRedisDB := initDB(dbAddr, password, dbIdx)
-	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)
+	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)*/
+	var creds Creds
+	creds.Tokens = make(map[string]plat.Uid)
+	creds.Users = make(map[plat.Uid]plat.User)
 
 	templates, err := initTemplates(resPath)
 	if err != nil {
@@ -75,12 +78,12 @@ func Run(version string, tlsConn bool) {
 
 	db := authDB{
 		path:   resPath,
-		client: newRedisDB,
+		client: creds,
 	}
 
 	h := handler{
 		templates: templates,
-		database:  &db,
+		database:  db,
 	}
 
 	mux := http.NewServeMux()

@@ -91,6 +91,12 @@ type Task struct {
 	Id        string
 }
 
+// Uid represents a unique user identifier.
+type Uid struct {
+	School   string
+	Username string
+}
+
 // User represents an authenticated TaskCollect user.
 type User struct {
 	Timezone   *time.Location
@@ -99,6 +105,6 @@ type User struct {
 	Email      string
 	Username   string
 	Password   string
-	Token      string
+	Token      string	// TODO: delete this field!
 	SiteTokens map[string]string
 }
