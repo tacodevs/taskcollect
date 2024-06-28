@@ -15,9 +15,10 @@ import (
 
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/logger"
+	"main/plat"
 )
 
+// TODO: delete
 type User struct {
 	Timezone *time.Location
 	Token    string
@@ -590,25 +591,16 @@ func fetch(link, username, password string) (string, string, error) {
 	return s11page, authToken, nil
 }
 
-// Authenticate to Daymap and retrieve a session token (an HTTP cookie).
-func Auth(school, usr, pwd string) (User, error) {
-	timezone, e := time.LoadLocation("Australia/Adelaide")
-	if e != nil {
-		err := errors.New(e.Error(), nil)
-		logger.Error(errors.New("failed to load timezone", err))
-	}
-
-	// TODO: Implement Daymap auth for other institutions as well
-	page := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	_, authToken, err := fetch(page, usr, pwd)
+func Auth(user plat.User, c chan plat.Pair[[2]string, error], done *int) {
+	defer plat.Mark(done, c)
+	var result plat.Pair[[2]string, error]
+	link := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
+	_, token, err := fetch(link, user.Username, user.Password)
 	if err != nil {
-		return User{}, errors.New("fetch dayplan.aspx failed", err)
+		result.Second = errors.New("daymap login failed", err)
+		c <- result
+		return
 	}
-
-	creds := User{
-		Timezone: timezone,
-		Token:    authToken,
-	}
-
-	return creds, nil
+	result.First = [2]string{"daymap", token}
+	c <- result
 }

@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"main/plat"
-
 	"git.sr.ht/~kvo/go-std/errors"
 )
 
@@ -95,7 +93,7 @@ func Info(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		infoLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(plat.ErrInvalidInterfaceType)
+		Fatal(errors.New("invalid interface type", nil))
 	}
 	write()
 }
@@ -116,7 +114,7 @@ func Debug(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		debugLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(plat.ErrInvalidInterfaceType)
+		Fatal(errors.New("invalid interface type", nil))
 	}
 	write()
 }
@@ -136,7 +134,7 @@ func Warn(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		warnLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(plat.ErrInvalidInterfaceType)
+		Fatal(errors.New("invalid interface type", nil))
 	}
 	write()
 }
@@ -156,7 +154,7 @@ func Error(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		errorLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(plat.ErrInvalidInterfaceType)
+		Fatal(errors.New("invalid interface type", nil))
 	}
 	write()
 }
@@ -177,7 +175,7 @@ func Fatal(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		fatalLogger.logWrite(err.Error(), v...)
 	default:
-		fatalLogger.logWrite(plat.ErrInvalidInterfaceType.Error())
+		fatalLogger.logWrite("invalid interface type")
 	}
 	write()
 	os.Exit(1)

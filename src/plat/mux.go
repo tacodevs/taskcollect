@@ -5,13 +5,20 @@ import (
 	"time"
 
 	"git.sr.ht/~kvo/go-std/errors"
+
+	"main/logger"
 )
+
+type Pair[T, U any] struct {
+	First  T
+	Second U
+}
 
 // Mux is a platform multiplexer. Methods can be invoked on it to select the
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.
 type Mux struct {
-	auth     []func(User, chan [2]string, chan error, *int)
+	auth     []func(User, chan Pair[[2]string, error], *int)
 	classes  []func(User, chan []Class, chan error, *int)
 	duetasks []func(User, chan []Task, chan error, *int)
 	events   []func(User, chan []Event, chan error, *int)
@@ -29,7 +36,7 @@ func NewMux() *Mux {
 
 // AddAuth adds the authentication function f to m for platform authentication
 // multiplexing.
-func (m *Mux) AddAuth(f func(User, chan [2]string, chan error, *int)) {
+func (m *Mux) AddAuth(f func(User, chan Pair[[2]string, error], *int)) {
 	m.auth = append(m.auth, f)
 }
 
@@ -82,32 +89,32 @@ func (m *Mux) SetReports(f func(User) ([]Report, error)) {
 }
 
 // Auth attempts to authenticate to all platforms multiplexed by m using the
-// provided *creds. Each new platform authentication token returned by each
-// successful authentication attempt is added to *creds.SiteTokens
+// provided *user. Each new platform authentication token returned by each
+// successful authentication attempt is added to *user.SiteTokens
 //
 // An error is returned if no platform multiplexed by m can verify the
-// authenticity of the provided *creds.
-func (m *Mux) Auth(creds *User) error {
-	ch := make(chan [2]string)
-	errs := make(chan error)
+// authenticity of the provided *user. Each platform authentication attempt that
+// fails is logged at debug level.
+func (m *Mux) Auth(user *User) error {
+	ch := make(chan Pair[[2]string, error])
 	var finished int
 	for _, f := range m.auth {
 		finished--
-		go f(*creds, ch, errs, &finished)
+		go f(*user, ch, &finished)
 	}
-	var err error
+	var errs error
 	valid := false
-	for e := range errs {
-		errors.Join(err, e)
-		if err == nil {
+	for result := range ch {
+		token, err := result.First, result.Second
+		if err != nil {
+			logger.Debug(err)
+			errors.Join(errs, err)
+		} else if !valid && err == nil {
 			valid = true
 		}
-	}
-	if !valid {
-		return err
-	}
-	for token := range ch {
-		(*creds).SiteTokens[token[0]] = token[1]
+		if err == nil {
+			user.SiteTokens[token[0]] = token[1]
+		}
 	}
 	return nil
 }
@@ -293,4 +300,11 @@ func Deliver[T any](c chan T, t *T, done *int) {
 // by multiple goroutines.
 func Done(done *int) {
 	*done++
+}
+
+func Mark[T any](done *int, c chan T) {
+	*done++
+	if *done == 0 {
+		close(c)
+	}
 }

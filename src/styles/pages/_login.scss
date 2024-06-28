@@ -64,9 +64,8 @@
         @include forms.styling-1;
     }
 
-    input#email,
-    input#usr,
-    input#pwd,
+    input[type="text"],
+	input[type="password"],
     select#school {
         margin: 10px 0;
         padding: 6px 10px;

@@ -15,9 +15,21 @@ import (
 	"main/plat"
 )
 
+type Database struct {
+	Templates *template.Template
+	Creds     Creds
+}
+
+// TODO: delete
 type handler struct {
 	templates *template.Template
-	database  *authDB
+	database  authDB
+}
+
+// TODO: delete
+type authDB struct {
+	path   string
+	client Creds
 }
 
 // Handle things like submission and file uploads/removals.
@@ -239,14 +251,8 @@ func (h *handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	redirect := r.URL.Query().Get("redirect")
 	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	data := loginPageData
@@ -276,14 +282,8 @@ func (h *handler) authHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	_, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if !validAuth {
@@ -321,18 +321,12 @@ func (h *handler) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
-		err = h.database.logout(creds)
+		err = h.database.logout(r.Header.Get("Cookie"))
 		if err == nil {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
@@ -355,14 +349,8 @@ func (h *handler) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
@@ -409,14 +397,8 @@ func (h *handler) taskHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
@@ -440,14 +422,8 @@ func (h *handler) tasksHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
@@ -479,14 +455,8 @@ func (h *handler) timetableHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
@@ -518,14 +488,8 @@ func (h *handler) gradesHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
@@ -559,14 +523,8 @@ func (h *handler) resHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if validAuth {
@@ -598,14 +556,8 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	validAuth := true
 	creds, err := h.database.getCreds(r.Header.Get("Cookie"))
 
-	if errors.Is(err, plat.ErrInvalidAuth) {
+	if err != nil {
 		validAuth = false
-	} else if err != nil {
-		logger.Debug(errors.New("failed to get creds", err))
-		data := statusServerErrorData
-		data.User = userData{Name: "none"}
-		h.genPage(w, data)
-		return
 	}
 
 	if res == "/favicon.ico" {
