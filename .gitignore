@@ -1,2 +1,8 @@
 prg/
 tmp/
+**/.DS_store
+res/cert.pem
+res/config.json
+res/gauth.json
+res/key.pem
+res/logs/
