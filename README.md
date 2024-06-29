@@ -23,12 +23,13 @@ Is your institution not in the list above? [Contribute][5] today to make it happ
 
 ## Setup
 
-Build dependencies:
+Build dependencies^:
   * Git
   * Make
   * Go 1.20+
-  * Python 3.9+ (build script)
   * Dart Sass 1.57+
+
+^ Windows users should install a [Unix shell][9] for Make to function properly.
 
 Clone this Git repository and build TaskCollect from source:
 
@@ -38,10 +39,10 @@ cd taskcollect/
 make
 ```
 
-To cross-compile for a specific platform (for example, OpenBSD on 64-bit MIPS):
+To cross-compile for a specific platform (for a list of supported platforms, run `go tool dist list`):
 
 ```
-GOOS=openbsd GOARCH=mips64 make
+GOOS=linux GOARCH=amd64 make
 ```
 
 To build release versions for all supported platforms, use the following:
@@ -109,3 +110,4 @@ The list archives are hidden to protect the privacy of educational institutions.
 [6]: mailto:~kvo/taskcollect-devel@lists.sr.ht
 [7]: https://lists.sr.ht/~kvo/taskcollect-announce
 [8]: https://developercertificate.org/
+[9]: https://kvo.envs.net/tutorials/win11unix.html

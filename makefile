@@ -1,5 +1,7 @@
-.PHONY: build all run deploy
+.PHONY: build all run deploy version
 
+VERSION := $(shell git describe --tags --abbrev=0)
+COMMIT := $(shell git rev-parse HEAD)
 ARCH := $(shell go env GOARCH)
 OS := $(shell go env GOOS)
 
@@ -7,13 +9,19 @@ ifeq ($(OS), windows)
 	EXT := .exe
 endif
 
-# TODO: update src/version.go on all builds
+ifeq ("$(VERSION)", "")
+	VERSION = v0.0.0
+endif
 
-build: res/styles.css
+ifeq ("$(COMMIT)", "")
+	COMMIT = unknown
+endif
+
+build: res/styles.css version
 	mkdir -p prg/$(OS)/$(ARCH)/
 	cd src/; CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o ../prg/$(OS)/$(ARCH)/taskcollect$(EXT) .
 
-all: res/styles.css
+all: res/styles.css version
 	cd src/; for os in linux android; do \
 		for arch in amd64 386 arm64 arm; do \
 			echo make: building for $$os/$$arch...; \
@@ -33,6 +41,11 @@ all: res/styles.css
 		mkdir -p ../prg/windows/$$arch/; \
 		CGO_ENABLED=0 GOOS=windows GOARCH=$$arch go build -o ../prg/windows/$$arch/taskcollect.exe .; \
 	done
+
+version:
+	echo 'package main' > src/version.go
+	echo >> src/version.go
+	echo 'const version = "TaskCollect $(VERSION) (build $(COMMIT))"' >> src/version.go
 
 res/styles.css:
 	sass src/styles/styles.scss res/styles.css --no-source-map

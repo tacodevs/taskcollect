@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"os/user"
 	path "path/filepath"
 	_ "time/tzdata"
 
@@ -19,15 +18,12 @@ import (
 	"main/plat"
 )
 
-// Run the TaskCollect server.
 func Run(version string, tlsConn bool) {
-	curUser, err := user.Current()
+	resPath, err := os.Executable()
 	if err != nil {
-		logger.Fatal("cannot determine current user's home folder")
+		logger.Fatal(errors.New("cannot get path to executable", err))
 	}
-
-	home := curUser.HomeDir
-	resPath := path.Join(home, "res/taskcollect")
+	resPath = path.Join(path.Dir(resPath), "../../../res/")
 	configFile := path.Join(resPath, "config.json")
 	certFile := path.Join(resPath, "cert.pem")
 	keyFile := path.Join(resPath, "key.pem")
@@ -49,7 +45,7 @@ func Run(version string, tlsConn bool) {
 		}
 	}
 
-	logger.Info("Running %v", version)
+	logger.Info("Running %s", version)
 	configMux()
 
 	var creds Creds

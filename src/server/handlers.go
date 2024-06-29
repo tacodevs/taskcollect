@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	fp "path/filepath"
+	path "path/filepath"
 	"strings"
 
 	"git.sr.ht/~kvo/go-std/errors"
@@ -199,35 +199,36 @@ func (h *handler) assetHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fullPath := fp.Join(h.database.path, "icons", fileStr)
+		fullPath := path.Join(h.database.path, "icons", fileStr)
 		dispatchAsset(w, fullPath, mimeType)
 
-	} else if res == "/taskcollect-wordmark.svg" {
-		fullPath := fp.Join(h.database.path, "taskcollect-wordmark.svg")
+	} else if res == "/wordmark.svg" {
+		w.Header().Set("Cache-Control", "max-age=3600")
+		fullPath := path.Join(h.database.path, "brand/wordmark.svg")
 		dispatchAsset(w, fullPath, "image/svg+xml")
 
 	} else if res == "/manifest.webmanifest" {
-		fullPath := fp.Join(h.database.path, "manifest.webmanifest")
+		fullPath := path.Join(h.database.path, "manifest.webmanifest")
 		dispatchAsset(w, fullPath, "application/json")
 
 	} else if res == "/styles.css" {
 		//w.Header().Set("Cache-Control", "max-age=3600")
-		fullPath := fp.Join(h.database.path, "styles.css")
+		fullPath := path.Join(h.database.path, "styles.css")
 		dispatchAsset(w, fullPath, "text/css")
 
 	} else if res == "/script.js" {
 		w.Header().Set("Cache-Control", "max-age=3600")
-		fullPath := fp.Join(h.database.path, "script.js")
+		fullPath := path.Join(h.database.path, "script.js")
 		dispatchAsset(w, fullPath, "text/javascript")
 
 	} else if res == "/mainfont.woff2" {
 		w.Header().Set("Cache-Control", "max-age=259200")
-		fullPath := fp.Join(h.database.path, "mainfont.woff2")
+		fullPath := path.Join(h.database.path, "fonts/lato/mainfont.woff2")
 		dispatchAsset(w, fullPath, "font/woff2")
 
 	} else if res == "/navfont.woff2" {
 		w.Header().Set("Cache-Control", "max-age=259200")
-		fullPath := fp.Join(h.database.path, "navfont.woff2")
+		fullPath := path.Join(h.database.path, "fonts/redhat/navfont.woff2")
 		dispatchAsset(w, fullPath, "font/woff2")
 
 	} else {
@@ -561,7 +562,7 @@ func (h *handler) rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res == "/favicon.ico" {
-		fullPath := fp.Join(h.database.path, "/icons/favicon.ico")
+		fullPath := path.Join(h.database.path, "/icons/favicon.ico")
 		dispatchAsset(w, fullPath, "text/plain")
 	} else if !validAuth {
 		// User is not logged in (and is not on login page)
