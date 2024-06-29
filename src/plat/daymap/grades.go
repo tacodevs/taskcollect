@@ -92,13 +92,9 @@ func findGrade(webpage *string) (taskGrade, error) {
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
-	var tasks []plat.Task
-	var err error
-
-	defer plat.Deliver(c, &tasks, done)
-	defer plat.Deliver(ok, &err, done)
-	defer plat.Done(done)
+func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error], done *int) {
+	defer plat.Mark(done, c)
+	var result plat.Pair[[]plat.Task, error]
 
 	client := &http.Client{}
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID="
@@ -112,7 +108,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 
 	req, err := http.NewRequest("POST", link, data)
 	if err != nil {
-		err = errors.New("GET request failed", err)
+		result.Second = errors.New("GET request failed", err)
+		c <- result
 		return
 	}
 
@@ -123,7 +120,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		err = errors.New("failed to get resp", err)
+		result.Second = errors.New("failed to get resp", err)
+		c <- result
 		return
 	}
 
@@ -137,7 +135,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 			line = line[i:]
 			i = strings.Index(line, " (")
 			if i == -1 {
-				err = errors.Raise(plat.ErrInvalidResp)
+				result.Second = errors.Raise(plat.ErrInvalidResp)
+				c <- result
 				return
 			}
 			class = line[:i]
@@ -153,7 +152,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 
 		i = strings.Index(line, `);">`)
 		if i == -1 {
-			err = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(plat.ErrInvalidResp)
+			c <- result
 			return
 		}
 		task.Id = line[:i]
@@ -163,7 +163,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 
 		i = strings.Index(line, `</a>`)
 		if i == -1 {
-			err = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(plat.ErrInvalidResp)
+			c <- result
 			return
 		}
 		task.Name = line[:i]
@@ -171,7 +172,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 		for j := 0; j < 2; j++ {
 			i = strings.Index(line, `<td nowrap>`)
 			if i == -1 {
-				err = errors.Raise(plat.ErrInvalidResp)
+				result.Second = errors.Raise(plat.ErrInvalidResp)
+				c <- result
 				return
 			}
 			i += len(`<td nowrap>`)
@@ -180,14 +182,16 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			err = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(plat.ErrInvalidResp)
+			c <- result
 			return
 		}
 		task.Grade = line[:i]
 
 		i = strings.Index(line, `<td nowrap>`)
 		if i == -1 {
-			err = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(plat.ErrInvalidResp)
+			c <- result
 			return
 		}
 		i += len(`<td nowrap>`)
@@ -195,7 +199,8 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			err = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(plat.ErrInvalidResp)
+			c <- result
 			return
 		}
 		mark := line[:i]
@@ -204,21 +209,25 @@ func Graded(creds plat.User, c chan []plat.Task, ok chan error, done *int) {
 		if len(marks) == 2 {
 			top, err := strconv.ParseFloat(marks[0], 64)
 			if err != nil {
-				err = errors.New("numerator float64 conversion failed", err)
+				result.Second = errors.New("numerator float64 conversion failed", err)
+				c <- result
 				return
 			}
 			bottom, err := strconv.ParseFloat(marks[1], 64)
 			if err != nil {
-				err = errors.New("denominator float64 conversion failed", err)
+				result.Second = errors.New("denominator float64 conversion failed", err)
+				c <- result
 				return
 			}
 			task.Score = top / bottom * 100
 		}
 
-		tasks = append(tasks, task)
+		result.First = append(result.First, task)
 	}
 	if err := scanner.Err(); err != nil {
-		err = errors.New("error reading response body", err)
+		result.Second = errors.New("error reading response body", err)
+		c <- result
 		return
 	}
+	c <- result
 }

@@ -19,13 +19,13 @@ type Pair[T, U any] struct {
 // function call.
 type Mux struct {
 	auth     []func(User, chan Pair[[2]string, error], *int)
-	classes  []func(User, chan []Class, chan error, *int)
-	duetasks []func(User, chan []Task, chan error, *int)
-	events   []func(User, chan []Event, chan error, *int)
-	graded   []func(User, chan []Task, chan error, *int)
-	items    []func(User, chan []Item, chan error, []Class, *int)
+	classes  []func(User, chan Pair[[]Class, error], *int)
+	duetasks []func(User, chan Pair[[]Task, error], *int)
+	events   []func(User, chan Pair[[]Event, error], *int)
+	graded   []func(User, chan Pair[[]Task, error], *int)
+	items    []func(User, chan Pair[[]Item, error], []Class, *int)
 	lessons  func(User, time.Time, time.Time) ([]Lesson, error)
-	messages []func(User, chan []Message, chan error, *int)
+	messages []func(User, chan Pair[[]Message, error], *int)
 	reports  func(User) ([]Report, error)
 }
 
@@ -42,37 +42,37 @@ func (m *Mux) AddAuth(f func(User, chan Pair[[2]string, error], *int)) {
 
 // AddClasses adds the class list retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddClasses(f func(User, chan []Class, chan error, *int)) {
+func (m *Mux) AddClasses(f func(User, chan Pair[[]Class, error], *int)) {
 	m.classes = append(m.classes, f)
 }
 
 // AddDueTasks adds the active tasks retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddDueTasks(f func(User, chan []Task, chan error, *int)) {
+func (m *Mux) AddDueTasks(f func(User, chan Pair[[]Task, error], *int)) {
 	m.duetasks = append(m.duetasks, f)
 }
 
 // AddEvents adds the calendar events retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddEvents(f func(User, chan []Event, chan error, *int)) {
+func (m *Mux) AddEvents(f func(User, chan Pair[[]Event, error], *int)) {
 	m.events = append(m.events, f)
 }
 
 // AddGraded adds the graded tasks retrieval function f to m for platform
 // mulitplexing.
-func (m *Mux) AddGraded(f func(User, chan []Task, chan error, *int)) {
+func (m *Mux) AddGraded(f func(User, chan Pair[[]Task, error], *int)) {
 	m.graded = append(m.graded, f)
 }
 
 // AddItems adds the class tasks/resources retrieval function f to m for
 // platform multiplexing.
-func (m *Mux) AddItems(f func(User, chan []Item, chan error, []Class, *int)) {
+func (m *Mux) AddItems(f func(User, chan Pair[[]Item, error], []Class, *int)) {
 	m.items = append(m.items, f)
 }
 
 // AddMessages adds the unread messages retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddMessages(f func(User, chan []Message, chan error, *int)) {
+func (m *Mux) AddMessages(f func(User, chan Pair[[]Message, error], *int)) {
 	m.messages = append(m.messages, f)
 }
 
@@ -122,19 +122,17 @@ func (m *Mux) Auth(user *User) error {
 // Classes returns a list of classes from all platforms multiplexed by m.
 func (m *Mux) Classes(creds User) ([]Class, error) {
 	var classes []Class
-	ch := make(chan []Class)
-	errs := make(chan error)
+	ch := make(chan Pair[[]Class, error])
 	var finished int
 	for _, f := range m.classes {
 		finished--
-		go f(creds, ch, errs, &finished)
+		go f(creds, ch, &finished)
 	}
-	for err := range errs {
+	for result := range ch {
+		list, err := result.First, result.Second
 		if err != nil {
-			return nil, err
+			return nil, errors.New("cannot get class list", err)
 		}
-	}
-	for list := range ch {
 		classes = append(classes, list...)
 	}
 	sort.SliceStable(classes, func(i, j int) bool {
@@ -146,19 +144,17 @@ func (m *Mux) Classes(creds User) ([]Class, error) {
 // DueTasks returns a list of active tasks from all platforms multiplexed by m.
 func (m *Mux) DueTasks(creds User) ([]Task, error) {
 	var active []Task
-	ch := make(chan []Task)
-	errs := make(chan error)
+	ch := make(chan Pair[[]Task, error])
 	var finished int
 	for _, f := range m.duetasks {
 		finished--
-		go f(creds, ch, errs, &finished)
+		go f(creds, ch, &finished)
 	}
-	for err := range errs {
+	for result := range ch {
+		list, err := result.First, result.Second
 		if err != nil {
-			return nil, err
+			return nil, errors.New("cannot get active task list", err)
 		}
-	}
-	for list := range ch {
 		active = append(active, list...)
 	}
 	sort.SliceStable(active, func(i, j int) bool {
@@ -170,19 +166,17 @@ func (m *Mux) DueTasks(creds User) ([]Task, error) {
 // Events returns a list of calendar events from all platforms multiplexed by m.
 func (m *Mux) Events(creds User) ([]Event, error) {
 	var events []Event
-	ch := make(chan []Event)
-	errs := make(chan error)
+	ch := make(chan Pair[[]Event, error])
 	var finished int
 	for _, f := range m.events {
 		finished--
-		go f(creds, ch, errs, &finished)
+		go f(creds, ch, &finished)
 	}
-	for err := range errs {
+	for result := range ch {
+		list, err := result.First, result.Second
 		if err != nil {
-			return nil, err
+			return nil, errors.New("cannot get event list", err)
 		}
-	}
-	for list := range ch {
 		events = append(events, list...)
 	}
 	sort.SliceStable(events, func(i, j int) bool {
@@ -194,19 +188,17 @@ func (m *Mux) Events(creds User) ([]Event, error) {
 // Graded returns a list of graded tasks from all platforms multiplexed by m.
 func (m *Mux) Graded(creds User) ([]Task, error) {
 	var graded []Task
-	ch := make(chan []Task)
-	errs := make(chan error)
+	ch := make(chan Pair[[]Task, error])
 	var finished int
 	for _, f := range m.graded {
 		finished--
-		go f(creds, ch, errs, &finished)
+		go f(creds, ch, &finished)
 	}
-	for err := range errs {
+	for result := range ch {
+		list, err := result.First, result.Second
 		if err != nil {
-			return nil, err
+			return nil, errors.New("cannot get graded task list", err)
 		}
-	}
-	for list := range ch {
 		graded = append(graded, list...)
 	}
 	sort.SliceStable(graded, func(i, j int) bool {
@@ -218,19 +210,17 @@ func (m *Mux) Graded(creds User) ([]Task, error) {
 // Items returns a list of tasks and resources for all specified classes.
 func (m *Mux) Items(creds User, classes ...Class) ([]Item, error) {
 	var items []Item
-	ch := make(chan []Item)
-	errs := make(chan error)
+	ch := make(chan Pair[[]Item, error])
 	var finished int
 	for _, f := range m.items {
 		finished--
-		go f(creds, ch, errs, classes, &finished)
+		go f(creds, ch, classes, &finished)
 	}
-	for err := range errs {
+	for result := range ch {
+		list, err := result.First, result.Second
 		if err != nil {
-			return nil, err
+			return nil, errors.New("cannot get task/resource list", err)
 		}
-	}
-	for list := range ch {
 		items = append(items, list...)
 	}
 	sort.SliceStable(items, func(i, j int) bool {
@@ -254,19 +244,17 @@ func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, error) {
 // Messages returns all unread messages from all platforms multiplexed by m.
 func (m *Mux) Messages(creds User) ([]Message, error) {
 	var messages []Message
-	ch := make(chan []Message)
-	errs := make(chan error)
+	ch := make(chan Pair[[]Message, error])
 	var finished int
 	for _, f := range m.messages {
 		finished--
-		go f(creds, ch, errs, &finished)
+		go f(creds, ch, &finished)
 	}
-	for err := range errs {
+	for result := range ch {
+		list, err := result.First, result.Second
 		if err != nil {
-			return nil, err
+			return nil, errors.New("cannot get unread message list", err)
 		}
-	}
-	for list := range ch {
 		messages = append(messages, list...)
 	}
 	sort.SliceStable(messages, func(i, j int) bool {
@@ -285,21 +273,6 @@ func (m *Mux) Reports(creds User) ([]Report, error) {
 		return reports[i].Released.After(reports[j].Released)
 	})
 	return reports, nil
-}
-
-// Deliver sends *t to channel c, and closes c if the calling goroutine is the
-// last goroutine to use the channel (i.e. when *done == 0).
-func Deliver[T any](c chan T, t *T, done *int) {
-	if *done == 0 {
-		defer close(c)
-	}
-	c <- *t
-}
-
-// Done specifies that the calling goroutine is finished using a channel shared
-// by multiple goroutines.
-func Done(done *int) {
-	*done++
 }
 
 func Mark[T any](done *int, c chan T) {
