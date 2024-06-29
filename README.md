@@ -11,8 +11,9 @@ The solution to this problem is TaskCollect: a lightweight, web-based frontend t
 
 Build dependencies:
   * Git
+  * Make
   * Go 1.20+
-  * Python 3.9+ (build, test, etc. scripts)
+  * Python 3.9+ (build script)
   * Dart Sass 1.57+
 
 Clone this Git repository and run the build script with `./build.py -u`:
@@ -27,7 +28,17 @@ For more information on how to use the build script, run `./build.py help`.
 
 ## Usage
 
-Use `./run.py` to start the TaskCollect server (`./run.py -w` for development purposes).
+For personal or development purposes, use the following command:
+
+```
+make run
+```
+
+When deploying in production, use this instead:
+
+```
+make deploy
+```
 
 ## Contributing
 

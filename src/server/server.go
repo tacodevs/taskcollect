@@ -9,12 +9,11 @@ import (
 	"net/http"
 	"os"
 	"os/user"
-	fp "path/filepath"
+	path "path/filepath"
 	_ "time/tzdata"
 
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
-//	"golang.org/x/term"
 
 	"main/logger"
 	"main/plat"
@@ -28,10 +27,10 @@ func Run(version string, tlsConn bool) {
 	}
 
 	home := curUser.HomeDir
-	resPath := fp.Join(home, "res/taskcollect")
-	configFile := fp.Join(resPath, "config.json")
-	certFile := fp.Join(resPath, "cert.pem")
-	keyFile := fp.Join(resPath, "key.pem")
+	resPath := path.Join(home, "res/taskcollect")
+	configFile := path.Join(resPath, "config.json")
+	certFile := path.Join(resPath, "cert.pem")
+	keyFile := path.Join(resPath, "key.pem")
 
 	result, err := getConfig(configFile)
 	if err != nil {
@@ -41,7 +40,7 @@ func Run(version string, tlsConn bool) {
 
 	// TODO: Implement logging to file with further options
 	if result.Logging.UseLogFile {
-		logPath := fp.Join(resPath, "logs")
+		logPath := path.Join(resPath, "logs")
 		err = logger.UseConfigFile(logPath)
 		if err != nil {
 			logger.Error(errors.New("Log file was not set up successfully", err))
@@ -53,19 +52,6 @@ func Run(version string, tlsConn bool) {
 	logger.Info("Running %v", version)
 	configMux()
 
-	/*var password string
-	fmt.Print("Password to Redis database: ")
-	dbPwdInput, err := term.ReadPassword(int(os.Stdin.Fd()))
-	if err != nil {
-		logger.Fatal(errors.New("could not get password input", err))
-	}
-	fmt.Println()
-
-	dbAddr := result.Database.Address
-	dbIdx := result.Database.Index
-	password = string(dbPwdInput)
-	newRedisDB := initDB(dbAddr, password, dbIdx)
-	logger.Info("Connected to Redis on %s with database index of %d", dbAddr, dbIdx)*/
 	var creds Creds
 	creds.Tokens = make(map[string]plat.Uid)
 	creds.Users = make(map[plat.Uid]plat.User)
@@ -106,7 +92,7 @@ func Run(version string, tlsConn bool) {
 		err = http.ListenAndServeTLS(":443", certFile, keyFile, mux)
 	} else {
 		logger.Warn("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
-		err = http.ListenAndServe(":8080", mux)
+		err = http.ListenAndServe("localhost:8080", mux)
 	}
 
 	if err != nil {
@@ -117,7 +103,7 @@ func Run(version string, tlsConn bool) {
 // Create and manage necessary HTML files from template files.
 func initTemplates(resPath string) (*template.Template, error) {
 	// Create "./templates/" dir if it does not exist
-	tmplPath := fp.Join(resPath, "templates")
+	tmplPath := path.Join(resPath, "templates")
 	err := os.MkdirAll(tmplPath, os.ModePerm)
 	if err != nil {
 		return nil, errors.New("could not make 'templates' directory", err)
@@ -126,7 +112,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 	tmplResPath := tmplPath
 
 	var files []string
-	err = fp.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
+	err = path.WalkDir(tmplResPath, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -154,7 +140,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 		"body/task", "body/tasks", "body/timetable",
 	}
 	for _, f := range tmplFiles {
-		requiredFiles = append(requiredFiles, fp.Join(tmplResPath, f+".tmpl"))
+		requiredFiles = append(requiredFiles, path.Join(tmplResPath, f+".tmpl"))
 	}
 
 	filesMissing := false
@@ -172,7 +158,7 @@ func initTemplates(resPath string) (*template.Template, error) {
 
 	// Find page.tmpl and put it at the front; NOTE: (only needed when not using ExecuteTemplate)
 	//var sortedFiles []string
-	//pageTmpl := fp.Join(tmplResPath, "page.tmpl")
+	//pageTmpl := path.Join(tmplResPath, "page.tmpl")
 	//for _, f := range files {
 	//	if f == pageTmpl {
 	//		sortedFiles = append([]string{f}, sortedFiles...)
