@@ -62,17 +62,6 @@ func getLessons(creds plat.User) ([][]plat.Lesson, error) {
 }
 
 func getTasks(creds plat.User) map[string][]plat.Task {
-	gcChan := make(chan map[string][]plat.Task)
-	gcErrChan := make(chan [][]error)
-
-	gcCreds := gclass.User{
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["gclass"],
-	}
-
-	finished := -1
-	go gclass.ListTasks(gcCreds, gcChan, gcErrChan, &finished)
-
 	dmChan := make(chan map[string][]plat.Task)
 	dmErrChan := make(chan [][]error)
 	go daymap.ListTasks(creds, dmChan, dmErrChan)
@@ -80,32 +69,12 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	t := map[string][]plat.Task{}
 	tasks := map[string][]plat.Task{}
 
-	for errs := range gcErrChan {
-		for _, i := range errs {
-			for _, j := range i {
-				if j != nil {
-					logger.Error(errors.New("failed to get task list from gclass", j))
-				}
-			}
-		}
-	}
-	gcTasks := <-gcChan
-
 	dmTasks, dmErrs := <-dmChan, <-dmErrChan
 	for _, classErrs := range dmErrs {
 		for _, err := range classErrs {
 			if err != nil {
 				logger.Debug(errors.New("failed to get task list from daymap", err))
 			}
-		}
-	}
-
-	for c, taskList := range gcTasks {
-		if c == "graded" {
-			continue
-		}
-		for i := 0; i < len(taskList); i++ {
-			t[c] = append(t[c], plat.Task(taskList[i]))
 		}
 	}
 
