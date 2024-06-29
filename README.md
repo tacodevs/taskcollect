@@ -30,18 +30,24 @@ Build dependencies:
   * Python 3.9+ (build script)
   * Dart Sass 1.57+
 
-Clone this Git repository and run the build script with `./build.py -u`:
+Clone this Git repository and build TaskCollect from source:
 
 ```
 git clone https://git.sr.ht/~kvo/taskcollect
 cd taskcollect/
-./build.py -u
+make
+```
+
+To cross-compile for a specific platform (for example, OpenBSD on 64-bit MIPS):
+
+```
+GOOS=openbsd GOARCH=mips64 make
 ```
 
 To build release versions for all supported platforms, use the following:
 
 ```
-./build.py all
+make all
 ```
 
 ## Usage
