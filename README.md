@@ -3,9 +3,23 @@ Lightweight, web-based, multiplexed frontend for online educational platforms.
 
 ## Description
 
-Many educational institutions around the world use web-based educational platforms. However, these platforms may have numerous problems — they may be bloated, unreliably engineered, unintuitive, and so on. Furthermore, they may have duplicate functionality, which would make managing learning across multiple platforms extremely difficult. With each new confusing buggy platform, the amount of time wasted trying to manage learning outgrows the amount of learning actually done.
+Tired of using bloated, buggy, or unintuitive educational platforms? Forced to use them for school or university? Want to throw all of them away and find an alternative approach that truly respects both your privacy and your time?
 
-The solution to this problem is TaskCollect: a lightweight, web-based frontend that multiplexes functionality from educational web platforms, in a single, reliable, and intuitive web interface.
+TaskCollect is a lightweight, web-based frontend that allows you to use existing platforms in a way that best suits your needs. Our goal is for you to stop wasting time managing platforms and to manage your learning instead. To this end, we have designed TaskCollect to be:
+
+  - lightweight, accessible, and fast
+  - multiplexed (all your platforms appear as one)
+  - easy-to-use, efficient, and productive (based on continuous user feedback)
+  - free, libre, and open-source
+  - easy to fix, maintain, and improve
+
+**Our team is currently working on TaskCollect v2 which will completely bring the above goals to fruition!**
+
+TaskCollect currently supports the following educational institutions:
+
+  - Glenunga International High School
+
+Is your institution not in the list above? [Contribute][5] today to make it happen!
 
 ## Setup
 
@@ -24,7 +38,11 @@ cd taskcollect/
 ./build.py -u
 ```
 
-For more information on how to use the build script, run `./build.py help`.
+To build release versions for all supported platforms, use the following:
+
+```
+./build.py all
+```
 
 ## Usage
 
@@ -40,13 +58,15 @@ When deploying in production, use this instead:
 make deploy
 ```
 
+The TaskCollect server should now start on TCP port 443 (if deploying) or on port 8080 (for personal use).
+
 ## Contributing
 
 TaskCollect development occurs on [SourceHut][1]. Mirrors may exist elsewhere (e.g. the official mirrors on [Codeberg][2] and [GitHub][3]), but contributions will only be accepted through SourceHut.
 
 Confirmed issues and feature requests may be reported on the [issue tracker][4]. If your issue has not been confirmed, please send an email to [taskcollect-discuss][5] to discuss your query first.
 
-Contributions are welcome! You can send us a pull request, or if you are unsure where to start, or send an email to [taskcollect-devel][6] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [taskcollect-discuss][5].
+Contributions are welcome! You can send us a pull request, or if you are unsure where to start, send an email to [taskcollect-devel][6] and we can help you get started. If your email reveals information about any educational institution, we advise you to send an email to [taskcollect-discuss][5].
 
 All contributors are required to "sign-off" their commits (using `git commit -s`) to indicate that they have agreed to the [Developer Certificate of Origin][8].
 
