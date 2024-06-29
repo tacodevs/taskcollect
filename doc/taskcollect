@@ -19,8 +19,8 @@ DESCRIPTION
 
 OPTIONS
     -w    Run TaskCollect without TLS support. TaskCollect will start on port
-          8080 and all connections will be unencrypted. For personal and
-          and development use only. DO NOT USE IN PRODUCTION.
+          8080 and all connections will be bound to localhost to prevent
+          unencrypted network connections.
 
 FILES
     $home/res/taskcollect/logs/                       Log files (if enabled)
