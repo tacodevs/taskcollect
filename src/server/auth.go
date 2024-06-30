@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
-	"math/rand"
+	"crypto/rand"
 	"net/url"
 	"strings"
 	"sync"
@@ -139,13 +139,13 @@ func (creds *Creds) Login(query url.Values) (string, error) {
 		}
 	}
 
-	bytes := make([]byte, 32)
-	rand.Seed(time.Now().UnixNano())
-	for i := range bytes {
-		bytes[i] = byte(rand.Intn(255))
+	buf := make([]byte, 32)
+	_, err = rand.Read(buf)
+	if err != nil {
+		return "", errors.New("login failed", err)
 	}
 
-	token := base64.StdEncoding.EncodeToString(bytes)
+	token := base64.StdEncoding.EncodeToString(buf)
 	expiry := time.Now().UTC().AddDate(0, 0, 3)
 	cookie := fmt.Sprintf(
 		"token=%s; Expires=%s",
