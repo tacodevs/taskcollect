@@ -14,35 +14,36 @@ import (
 	"main/plat/saml"
 )
 
-// Map of school names to the associated platform multiplexers.
-var schools = map[string]*plat.Mux{}
-
-// configMux configures the school platform multiplexers.
-func configMux() {
-	schools["gihs"] = plat.NewMux()
-	schools["gihs"].AddAuth(saml.Auth)
-	schools["gihs"].AddAuth(daymap.Auth)
-	//schools["gihs"].AddAuth(gclass.Auth)
-	//schools["gihs"].AddClasses(daymap.Classes)
-	//schools["gihs"].AddClasses(gclass.Classes)
-	//schools["gihs"].AddDueTasks(daymap.DueTasks)
-	//schools["gihs"].AddDueTasks(gclass.DueTasks)
-	//schools["gihs"].AddEvents(outlook.Events)
-	schools["gihs"].AddGraded(daymap.Graded)
-	schools["gihs"].AddGraded(gclass.Graded)
-	//schools["gihs"].AddItems(daymap.Items)
-	//schools["gihs"].AddItems(gclass.Items)
-	//schools["gihs"].SetLessons(daymap.Lessons)
-	//schools["gihs"].AddMessages(daymap.Messages)
-	//schools["gihs"].SetReports(learnprof.Reports)
+func enrol(institutes ...string) {
+	for _, institute := range institutes {
+		switch institute {
+		case "gihs":
+			schools["gihs"] = plat.NewMux()
+			schools["gihs"].AddAuth(saml.Auth)
+			schools["gihs"].AddAuth(daymap.Auth)
+			//schools["gihs"].AddAuth(gclass.Auth)
+			//schools["gihs"].AddClasses(daymap.Classes)
+			//schools["gihs"].AddClasses(gclass.Classes)
+			//schools["gihs"].AddDueTasks(daymap.DueTasks)
+			//schools["gihs"].AddDueTasks(gclass.DueTasks)
+			//schools["gihs"].AddEvents(outlook.Events)
+			schools["gihs"].AddGraded(daymap.Graded)
+			schools["gihs"].AddGraded(gclass.Graded)
+			//schools["gihs"].AddItems(daymap.Items)
+			//schools["gihs"].AddItems(gclass.Items)
+			//schools["gihs"].SetLessons(daymap.Lessons)
+			//schools["gihs"].AddMessages(daymap.Messages)
+			//schools["gihs"].SetReports(learnprof.Reports)
+		}
+	}
 }
 
-func getLessons(creds plat.User) ([][]plat.Lesson, error) {
+func getLessons(user plat.User) ([][]plat.Lesson, error) {
 	lessons := [][]plat.Lesson{}
 
 	dmCreds := daymap.User{
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["daymap"],
+		Timezone: user.Timezone,
+		Token:    user.SiteTokens["daymap"],
 	}
 
 	dmLessons, err := daymap.GetLessons(dmCreds)
@@ -53,7 +54,7 @@ func getLessons(creds plat.User) ([][]plat.Lesson, error) {
 			day = append(day, plat.Lesson(dmLessons[i][j]))
 		}
 		sort.SliceStable(day, func(i, j int) bool {
-			return day[i].Start.In(creds.Timezone).Unix() < day[j].Start.In(creds.Timezone).Unix()
+			return day[i].Start.In(user.Timezone).Unix() < day[j].Start.In(user.Timezone).Unix()
 		})
 		lessons = append(lessons, day)
 	}
@@ -61,10 +62,10 @@ func getLessons(creds plat.User) ([][]plat.Lesson, error) {
 	return lessons, err
 }
 
-func getTasks(creds plat.User) map[string][]plat.Task {
+func getTasks(user plat.User) map[string][]plat.Task {
 	dmChan := make(chan map[string][]plat.Task)
 	dmErrChan := make(chan [][]error)
-	go daymap.ListTasks(creds, dmChan, dmErrChan)
+	go daymap.ListTasks(user, dmChan, dmErrChan)
 
 	t := map[string][]plat.Task{}
 	tasks := map[string][]plat.Task{}
@@ -122,13 +123,13 @@ func getTasks(creds plat.User) map[string][]plat.Task {
 	return tasks
 }
 
-func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
+func getResources(user plat.User) ([]string, map[string][]plat.Resource) {
 	gResChan := make(chan []plat.Resource)
 	gErrChan := make(chan []error)
 
 	gcCreds := gclass.User{
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["gclass"],
+		Timezone: user.Timezone,
+		Token:    user.SiteTokens["gclass"],
 	}
 
 	go gclass.ListRes(gcCreds, gResChan, gErrChan)
@@ -137,8 +138,8 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 	dmErrChan := make(chan []error)
 
 	dmCreds := daymap.User{
-		Timezone: creds.Timezone,
-		Token:    creds.SiteTokens["daymap"],
+		Timezone: user.Timezone,
+		Token:    user.SiteTokens["daymap"],
 	}
 
 	go daymap.ListRes(dmCreds, dmResChan, dmErrChan)
@@ -199,23 +200,23 @@ func getResources(creds plat.User) ([]string, map[string][]plat.Resource) {
 }
 
 // Get a task from the given platform.
-func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
+func getTask(platform, taskId string, user plat.User) (plat.Task, error) {
 	assignment := plat.Task{}
 	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["gclass"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["gclass"],
 		}
 		gcTask, gcErr := gclass.GetTask(gcCreds, taskId)
 		assignment = plat.Task(gcTask)
 		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["daymap"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["daymap"],
 		}
 		dmTask, dmErr := daymap.GetTask(dmCreds, taskId)
 		assignment = plat.Task(dmTask)
@@ -226,23 +227,23 @@ func getTask(platform, taskId string, creds plat.User) (plat.Task, error) {
 }
 
 // Get a resource from the given platform.
-func getResource(platform, resId string, creds plat.User) (plat.Resource, error) {
+func getResource(platform, resId string, user plat.User) (plat.Resource, error) {
 	res := plat.Resource{}
 	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["gclass"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["gclass"],
 		}
 		gcRes, gcErr := gclass.GetResource(gcCreds, resId)
 		res = plat.Resource(gcRes)
 		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["daymap"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["daymap"],
 		}
 		dmRes, dmErr := daymap.GetResource(dmCreds, resId)
 		res = plat.Resource(dmRes)
@@ -253,14 +254,14 @@ func getResource(platform, resId string, creds plat.User) (plat.Resource, error)
 }
 
 // Submit task to a given platform.
-func submitTask(creds plat.User, platform, taskId string) error {
+func submitTask(user plat.User, platform, taskId string) error {
 	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["gclass"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["gclass"],
 		}
 		err = gclass.SubmitTask(gcCreds, taskId)
 	}
@@ -278,7 +279,7 @@ func reqFiles(r *http.Request) (*multipart.Reader, error) {
 }
 
 // Upload work to a given platform.
-func uploadWork(creds plat.User, platform string, id string, r *http.Request) error {
+func uploadWork(user plat.User, platform string, id string, r *http.Request) error {
 	files, err := reqFiles(r)
 	if err != nil {
 		return err
@@ -288,14 +289,14 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["gclass"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["gclass"],
 		}
 		err = gclass.UploadWork(gcCreds, id, files)
 	case "daymap":
 		dmCreds := daymap.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["daymap"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["daymap"],
 		}
 		err = daymap.UploadWork(dmCreds, id, files)
 	}
@@ -304,20 +305,20 @@ func uploadWork(creds plat.User, platform string, id string, r *http.Request) er
 }
 
 // Remove work from a given platform.
-func removeWork(creds plat.User, platform, taskId string, filenames []string) error {
+func removeWork(user plat.User, platform, taskId string, filenames []string) error {
 	err := errors.Raise(plat.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["gclass"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["gclass"],
 		}
 		err = gclass.RemoveWork(gcCreds, taskId, filenames)
 	case "daymap":
 		dmCreds := daymap.User{
-			Timezone: creds.Timezone,
-			Token:    creds.SiteTokens["daymap"],
+			Timezone: user.Timezone,
+			Token:    user.SiteTokens["daymap"],
 		}
 		err = daymap.RemoveWork(dmCreds, taskId, filenames)
 	}

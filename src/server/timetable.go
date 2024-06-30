@@ -192,8 +192,8 @@ func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA,
 }
 
 // Generate a timetable image in PNG format.
-func genTimetableImg(creds plat.User, w http.ResponseWriter) {
-	lessons, err := getLessons(creds)
+func genTimetableImg(user plat.User, w http.ResponseWriter) {
+	lessons, err := getLessons(user)
 	if err != nil {
 		logger.Error(errors.New("failed to get lessons", err))
 		w.WriteHeader(500)
@@ -294,8 +294,8 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 		Face: face,
 	}
 
-	today := int(time.Now().In(creds.Timezone).Weekday())
-	monday := time.Now().In(creds.Timezone)
+	today := int(time.Now().In(user.Timezone).Weekday())
+	monday := time.Now().In(user.Timezone)
 	v := -1
 
 	if today == int(time.Sunday) || today > numOfDays {
@@ -340,17 +340,17 @@ func genTimetableImg(creds plat.User, w http.ResponseWriter) {
 }
 
 // Generate data for the HTML timetable.
-func genTimetable(creds plat.User) (timetableData, error) {
+func genTimetable(user plat.User) (timetableData, error) {
 	data := timetableData{}
 
-	lessons, err := getLessons(creds)
+	lessons, err := getLessons(user)
 	if err != nil {
 		return data, errors.New("failed to get lessons", err)
 	}
 
 	const numOfDays = 5
 
-	//weekday := int(time.Now().In(creds.Timezone).Weekday())
+	//weekday := int(time.Now().In(user.Timezone).Weekday())
 	//dayOffset := (weekday - 1) * dayWidth
 	classes := []string{}
 
@@ -369,8 +369,8 @@ func genTimetable(creds plat.User) (timetableData, error) {
 		colorList[classes[i]] = colors[idx]
 	}
 
-	today := int(time.Now().In(creds.Timezone).Weekday())
-	monday := time.Now().In(creds.Timezone)
+	today := int(time.Now().In(user.Timezone).Weekday())
+	monday := time.Now().In(user.Timezone)
 	v := -1
 
 	if today == int(time.Sunday) || today > numOfDays {
@@ -388,8 +388,8 @@ func genTimetable(creds plat.User) (timetableData, error) {
 		dayStart := 800.0 // is 08:00
 
 		for j := 0; j < len(day); j++ {
-			day[j].Start = day[j].Start.In(creds.Timezone)
-			day[j].End = day[j].End.In(creds.Timezone)
+			day[j].Start = day[j].Start.In(user.Timezone)
+			day[j].End = day[j].End.In(user.Timezone)
 
 			startMins := day[j].Start.Hour()*60 + day[j].Start.Minute()
 			endMins := day[j].End.Hour()*60 + day[j].End.Minute()
@@ -433,7 +433,7 @@ func genTimetable(creds plat.User) (timetableData, error) {
 		data.Days = append(data.Days, d)
 	}
 
-	if time.Now().In(creds.Timezone).Before(monday) {
+	if time.Now().In(user.Timezone).Before(monday) {
 		data.CurrentDay = 0
 	} else {
 		data.CurrentDay = int(today)
