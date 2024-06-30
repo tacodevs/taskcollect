@@ -167,30 +167,3 @@ func (creds *Creds) Logout(cookie string) error {
 	creds.Mutex.Unlock()
 	return nil
 }
-
-// semi backwards compat with redis crap...
-
-func (db *authDB) getCreds(cookies string) (plat.User, error) {
-	return db.client.LookupToken(cookies)
-}
-
-func (db *authDB) findUser(school, username, pwd string) (bool, error) {
-	user, err := db.client.LookupUid(school, username)
-	if user.Username == "" {
-		return false, err
-	}
-	return true, err
-}
-
-func (db *authDB) writeCreds(user plat.User) error {
-	db.client.Update(user.Token, user)
-	return nil
-}
-
-func (db *authDB) auth(query url.Values) (string, error) {
-	return db.client.Login(query)
-}
-
-func (db *authDB) logout(cookie string) error {
-	return db.client.Logout(cookie)
-}

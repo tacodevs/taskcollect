@@ -24,17 +24,17 @@ var gradeColors = []color.RGBA{
 	{0x03, 0x6e, 0x05, 0xff}, // Green, #036e05
 }
 
-func genDueStr(due time.Time, creds plat.User) string {
+func genDueStr(due time.Time, user plat.User) string {
 	var dueDate string
-	now := time.Now().In(creds.Timezone)
-	localDueDate := due.In(creds.Timezone)
+	now := time.Now().In(user.Timezone)
+	localDueDate := due.In(user.Timezone)
 
 	todayStart := time.Date(
 		now.Year(),
 		now.Month(),
 		now.Day(),
 		0, 0, 0, 0,
-		creds.Timezone,
+		user.Timezone,
 	)
 
 	todayEnd := todayStart.AddDate(0, 0, 1)
@@ -64,17 +64,17 @@ func genDueStr(due time.Time, creds plat.User) string {
 	return dueDate
 }
 
-func genPostStr(posted time.Time, creds plat.User) string {
+func genPostStr(posted time.Time, user plat.User) string {
 	var postDate string
-	now := time.Now().In(creds.Timezone)
-	localPostDate := posted.In(creds.Timezone)
+	now := time.Now().In(user.Timezone)
+	localPostDate := posted.In(user.Timezone)
 
 	todayStart := time.Date(
 		now.Year(),
 		now.Month(),
 		now.Day(),
 		0, 0, 0, 0,
-		creds.Timezone,
+		user.Timezone,
 	)
 
 	todayEnd := todayStart.AddDate(0, 0, 1)
@@ -105,7 +105,7 @@ func genPostStr(posted time.Time, creds plat.User) string {
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
-func genTask(assignment plat.Task, noteType string, creds plat.User) taskItem {
+func genTask(assignment plat.Task, noteType string, user plat.User) taskItem {
 	task := taskItem{
 		Id:       assignment.Id,
 		Name:     assignment.Name,
@@ -116,9 +116,9 @@ func genTask(assignment plat.Task, noteType string, creds plat.User) taskItem {
 
 	switch noteType {
 	case "dueDate":
-		task.DueDate = genDueStr(assignment.Due, creds)
+		task.DueDate = genDueStr(assignment.Due, user)
 	case "posted":
-		task.Posted = genPostStr(assignment.Posted, creds)
+		task.Posted = genPostStr(assignment.Posted, user)
 	case "grade":
 		task.Grade = "N/A"
 		if assignment.Grade != "" && assignment.Score == 0.0 {
@@ -134,7 +134,7 @@ func genTask(assignment plat.Task, noteType string, creds plat.User) taskItem {
 }
 
 // Generate the HTML page for viewing a single task
-func genTaskPage(assignment plat.Task, creds plat.User) pageData {
+func genTaskPage(assignment plat.Task, user plat.User) pageData {
 	data := pageData{
 		PageType: "task",
 		Head: headData{
@@ -155,13 +155,13 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 			},
 		},
 		User: userData{
-			Name: creds.DispName,
+			Name: user.DispName,
 		},
 	}
 
 	if !assignment.Due.IsZero() {
 		data.Body.TaskData.IsDue = true
-		data.Body.TaskData.DueDate = genDueStr(assignment.Due, creds)
+		data.Body.TaskData.DueDate = genDueStr(assignment.Due, user)
 	}
 
 	if assignment.Submitted {
@@ -264,7 +264,7 @@ func genTaskPage(assignment plat.Task, creds plat.User) pageData {
 }
 
 // Generate the HTML page for viewing a single resource
-func genResPage(res plat.Resource, creds plat.User) pageData {
+func genResPage(res plat.Resource, user plat.User) pageData {
 	data := pageData{
 		PageType: "resource",
 		Head: headData{
@@ -278,13 +278,13 @@ func genResPage(res plat.Resource, creds plat.User) pageData {
 				Class:       res.Class,
 				URL:         res.Link,
 				Desc:        "",
-				Posted:      genPostStr(res.Posted, creds),
+				Posted:      genPostStr(res.Posted, user),
 				ResLinks:    nil,
 				HasResLinks: false,
 			},
 		},
 		User: userData{
-			Name: creds.DispName,
+			Name: user.DispName,
 		},
 	}
 
@@ -334,7 +334,7 @@ func genResPage(res plat.Resource, creds plat.User) pageData {
 }
 
 // Generate a resource link
-func genHtmlResLink(className string, res []plat.Resource, creds plat.User) resClass {
+func genHtmlResLink(className string, res []plat.Resource, user plat.User) resClass {
 	class := resClass{
 		Name: className,
 	}
@@ -343,7 +343,7 @@ func genHtmlResLink(className string, res []plat.Resource, creds plat.User) resC
 		class.ResItems = append(class.ResItems, resItem{
 			Id:       r.Id,
 			Name:     r.Name,
-			Posted:   genPostStr(r.Posted, creds),
+			Posted:   genPostStr(r.Posted, user),
 			Platform: r.Platform,
 			URL:      r.Link,
 		})
@@ -353,15 +353,15 @@ func genHtmlResLink(className string, res []plat.Resource, creds plat.User) resC
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
+func genRes(resPath string, resURL string, user plat.User) (pageData, error) {
 	var data pageData
-	data.User.Name = creds.DispName
+	data.User.Name = user.DispName
 
 	if resURL == "/timetable" {
 		data.PageType = "timetable"
 		data.Head.Title = "Timetable"
 
-		timetable, err := genTimetable(creds)
+		timetable, err := genTimetable(user)
 		if err != nil {
 			return data, errors.New("failed to generate timetable", err)
 		}
@@ -373,7 +373,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 		data.Head.Title = "Tasks"
 		data.Body.TasksData.Heading = "Tasks"
 
-		tasks := getTasks(creds)
+		tasks := getTasks(user)
 		activeTasks := taskType{
 			Name:     "Active tasks",
 			NoteType: "dueDate",
@@ -382,7 +382,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 			activeTasks.Tasks = append(activeTasks.Tasks, genTask(
 				tasks["active"][i],
 				"dueDate",
-				creds,
+				user,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, activeTasks)
@@ -395,7 +395,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 			notDueTasks.Tasks = append(notDueTasks.Tasks, genTask(
 				tasks["notDue"][i],
 				"posted",
-				creds,
+				user,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, notDueTasks)
@@ -408,7 +408,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 			overdueTasks.Tasks = append(overdueTasks.Tasks, genTask(
 				tasks["overdue"][i],
 				"dueDate",
-				creds,
+				user,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, overdueTasks)
@@ -421,7 +421,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 			submittedTasks.Tasks = append(submittedTasks.Tasks, genTask(
 				tasks["submitted"][i],
 				"posted",
-				creds,
+				user,
 			))
 		}
 		data.Body.TasksData.TaskTypes = append(data.Body.TasksData.TaskTypes, submittedTasks)
@@ -431,12 +431,12 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 		data.Head.Title = "Resources"
 		data.Body.ResData.Heading = "Resources"
 
-		classes, resources := getResources(creds)
+		classes, resources := getResources(user)
 		for _, class := range classes {
 			data.Body.ResData.Classes = append(data.Body.ResData.Classes, genHtmlResLink(
 				class,
 				resources[class],
-				creds,
+				user,
 			))
 		}
 
@@ -444,7 +444,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 		data.PageType = "grades"
 		data.Head.Title = "Grades"
 
-		tasks, err := schools[creds.School].Graded(creds)
+		tasks, err := schools[user.School].Graded(user)
 		if err != nil {
 			return data, errors.New("failed getting graded tasks", err)
 		}
@@ -452,7 +452,7 @@ func genRes(resPath string, resURL string, creds plat.User) (pageData, error) {
 		for _, task := range tasks {
 			data.Body.GradesData.Tasks = append(
 				data.Body.GradesData.Tasks,
-				genTask(task, "grade", creds),
+				genTask(task, "grade", user),
 			)
 		}
 
