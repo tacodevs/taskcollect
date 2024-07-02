@@ -12,6 +12,7 @@ import (
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
 
+	"main/logger"
 	"main/plat"
 )
 
@@ -111,8 +112,14 @@ func auth(school, email, username, password string) (plat.User, error) {
 		if err != nil {
 			return plat.User{}, errors.New("", err)
 		}
+	case "example":
+		user.Timezone = time.UTC
+		err = schools["example"].Auth(&user)
+		if err != nil {
+			return plat.User{}, errors.New("", err)
+		}
 	default:
-		return plat.User{}, errors.New("unsupported school", nil)
+		return plat.User{}, errors.New(fmt.Sprintf("unsupported school: %s", school), nil)
 	}
 
 	return user, nil
@@ -133,6 +140,7 @@ func (creds *Creds) Login(query url.Values) (string, error) {
 
 	user, err := auth(school, email, username, password)
 	if err != nil {
+		logger.Debug(err)
 		user, err = creds.LookupUid(school, username)
 		if err != nil {
 			return "", errors.New("login failed", err)

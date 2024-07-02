@@ -10,6 +10,7 @@ import (
 	"main/logger"
 	"main/plat"
 	"main/plat/daymap"
+	"main/plat/example"
 	"main/plat/gclass"
 	"main/plat/saml"
 )
@@ -34,6 +35,10 @@ func enrol(institutes ...string) {
 			//schools["gihs"].SetLessons(daymap.Lessons)
 			//schools["gihs"].AddMessages(daymap.Messages)
 			//schools["gihs"].SetReports(learnprof.Reports)
+		case "example":
+			schools["example"] = plat.NewMux()
+			schools["example"].AddAuth(example.Auth)
+			//schools["example"].SetLessons(example.Lessons)
 		}
 	}
 }
