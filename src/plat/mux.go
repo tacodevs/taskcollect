@@ -10,11 +10,6 @@ import (
 	"main/logger"
 )
 
-type Pair[T, U any] struct {
-	First  T
-	Second U
-}
-
 // Mux is a platform multiplexer. Methods can be invoked on it to select the
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.
@@ -279,11 +274,4 @@ func (m *Mux) Reports(creds User) ([]Report, error) {
 		return reports[i].Released.After(reports[j].Released)
 	})
 	return reports, nil
-}
-
-func Mark[T any](done *int, c chan T) {
-	*done++
-	if *done == 0 {
-		close(c)
-	}
 }
