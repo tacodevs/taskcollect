@@ -1,6 +1,7 @@
 package plat
 
 import (
+	"net/http"
 	"sort"
 	"time"
 
@@ -26,7 +27,12 @@ type Mux struct {
 	items    []func(User, chan Pair[[]Item, error], []Class, *int)
 	lessons  func(User, time.Time, time.Time) ([]Lesson, error)
 	messages []func(User, chan Pair[[]Message, error], *int)
+	remove   map[string]func(User, string, []string) error
 	reports  func(User) ([]Report, error)
+	resource map[string]func(User, string) (Resource, error)
+	submit   map[string]func(User, string) error
+	task     map[string]func(User, string) (Task, error)
+	upload   map[string]func(User, string, *http.Request) error
 }
 
 // Return a new instance of Mux.
