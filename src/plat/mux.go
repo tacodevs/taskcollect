@@ -14,14 +14,14 @@ import (
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.
 type Mux struct {
-	auth     []func(User, chan Pair[[2]string, error], *int)
-	classes  []func(User, chan Pair[[]Class, error], *int)
-	duetasks []func(User, chan Pair[[]Task, error], *int)
-	events   []func(User, chan Pair[[]Event, error], *int)
-	graded   []func(User, chan Pair[[]Task, error], *int)
-	items    []func(User, chan Pair[[]Item, error], []Class, *int)
+	auth     []func(User, chan Pair[[2]string, error])
+	classes  []func(User, chan Pair[[]Class, error])
+	duetasks []func(User, chan Pair[[]Task, error])
+	events   []func(User, chan Pair[[]Event, error])
+	graded   []func(User, chan Pair[[]Task, error])
+	items    []func(User, chan Pair[[]Item, error], []Class)
 	lessons  func(User, time.Time, time.Time) ([]Lesson, error)
-	messages []func(User, chan Pair[[]Message, error], *int)
+	messages []func(User, chan Pair[[]Message, error])
 	remove   map[string]func(User, string, []string) error
 	reports  func(User) ([]Report, error)
 	resource map[string]func(User, string) (Resource, error)
@@ -37,43 +37,43 @@ func NewMux() *Mux {
 
 // AddAuth adds the authentication function f to m for platform authentication
 // multiplexing.
-func (m *Mux) AddAuth(f func(User, chan Pair[[2]string, error], *int)) {
+func (m *Mux) AddAuth(f func(User, chan Pair[[2]string, error])) {
 	m.auth = append(m.auth, f)
 }
 
 // AddClasses adds the class list retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddClasses(f func(User, chan Pair[[]Class, error], *int)) {
+func (m *Mux) AddClasses(f func(User, chan Pair[[]Class, error])) {
 	m.classes = append(m.classes, f)
 }
 
 // AddDueTasks adds the active tasks retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddDueTasks(f func(User, chan Pair[[]Task, error], *int)) {
+func (m *Mux) AddDueTasks(f func(User, chan Pair[[]Task, error])) {
 	m.duetasks = append(m.duetasks, f)
 }
 
 // AddEvents adds the calendar events retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddEvents(f func(User, chan Pair[[]Event, error], *int)) {
+func (m *Mux) AddEvents(f func(User, chan Pair[[]Event, error])) {
 	m.events = append(m.events, f)
 }
 
 // AddGraded adds the graded tasks retrieval function f to m for platform
 // mulitplexing.
-func (m *Mux) AddGraded(f func(User, chan Pair[[]Task, error], *int)) {
+func (m *Mux) AddGraded(f func(User, chan Pair[[]Task, error])) {
 	m.graded = append(m.graded, f)
 }
 
 // AddItems adds the class tasks/resources retrieval function f to m for
 // platform multiplexing.
-func (m *Mux) AddItems(f func(User, chan Pair[[]Item, error], []Class, *int)) {
+func (m *Mux) AddItems(f func(User, chan Pair[[]Item, error], []Class)) {
 	m.items = append(m.items, f)
 }
 
 // AddMessages adds the unread messages retrieval function f to m for platform
 // multiplexing.
-func (m *Mux) AddMessages(f func(User, chan Pair[[]Message, error], *int)) {
+func (m *Mux) AddMessages(f func(User, chan Pair[[]Message, error])) {
 	m.messages = append(m.messages, f)
 }
 
@@ -98,14 +98,13 @@ func (m *Mux) SetReports(f func(User) ([]Report, error)) {
 // fails is logged at debug level.
 func (m *Mux) Auth(user *User) error {
 	ch := make(chan Pair[[2]string, error])
-	var finished int
 	for _, f := range m.auth {
-		finished--
-		go f(*user, ch, &finished)
+		go f(*user, ch)
 	}
 	var errs error
 	valid := false
-	for result := range ch {
+	for _ = range m.auth {
+		result := <-ch
 		token, err := result.First, result.Second
 		if err != nil {
 			logger.Debug(err)
@@ -124,12 +123,11 @@ func (m *Mux) Auth(user *User) error {
 func (m *Mux) Classes(creds User) ([]Class, error) {
 	var classes []Class
 	ch := make(chan Pair[[]Class, error])
-	var finished int
 	for _, f := range m.classes {
-		finished--
-		go f(creds, ch, &finished)
+		go f(creds, ch)
 	}
-	for result := range ch {
+	for _ = range m.classes {
+		result := <- ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get class list", err)
@@ -146,12 +144,11 @@ func (m *Mux) Classes(creds User) ([]Class, error) {
 func (m *Mux) DueTasks(creds User) ([]Task, error) {
 	var active []Task
 	ch := make(chan Pair[[]Task, error])
-	var finished int
 	for _, f := range m.duetasks {
-		finished--
-		go f(creds, ch, &finished)
+		go f(creds, ch)
 	}
-	for result := range ch {
+	for _ = range m.duetasks {
+		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get active task list", err)
@@ -168,12 +165,11 @@ func (m *Mux) DueTasks(creds User) ([]Task, error) {
 func (m *Mux) Events(creds User) ([]Event, error) {
 	var events []Event
 	ch := make(chan Pair[[]Event, error])
-	var finished int
 	for _, f := range m.events {
-		finished--
-		go f(creds, ch, &finished)
+		go f(creds, ch)
 	}
-	for result := range ch {
+	for _ = range m.events {
+		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get event list", err)
@@ -190,12 +186,11 @@ func (m *Mux) Events(creds User) ([]Event, error) {
 func (m *Mux) Graded(creds User) ([]Task, error) {
 	var graded []Task
 	ch := make(chan Pair[[]Task, error])
-	var finished int
 	for _, f := range m.graded {
-		finished--
-		go f(creds, ch, &finished)
+		go f(creds, ch)
 	}
-	for result := range ch {
+	for _ = range m.graded {
+		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get graded task list", err)
@@ -212,12 +207,11 @@ func (m *Mux) Graded(creds User) ([]Task, error) {
 func (m *Mux) Items(creds User, classes ...Class) ([]Item, error) {
 	var items []Item
 	ch := make(chan Pair[[]Item, error])
-	var finished int
 	for _, f := range m.items {
-		finished--
-		go f(creds, ch, classes, &finished)
+		go f(creds, ch, classes)
 	}
-	for result := range ch {
+	for _ = range m.items {
+		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get task/resource list", err)
@@ -246,12 +240,11 @@ func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, error) {
 func (m *Mux) Messages(creds User) ([]Message, error) {
 	var messages []Message
 	ch := make(chan Pair[[]Message, error])
-	var finished int
 	for _, f := range m.messages {
-		finished--
-		go f(creds, ch, &finished)
+		go f(creds, ch)
 	}
-	for result := range ch {
+	for _ = range m.messages {
+		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get unread message list", err)

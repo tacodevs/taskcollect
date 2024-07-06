@@ -92,8 +92,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error], done *int) {
-	defer plat.Mark(done, c)
+func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 	var result plat.Pair[[]plat.Task, error]
 
 	client := &http.Client{}

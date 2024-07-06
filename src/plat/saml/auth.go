@@ -88,8 +88,7 @@ func fetch(username, password string) error {
 	return errors.New("saml returned non-200 response", nil)
 }
 
-func Auth(user plat.User, c chan plat.Pair[[2]string, error], done *int) {
-	defer plat.Mark(done, c)
+func Auth(user plat.User, c chan plat.Pair[[2]string, error]) {
 	var result plat.Pair[[2]string, error]
 	err := fetch(user.Username, user.Password)
 	if err != nil {
