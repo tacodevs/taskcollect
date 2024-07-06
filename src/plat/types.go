@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// Pair represents a tuple of two elements.
+type Pair[T, U any] struct {
+	First  T
+	Second U
+}
+
 // Class represents a class into which the user is enrolled in.
 type Class struct {
 	Name     string

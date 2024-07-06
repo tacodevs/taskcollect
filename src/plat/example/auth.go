@@ -32,8 +32,7 @@ func fetch(link, email, username, password string) (string, string, error) {
 }
 
 // Example auth function
-func Auth(user plat.User, c chan plat.Pair[[2]string, error], done *int) {
-	defer plat.Mark(done, c)
+func Auth(user plat.User, c chan plat.Pair[[2]string, error]) {
 	var result plat.Pair[[2]string, error]
 
 	link :=  "https://example.com"
