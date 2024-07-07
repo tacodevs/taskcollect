@@ -343,22 +343,44 @@ func genTimetableImg(user plat.User, w http.ResponseWriter) {
 func genTimetable(user plat.User) (timetableData, error) {
 	data := timetableData{}
 
-	lessons, err := getLessons(user)
+	var weekStartIdx, weekEndIdx int
+	t := time.Now().In(user.Timezone)
+
+	now := time.Date(
+		t.Year(), t.Month(), t.Day(),
+		0, 0, 0, 0,
+		user.Timezone,
+	)
+
+	weekday := now.Weekday()
+
+	switch weekday {
+	case 6:
+		weekStartIdx = 2
+		weekEndIdx = 6
+	default:
+		weekStartIdx = 1 - int(weekday)
+		weekEndIdx = 5 - int(weekday)
+	}
+
+	weekStart := now.AddDate(0, 0, weekStartIdx)
+	weekEnd := now.AddDate(0, 0, weekEndIdx)
+
+	lessons, err := schools[user.School].Lessons(user, weekStart, weekEnd)
 	if err != nil {
 		return data, errors.New("failed to get lessons", err)
 	}
 
 	const numOfDays = 5
+	data.Days = make([]ttDay, numOfDays)
 
 	//weekday := int(time.Now().In(user.Timezone).Weekday())
 	//dayOffset := (weekday - 1) * dayWidth
 	classes := []string{}
 
-	for i := 0; i < len(lessons); i++ {
-		for j := 0; j < len(lessons[i]); j++ {
-			if !defs.Has(classes, lessons[i][j].Class) {
-				classes = append(classes, lessons[i][j].Class)
-			}
+	for _, lesson := range lessons {
+		if !defs.Has(classes, lesson.Class) {
+			classes = append(classes, lesson.Class)
 		}
 	}
 
@@ -370,7 +392,7 @@ func genTimetable(user plat.User) (timetableData, error) {
 	}
 
 	today := int(time.Now().In(user.Timezone).Weekday())
-	monday := time.Now().In(user.Timezone)
+	monday := now.In(user.Timezone)
 	v := -1
 
 	if today == int(time.Sunday) || today > numOfDays {
@@ -381,21 +403,33 @@ func genTimetable(user plat.User) (timetableData, error) {
 		monday = monday.AddDate(0, 0, v)
 	}
 
-	for i := 0; i < numOfDays; i++ {
-		day := lessons[i]
-		d := ttDay{}
+	for i := range data.Days {
+		s := time.Weekday(i+1).String() + ", "
+		s += monday.AddDate(0, 0, i).Format("2 January")
+		data.Days[i].Day = s
+	}
+
+		curDay := 0
 
 		dayStart := 800.0 // is 08:00
 
-		for j := 0; j < len(day); j++ {
-			day[j].Start = day[j].Start.In(user.Timezone)
-			day[j].End = day[j].End.In(user.Timezone)
+		for _, lesson := range lessons {
+			if lesson.Start.After(monday.AddDate(0, 0, curDay+1)) {
+				curDay++
+			}
 
-			startMins := day[j].Start.Hour()*60 + day[j].Start.Minute()
-			endMins := day[j].End.Hour()*60 + day[j].End.Minute()
+			if curDay > numOfDays {
+				break
+			}
+
+			lesson.Start = lesson.Start.In(user.Timezone)
+			lesson.End = lesson.End.In(user.Timezone)
+
+			startMins := lesson.Start.Hour()*60 + lesson.Start.Minute()
+			endMins := lesson.End.Hour()*60 + lesson.End.Minute()
 			duration := endMins - startMins
 
-			c := colorList[day[j].Class]
+			c := colorList[lesson.Class]
 			hexColor := fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 
 			textColor := "#ffffff"
@@ -407,31 +441,24 @@ func genTimetable(user plat.User) (timetableData, error) {
 			topOffset := math.Round(float64(startMins)*10/6 - dayStart)
 			height := math.Round(float64(duration) * 10 / 6)
 
-			lesson := ttLesson{
-				Class:     day[j].Class,
+			classInfo := ttLesson{
+				Class:     lesson.Class,
 				Height:    height,
 				TopOffset: topOffset,
-				Room:      day[j].Room,
-				Teacher:   day[j].Teacher,
-				Notice:    day[j].Notice,
+				Room:      lesson.Room,
+				Teacher:   lesson.Teacher,
+				Notice:    lesson.Notice,
 				Color:     textColor,
 				BGColor:   hexColor,
 			}
 
-			lesson.FormattedTime = day[j].Start.Format("15:04") + "–" + day[j].End.Format("15:04")
-			lesson.Duration = fmt.Sprintf(
+			classInfo.FormattedTime = lesson.Start.Format("15:04") + "–" + lesson.End.Format("15:04")
+			classInfo.Duration = fmt.Sprintf(
 				"%d mins",
-				int(day[j].End.Sub(day[j].Start).Minutes()),
+				int(lesson.End.Sub(lesson.Start).Minutes()),
 			)
-			d.Lessons = append(d.Lessons, lesson)
+			data.Days[curDay].Lessons = append(data.Days[curDay].Lessons, classInfo)
 		}
-
-		s := time.Weekday(i+1).String() + ", "
-		s += monday.AddDate(0, 0, i).Format("2 January")
-		d.Day = s
-
-		data.Days = append(data.Days, d)
-	}
 
 	if time.Now().In(user.Timezone).Before(monday) {
 		data.CurrentDay = 0
