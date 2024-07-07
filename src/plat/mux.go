@@ -120,11 +120,11 @@ func (m *Mux) Auth(user *User) error {
 }
 
 // Classes returns a list of classes from all platforms multiplexed by m.
-func (m *Mux) Classes(creds User) ([]Class, error) {
+func (m *Mux) Classes(user User) ([]Class, error) {
 	var classes []Class
 	ch := make(chan Pair[[]Class, error])
 	for _, f := range m.classes {
-		go f(creds, ch)
+		go f(user, ch)
 	}
 	for _ = range m.classes {
 		result := <- ch
@@ -141,11 +141,11 @@ func (m *Mux) Classes(creds User) ([]Class, error) {
 }
 
 // DueTasks returns a list of active tasks from all platforms multiplexed by m.
-func (m *Mux) DueTasks(creds User) ([]Task, error) {
+func (m *Mux) DueTasks(user User) ([]Task, error) {
 	var active []Task
 	ch := make(chan Pair[[]Task, error])
 	for _, f := range m.duetasks {
-		go f(creds, ch)
+		go f(user, ch)
 	}
 	for _ = range m.duetasks {
 		result := <-ch
@@ -162,11 +162,11 @@ func (m *Mux) DueTasks(creds User) ([]Task, error) {
 }
 
 // Events returns a list of calendar events from all platforms multiplexed by m.
-func (m *Mux) Events(creds User) ([]Event, error) {
+func (m *Mux) Events(user User) ([]Event, error) {
 	var events []Event
 	ch := make(chan Pair[[]Event, error])
 	for _, f := range m.events {
-		go f(creds, ch)
+		go f(user, ch)
 	}
 	for _ = range m.events {
 		result := <-ch
@@ -183,11 +183,11 @@ func (m *Mux) Events(creds User) ([]Event, error) {
 }
 
 // Graded returns a list of graded tasks from all platforms multiplexed by m.
-func (m *Mux) Graded(creds User) ([]Task, error) {
+func (m *Mux) Graded(user User) ([]Task, error) {
 	var graded []Task
 	ch := make(chan Pair[[]Task, error])
 	for _, f := range m.graded {
-		go f(creds, ch)
+		go f(user, ch)
 	}
 	for _ = range m.graded {
 		result := <-ch
@@ -204,11 +204,11 @@ func (m *Mux) Graded(creds User) ([]Task, error) {
 }
 
 // Items returns a list of tasks and resources for all specified classes.
-func (m *Mux) Items(creds User, classes ...Class) ([]Item, error) {
+func (m *Mux) Items(user User, classes ...Class) ([]Item, error) {
 	var items []Item
 	ch := make(chan Pair[[]Item, error])
 	for _, f := range m.items {
-		go f(creds, ch, classes)
+		go f(user, ch, classes)
 	}
 	for _ = range m.items {
 		result := <-ch
@@ -225,8 +225,8 @@ func (m *Mux) Items(creds User, classes ...Class) ([]Item, error) {
 }
 
 // Lessons returns a list of lessons occuring from start to end.
-func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, error) {
-	lessons, err := m.lessons(creds, start, end)
+func (m *Mux) Lessons(user User, start, end time.Time) ([]Lesson, error) {
+	lessons, err := m.lessons(user, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -237,11 +237,11 @@ func (m *Mux) Lessons(creds User, start, end time.Time) ([]Lesson, error) {
 }
 
 // Messages returns all unread messages from all platforms multiplexed by m.
-func (m *Mux) Messages(creds User) ([]Message, error) {
+func (m *Mux) Messages(user User) ([]Message, error) {
 	var messages []Message
 	ch := make(chan Pair[[]Message, error])
 	for _, f := range m.messages {
-		go f(creds, ch)
+		go f(user, ch)
 	}
 	for _ = range m.messages {
 		result := <-ch
@@ -258,8 +258,8 @@ func (m *Mux) Messages(creds User) ([]Message, error) {
 }
 
 // Reports returns a series of report cards.
-func (m *Mux) Reports(creds User) ([]Report, error) {
-	reports, err := m.reports(creds)
+func (m *Mux) Reports(user User) ([]Report, error) {
+	reports, err := m.reports(user)
 	if err != nil {
 		return nil, err
 	}
