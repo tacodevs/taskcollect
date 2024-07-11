@@ -1,4 +1,4 @@
-package plat
+package site
 
 import (
 	"net/http"

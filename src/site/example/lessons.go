@@ -3,11 +3,11 @@ package example
 import (
 	"time"
 
-	"main/plat"
+	"main/site"
 )
 
-func Lessons(user plat.User, start, end time.Time) ([]plat.Lesson, error) {
-	lessons := []plat.Lesson{
+func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
+	lessons := []site.Lesson{
 		{
 			Start: start.Add(8*time.Hour + 55*time.Minute),
 			End:   start.Add(10*time.Hour + 35*time.Minute),

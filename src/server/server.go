@@ -15,13 +15,13 @@ import (
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
-	"main/plat"
+	"main/site"
 )
 
 var (
 	creds     Creds
 	respath   string
-	schools   = make(map[string]*plat.Mux)
+	schools   = make(map[string]*site.Mux)
 	templates *template.Template
 )
 
@@ -29,8 +29,8 @@ func Run(version string, tlsConn bool) {
 	logger.Info("Running %s", version)
 	enrol("gihs")
 
-	creds.Tokens = make(map[string]plat.Uid)
-	creds.Users = make(map[plat.Uid]plat.User)
+	creds.Tokens = make(map[string]site.Uid)
+	creds.Users = make(map[site.Uid]site.User)
 
 	execpath, err := os.Executable()
 	if err != nil {
@@ -60,7 +60,7 @@ func Run(version string, tlsConn bool) {
 
 	err = initTemplates(respath)
 	if err != nil {
-		logger.Fatal(errors.New(plat.ErrInitFailed.Error()+" for HTML templates", err))
+		logger.Fatal(errors.New(site.ErrInitFailed.Error()+" for HTML templates", err))
 	}
 	logger.Info("Successfully initialized HTML templates")
 
@@ -145,7 +145,7 @@ func initTemplates(respath string) error {
 		}
 	}
 	if filesMissing {
-		errStr := fmt.Errorf("%v:\n%+v", plat.ErrMissingFiles.Error(), missingFiles)
+		errStr := fmt.Errorf("%v:\n%+v", site.ErrMissingFiles.Error(), missingFiles)
 		logger.Fatal(errors.New(errStr.Error(), nil))
 	}
 

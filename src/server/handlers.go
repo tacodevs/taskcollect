@@ -11,11 +11,11 @@ import (
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
-	"main/plat"
+	"main/site"
 )
 
 // Handle things like submission and file uploads/removals.
-func handleTask(r *http.Request, user plat.User, platform, id, cmd string) (int, pageData, [][2]string) {
+func handleTask(r *http.Request, user site.User, platform, id, cmd string) (int, pageData, [][2]string) {
 	data := pageData{}
 
 	res := r.URL.EscapedPath()
@@ -52,7 +52,7 @@ func handleTask(r *http.Request, user plat.User, platform, id, cmd string) (int,
 		}
 
 		err := removeWork(user, platform, id, filenames)
-		if errors.Is(err, plat.ErrNoPlatform) {
+		if errors.Is(err, site.ErrNoPlatform) {
 			data = statusNotFoundData
 			statusCode = 404
 		} else if err != nil {
@@ -72,7 +72,7 @@ func handleTask(r *http.Request, user plat.User, platform, id, cmd string) (int,
 	return statusCode, data, headers
 }
 
-func handleTaskReq(r *http.Request, user plat.User) (int, pageData, [][2]string) {
+func handleTaskReq(r *http.Request, user site.User) (int, pageData, [][2]string) {
 	res := r.URL.EscapedPath()
 
 	statusCode := 200
@@ -411,7 +411,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(respath, "/tasks", user)
-		if errors.Is(err, plat.ErrNotFound) {
+		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
@@ -444,7 +444,7 @@ func timetableHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(respath, "/timetable", user)
-		if errors.Is(err, plat.ErrNotFound) {
+		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
@@ -477,7 +477,7 @@ func gradesHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(respath, "/grades", user)
-		if errors.Is(err, plat.ErrNotFound) {
+		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
@@ -512,7 +512,7 @@ func resHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes(respath, "/res", user)
-		if errors.Is(err, plat.ErrNotFound) {
+		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}

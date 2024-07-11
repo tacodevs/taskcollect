@@ -9,11 +9,11 @@ import (
 
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 // Retrieve a webpage of all DayMap tasks for a user.
-func tasksPage(creds plat.User) (string, error) {
+func tasksPage(creds site.User) (string, error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
 
@@ -43,7 +43,7 @@ func tasksPage(creds plat.User) (string, error) {
 		i = strings.Index(b, ">")
 
 		if i == -1 {
-			return "", errors.Raise(plat.ErrInvalidResp)
+			return "", errors.Raise(site.ErrInvalidResp)
 		}
 
 		inputTag := b[:i]
@@ -51,7 +51,7 @@ func tasksPage(creds plat.User) (string, error) {
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			return "", errors.Raise(plat.ErrInvalidResp)
+			return "", errors.Raise(site.ErrInvalidResp)
 		}
 
 		i += len(`type="`)
@@ -59,7 +59,7 @@ func tasksPage(creds plat.User) (string, error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			return "", errors.Raise(plat.ErrInvalidResp)
+			return "", errors.Raise(site.ErrInvalidResp)
 		}
 
 		inputType = inputType[:i]
@@ -72,7 +72,7 @@ func tasksPage(creds plat.User) (string, error) {
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			return "", errors.Raise(plat.ErrInvalidResp)
+			return "", errors.Raise(site.ErrInvalidResp)
 		}
 
 		i += len(`name="`)
@@ -80,7 +80,7 @@ func tasksPage(creds plat.User) (string, error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			return "", errors.Raise(plat.ErrInvalidResp)
+			return "", errors.Raise(site.ErrInvalidResp)
 		}
 
 		name = name[:i]
@@ -92,7 +92,7 @@ func tasksPage(creds plat.User) (string, error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				return "", errors.Raise(plat.ErrInvalidResp)
+				return "", errors.Raise(site.ErrInvalidResp)
 			}
 
 			value = value[:i]
@@ -130,7 +130,7 @@ func tasksPage(creds plat.User) (string, error) {
 }
 
 // Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error) {
+func ListTasks(creds site.User, t chan map[string][]site.Task, e chan [][]error) {
 	b, err := tasksPage(creds)
 	if err != nil {
 		t <- nil
@@ -138,11 +138,11 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 		return
 	}
 
-	unsorted := []plat.Task{}
+	unsorted := []site.Task{}
 	i := strings.Index(b, `href="javascript:ViewAssignment(`)
 
 	for i != -1 {
-		task := plat.Task{
+		task := site.Task{
 			Platform: "daymap",
 		}
 
@@ -152,7 +152,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -163,7 +163,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -173,7 +173,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -184,7 +184,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -194,7 +194,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -205,7 +205,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -224,7 +224,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -251,7 +251,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 
 		if i == -1 {
 			t <- nil
-			e <- [][]error{{errors.Raise(plat.ErrInvalidResp)}}
+			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
 			return
 		}
 
@@ -273,7 +273,7 @@ func ListTasks(creds plat.User, t chan map[string][]plat.Task, e chan [][]error)
 		i = strings.Index(b, `href="javascript:ViewAssignment(`)
 	}
 
-	tasks := map[string][]plat.Task{
+	tasks := map[string][]site.Task{
 		"active":    {},
 		"notDue":    {},
 		"overdue":   {},

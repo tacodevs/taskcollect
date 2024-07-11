@@ -13,12 +13,12 @@ import (
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
-	"main/plat"
+	"main/site"
 )
 
 type Creds struct {
-	Tokens map[string]plat.Uid
-	Users  map[plat.Uid]plat.User
+	Tokens map[string]site.Uid
+	Users  map[site.Uid]site.User
 	Mutex  sync.Mutex
 }
 
@@ -43,34 +43,34 @@ func extract(cookie string) (string, error) {
 	return token, nil
 }
 
-func (creds *Creds) LookupToken(cookie string) (plat.User, error) {
+func (creds *Creds) LookupToken(cookie string) (site.User, error) {
 	token, err := extract(cookie)
 	if err != nil {
-		return plat.User{}, errors.New("cannot lookup token", err)
+		return site.User{}, errors.New("cannot lookup token", err)
 	}
 	user := creds.Users[creds.Tokens[token]]
 	if user.Username == "" {
 		errstr := "no user with matching token: " + token
-		return plat.User{}, errors.New(errstr, nil)
+		return site.User{}, errors.New(errstr, nil)
 	}
 	return user, nil
 }
 
-func (creds *Creds) LookupUid(school, username string) (plat.User, error) {
-	uid := plat.Uid{school, username}
+func (creds *Creds) LookupUid(school, username string) (site.User, error) {
+	uid := site.Uid{school, username}
 	user := creds.Users[uid]
 	if user.Username == "" {
 		errstr := fmt.Sprintf(
 			`no user with matching uid: {"%s", "%s"}`,
 			school, username,
 		)
-		return plat.User{}, errors.New(errstr, nil)
+		return site.User{}, errors.New(errstr, nil)
 	}
 	return user, nil
 }
 
-func (creds *Creds) Update(token string, user plat.User) {
-	uid := plat.Uid{user.School, user.Username}
+func (creds *Creds) Update(token string, user site.User) {
+	uid := site.Uid{user.School, user.Username}
 	creds.Mutex.Lock()
 	if token != "" {
 		creds.Tokens[token] = uid
@@ -79,7 +79,7 @@ func (creds *Creds) Update(token string, user plat.User) {
 	creds.Mutex.Unlock()
 }
 
-func auth(school, email, username, password string) (plat.User, error) {
+func auth(school, email, username, password string) (site.User, error) {
 	var err error
 
 	if school == "gihs" && !strings.HasPrefix(strings.ToUpper(username), `CURRIC\`) {
@@ -89,10 +89,10 @@ func auth(school, email, username, password string) (plat.User, error) {
 	}
 
 	if defs.Has([]string{username, password}, "") {
-		return plat.User{}, errors.New("username or password is empty", nil)
+		return site.User{}, errors.New("username or password is empty", nil)
 	}
 
-	user := plat.User{
+	user := site.User{
 		School:     school,
 		Email:      email,
 		DispName:   username,
@@ -105,21 +105,21 @@ func auth(school, email, username, password string) (plat.User, error) {
 	case "gihs":
 		user.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
-			return plat.User{}, errors.New("cannot load timezone", err)
+			return site.User{}, errors.New("cannot load timezone", err)
 		}
 		user.DispName = strings.TrimPrefix(username, `CURRIC\`)
 		err = schools["gihs"].Auth(&user)
 		if err != nil {
-			return plat.User{}, errors.New("", err)
+			return site.User{}, errors.New("", err)
 		}
 	case "example":
 		user.Timezone = time.UTC
 		err = schools["example"].Auth(&user)
 		if err != nil {
-			return plat.User{}, errors.New("", err)
+			return site.User{}, errors.New("", err)
 		}
 	default:
-		return plat.User{}, errors.New(fmt.Sprintf("unsupported school: %s", school), nil)
+		return site.User{}, errors.New(fmt.Sprintf("unsupported school: %s", school), nil)
 	}
 
 	return user, nil

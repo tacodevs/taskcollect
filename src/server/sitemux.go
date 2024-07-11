@@ -8,13 +8,13 @@ import (
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
-	"main/plat"
-	"main/plat/daymap"
-	"main/plat/gclass"
+	"main/site"
+	"main/site/daymap"
+	"main/site/gclass"
 )
 
-func getLessons(user plat.User) ([][]plat.Lesson, error) {
-	lessons := [][]plat.Lesson{}
+func getLessons(user site.User) ([][]site.Lesson, error) {
+	lessons := [][]site.Lesson{}
 
 	dmCreds := daymap.User{
 		Timezone: user.Timezone,
@@ -24,9 +24,9 @@ func getLessons(user plat.User) ([][]plat.Lesson, error) {
 	dmLessons, err := daymap.GetLessons(dmCreds)
 
 	for i := 0; i < len(dmLessons); i++ {
-		day := []plat.Lesson{}
+		day := []site.Lesson{}
 		for j := 0; j < len(dmLessons[i]); j++ {
-			day = append(day, plat.Lesson(dmLessons[i][j]))
+			day = append(day, site.Lesson(dmLessons[i][j]))
 		}
 		sort.SliceStable(day, func(i, j int) bool {
 			return day[i].Start.In(user.Timezone).Unix() < day[j].Start.In(user.Timezone).Unix()
@@ -37,13 +37,13 @@ func getLessons(user plat.User) ([][]plat.Lesson, error) {
 	return lessons, err
 }
 
-func getTasks(user plat.User) map[string][]plat.Task {
-	dmChan := make(chan map[string][]plat.Task)
+func getTasks(user site.User) map[string][]site.Task {
+	dmChan := make(chan map[string][]site.Task)
 	dmErrChan := make(chan [][]error)
 	go daymap.ListTasks(user, dmChan, dmErrChan)
 
-	t := map[string][]plat.Task{}
-	tasks := map[string][]plat.Task{}
+	t := map[string][]site.Task{}
+	tasks := map[string][]site.Task{}
 
 	dmTasks, dmErrs := <-dmChan, <-dmErrChan
 	for _, classErrs := range dmErrs {
@@ -59,7 +59,7 @@ func getTasks(user plat.User) map[string][]plat.Task {
 			continue
 		}
 		for i := 0; i < len(taskList); i++ {
-			t[c] = append(t[c], plat.Task(taskList[i]))
+			t[c] = append(t[c], site.Task(taskList[i]))
 		}
 	}
 
@@ -98,8 +98,8 @@ func getTasks(user plat.User) map[string][]plat.Task {
 	return tasks
 }
 
-func getResources(user plat.User) ([]string, map[string][]plat.Resource) {
-	gResChan := make(chan []plat.Resource)
+func getResources(user site.User) ([]string, map[string][]site.Resource) {
+	gResChan := make(chan []site.Resource)
 	gErrChan := make(chan []error)
 
 	gcCreds := gclass.User{
@@ -109,7 +109,7 @@ func getResources(user plat.User) ([]string, map[string][]plat.Resource) {
 
 	go gclass.ListRes(gcCreds, gResChan, gErrChan)
 
-	dmResChan := make(chan []plat.Resource)
+	dmResChan := make(chan []site.Resource)
 	dmErrChan := make(chan []error)
 
 	dmCreds := daymap.User{
@@ -119,7 +119,7 @@ func getResources(user plat.User) ([]string, map[string][]plat.Resource) {
 
 	go daymap.ListRes(dmCreds, dmResChan, dmErrChan)
 
-	unordered := map[string][]plat.Resource{}
+	unordered := map[string][]site.Resource{}
 
 	gcResLinks, errs := <-gResChan, <-gErrChan
 	for _, err := range errs {
@@ -136,14 +136,14 @@ func getResources(user plat.User) ([]string, map[string][]plat.Resource) {
 	}
 
 	for _, r := range gcResLinks {
-		unordered[r.Class] = append(unordered[r.Class], plat.Resource(r))
+		unordered[r.Class] = append(unordered[r.Class], site.Resource(r))
 	}
 
 	for _, r := range dmResLinks {
-		unordered[r.Class] = append(unordered[r.Class], plat.Resource(r))
+		unordered[r.Class] = append(unordered[r.Class], site.Resource(r))
 	}
 
-	resources := map[string][]plat.Resource{}
+	resources := map[string][]site.Resource{}
 	classes := []string{}
 
 	for c := range unordered {
@@ -175,9 +175,9 @@ func getResources(user plat.User) ([]string, map[string][]plat.Resource) {
 }
 
 // Get a task from the given platform.
-func getTask(platform, taskId string, user plat.User) (plat.Task, error) {
-	assignment := plat.Task{}
-	err := errors.Raise(plat.ErrNoPlatform)
+func getTask(platform, taskId string, user site.User) (site.Task, error) {
+	assignment := site.Task{}
+	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
@@ -186,7 +186,7 @@ func getTask(platform, taskId string, user plat.User) (plat.Task, error) {
 			Token:    user.SiteTokens["gclass"],
 		}
 		gcTask, gcErr := gclass.GetTask(gcCreds, taskId)
-		assignment = plat.Task(gcTask)
+		assignment = site.Task(gcTask)
 		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
@@ -194,7 +194,7 @@ func getTask(platform, taskId string, user plat.User) (plat.Task, error) {
 			Token:    user.SiteTokens["daymap"],
 		}
 		dmTask, dmErr := daymap.GetTask(dmCreds, taskId)
-		assignment = plat.Task(dmTask)
+		assignment = site.Task(dmTask)
 		err = dmErr
 	}
 
@@ -202,9 +202,9 @@ func getTask(platform, taskId string, user plat.User) (plat.Task, error) {
 }
 
 // Get a resource from the given platform.
-func getResource(platform, resId string, user plat.User) (plat.Resource, error) {
-	res := plat.Resource{}
-	err := errors.Raise(plat.ErrNoPlatform)
+func getResource(platform, resId string, user site.User) (site.Resource, error) {
+	res := site.Resource{}
+	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
@@ -213,7 +213,7 @@ func getResource(platform, resId string, user plat.User) (plat.Resource, error) 
 			Token:    user.SiteTokens["gclass"],
 		}
 		gcRes, gcErr := gclass.GetResource(gcCreds, resId)
-		res = plat.Resource(gcRes)
+		res = site.Resource(gcRes)
 		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
@@ -221,7 +221,7 @@ func getResource(platform, resId string, user plat.User) (plat.Resource, error) 
 			Token:    user.SiteTokens["daymap"],
 		}
 		dmRes, dmErr := daymap.GetResource(dmCreds, resId)
-		res = plat.Resource(dmRes)
+		res = site.Resource(dmRes)
 		err = dmErr
 	}
 
@@ -229,8 +229,8 @@ func getResource(platform, resId string, user plat.User) (plat.Resource, error) 
 }
 
 // Submit task to a given platform.
-func submitTask(user plat.User, platform, taskId string) error {
-	err := errors.Raise(plat.ErrNoPlatform)
+func submitTask(user site.User, platform, taskId string) error {
+	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":
@@ -254,13 +254,13 @@ func reqFiles(r *http.Request) (*multipart.Reader, error) {
 }
 
 // Upload work to a given platform.
-func uploadWork(user plat.User, platform string, id string, r *http.Request) error {
+func uploadWork(user site.User, platform string, id string, r *http.Request) error {
 	files, err := reqFiles(r)
 	if err != nil {
 		return err
 	}
 
-	err = errors.Raise(plat.ErrNoPlatform)
+	err = errors.Raise(site.ErrNoPlatform)
 	switch platform {
 	case "gclass":
 		gcCreds := gclass.User{
@@ -280,8 +280,8 @@ func uploadWork(user plat.User, platform string, id string, r *http.Request) err
 }
 
 // Remove work from a given platform.
-func removeWork(user plat.User, platform, taskId string, filenames []string) error {
-	err := errors.Raise(plat.ErrNoPlatform)
+func removeWork(user site.User, platform, taskId string, filenames []string) error {
+	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
 	case "gclass":

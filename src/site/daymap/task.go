@@ -17,14 +17,14 @@ import (
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 // Return information about a DayMap task by its ID.
-func GetTask(creds User, id string) (plat.Task, error) {
+func GetTask(creds User, id string) (site.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 
-	task := plat.Task{
+	task := site.Task{
 		Link:     taskUrl,
 		Platform: "daymap",
 		Id:       id,
@@ -34,19 +34,19 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		return plat.Task{}, errors.New("GET request failed", err)
+		return site.Task{}, errors.New("GET request failed", err)
 	}
 
 	req.Header.Set("Cookie", creds.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return plat.Task{}, errors.New("failed to get resp", err)
+		return site.Task{}, errors.New("failed to get resp", err)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return plat.Task{}, errors.New("failed to read resp.Body", err)
+		return site.Task{}, errors.New("failed to read resp.Body", err)
 	}
 
 	b := string(respBody)
@@ -58,14 +58,14 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i := strings.Index(b, "ctl00_ctl00_cp_cp_divResults")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
 	i = strings.Index(b, "SectionHeader")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -74,7 +74,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	task.Name = b[:i]
@@ -82,7 +82,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -91,7 +91,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	task.Class = b[:i]
@@ -99,7 +99,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -108,7 +108,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 	i = strings.Index(b, "</div>")
 
 	if i == -1 {
-		return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -121,7 +121,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		dueStr := b[:i]
@@ -134,7 +134,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		}
 
 		if err != nil {
-			return plat.Task{}, errors.New("failed to parse time", err)
+			return site.Task{}, errors.New("failed to parse time", err)
 		}
 	}
 
@@ -145,14 +145,14 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "<div><div>")
 
 		if i == -1 {
-			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
 		i = strings.Index(b, "</div></div></div></div>")
 
 		if i == -1 {
-			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		wlHtml := b[:i]
@@ -165,7 +165,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(wlHtml, `"`)
 
 			if x == -1 {
-				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			wll := wlHtml[:x]
@@ -174,7 +174,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(wlHtml, "&nbsp;")
 
 			if x == -1 {
-				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			x += len("&nbsp;")
@@ -182,7 +182,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(wlHtml, "</a>")
 
 			if x == -1 {
-				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			name := wlHtml[:x]
@@ -194,7 +194,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 
 	result, err := findGrade(&b)
 	if err != nil {
-		return plat.Task{}, err
+		return site.Task{}, err
 	}
 	task.Graded = result.Exists
 	task.Grade = result.Grade
@@ -209,7 +209,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		task.Comment = b[:i]
@@ -229,7 +229,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		}
 
 		if i == -1 {
-			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		rlHtml := b[:i]
@@ -242,7 +242,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(rlHtml, ")")
 
 			if x == -1 {
-				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			rlId := rlHtml[:x]
@@ -251,7 +251,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(rlHtml, "&nbsp;")
 
 			if x == -1 {
-				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			x += len("&nbsp;")
@@ -259,7 +259,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 			x = strings.Index(rlHtml, "</a>")
 
 			if x == -1 {
-				return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			name := rlHtml[:x]
@@ -278,7 +278,7 @@ func GetTask(creds User, id string) (plat.Task, error) {
 		i = strings.Index(b, "</div>")
 
 		if i == -1 {
-			return plat.Task{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		task.Desc = b[:i]
@@ -581,14 +581,14 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	i := strings.Index(b, "<form")
 
 	if i == -1 {
-		return errors.Raise(plat.ErrInvalidTaskResp)
+		return errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
 	i = strings.Index(b, ` action="`)
 
 	if i == -1 {
-		return errors.Raise(plat.ErrInvalidTaskResp)
+		return errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	b = b[i:]
@@ -597,7 +597,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	i = strings.Index(b, `"`)
 
 	if i == -1 {
-		return errors.Raise(plat.ErrInvalidTaskResp)
+		return errors.Raise(site.ErrInvalidTaskResp)
 	}
 
 	rwUrl := b[:i]
@@ -612,7 +612,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, ` type=`)
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
@@ -621,7 +621,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, ` `)
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		inputType := b[:i]
@@ -629,7 +629,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `name="`)
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
@@ -638,7 +638,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `"`)
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		name = b[:i]
@@ -647,7 +647,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, "\n")
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		valTest := b[:i]
@@ -660,7 +660,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 			i = strings.Index(b, `"`)
 
 			if i == -1 {
-				return errors.Raise(plat.ErrInvalidTaskResp)
+				return errors.Raise(site.ErrInvalidTaskResp)
 			}
 
 			value = b[:i]
@@ -676,7 +676,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `<span name=filename>`)
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		b = b[i:]
@@ -685,7 +685,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		i = strings.Index(b, `</span>`)
 
 		if i == -1 {
-			return errors.Raise(plat.ErrInvalidTaskResp)
+			return errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		fname := b[:i]

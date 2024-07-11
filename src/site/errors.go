@@ -1,4 +1,4 @@
-package plat
+package site
 
 import (
 	"git.sr.ht/~kvo/go-std/errors"

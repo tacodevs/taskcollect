@@ -9,7 +9,7 @@ import (
 
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 // Attempt to get GIHS Daily Access home page using a username and password.
@@ -88,8 +88,8 @@ func fetch(username, password string) error {
 	return errors.New("saml returned non-200 response", nil)
 }
 
-func Auth(user plat.User, c chan plat.Pair[[2]string, error]) {
-	var result plat.Pair[[2]string, error]
+func Auth(user site.User, c chan site.Pair[[2]string, error]) {
+	var result site.Pair[[2]string, error]
 	err := fetch(user.Username, user.Password)
 	if err != nil {
 		result.Second = errors.New("saml login failed", err)

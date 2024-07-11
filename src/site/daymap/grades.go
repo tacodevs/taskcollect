@@ -9,7 +9,7 @@ import (
 
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 type taskGrade struct {
@@ -28,7 +28,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		*webpage = (*webpage)[i:]
@@ -37,7 +37,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		grade = (*webpage)[:i]
@@ -50,7 +50,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "TaskGrade'>")
 
 		if i == -1 {
-			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		*webpage = (*webpage)[i:]
@@ -59,7 +59,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		i = strings.Index(*webpage, "</div>")
 
 		if i == -1 {
-			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		markStr := (*webpage)[:i]
@@ -68,7 +68,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 		x := strings.Index(markStr, " / ")
 
 		if x == -1 {
-			return taskGrade{}, errors.Raise(plat.ErrInvalidTaskResp)
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
 		}
 
 		st := markStr[:x]
@@ -92,8 +92,8 @@ func findGrade(webpage *string) (taskGrade, error) {
 }
 
 // Retrieve a list of graded tasks from DayMap for a user.
-func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
-	var result plat.Pair[[]plat.Task, error]
+func Graded(creds site.User, c chan site.Pair[[]site.Task, error]) {
+	var result site.Pair[[]site.Task, error]
 
 	client := &http.Client{}
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID="
@@ -134,7 +134,7 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 			line = line[i:]
 			i = strings.Index(line, " (")
 			if i == -1 {
-				result.Second = errors.Raise(plat.ErrInvalidResp)
+				result.Second = errors.Raise(site.ErrInvalidResp)
 				c <- result
 				return
 			}
@@ -145,13 +145,13 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 		if !strings.HasPrefix(line, `<tr><td><a href="javascript:OpenTask(`) {
 			continue
 		}
-		task := plat.Task{Class: class, Platform: "daymap"}
+		task := site.Task{Class: class, Platform: "daymap"}
 		i = len(`<tr><td><a href="javascript:OpenTask(`)
 		line = line[i:]
 
 		i = strings.Index(line, `);">`)
 		if i == -1 {
-			result.Second = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(site.ErrInvalidResp)
 			c <- result
 			return
 		}
@@ -162,7 +162,7 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 
 		i = strings.Index(line, `</a>`)
 		if i == -1 {
-			result.Second = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(site.ErrInvalidResp)
 			c <- result
 			return
 		}
@@ -171,7 +171,7 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 		for j := 0; j < 2; j++ {
 			i = strings.Index(line, `<td nowrap>`)
 			if i == -1 {
-				result.Second = errors.Raise(plat.ErrInvalidResp)
+				result.Second = errors.Raise(site.ErrInvalidResp)
 				c <- result
 				return
 			}
@@ -181,7 +181,7 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			result.Second = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(site.ErrInvalidResp)
 			c <- result
 			return
 		}
@@ -189,7 +189,7 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 
 		i = strings.Index(line, `<td nowrap>`)
 		if i == -1 {
-			result.Second = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(site.ErrInvalidResp)
 			c <- result
 			return
 		}
@@ -198,7 +198,7 @@ func Graded(creds plat.User, c chan plat.Pair[[]plat.Task, error]) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			result.Second = errors.Raise(plat.ErrInvalidResp)
+			result.Second = errors.Raise(site.ErrInvalidResp)
 			c <- result
 			return
 		}
