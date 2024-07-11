@@ -361,7 +361,7 @@ func genRes(resPath string, resURL string, user plat.User) (pageData, error) {
 		data.PageType = "timetable"
 		data.Head.Title = "Timetable"
 
-		timetable, err := genTimetable(user)
+		timetable, err := TimetableHTML(user)
 		if err != nil {
 			return data, errors.New("failed to generate timetable", err)
 		}

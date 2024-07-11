@@ -339,8 +339,7 @@ func genTimetableImg(user plat.User, w http.ResponseWriter) {
 	}
 }
 
-// Generate data for the HTML timetable.
-func genTimetable(user plat.User) (timetableData, error) {
+func TimetableHTML(user plat.User) (timetableData, error) {
 	data := timetableData{}
 
 	var weekStartIdx, weekEndIdx int
@@ -409,56 +408,56 @@ func genTimetable(user plat.User) (timetableData, error) {
 		data.Days[i].Day = s
 	}
 
-		curDay := 0
+	curDay := 0
 
-		dayStart := 800.0 // is 08:00
+	dayStart := 800.0 // is 08:00
 
-		for _, lesson := range lessons {
-			if lesson.Start.After(monday.AddDate(0, 0, curDay+1)) {
-				curDay++
-			}
-
-			if curDay > numOfDays {
-				break
-			}
-
-			lesson.Start = lesson.Start.In(user.Timezone)
-			lesson.End = lesson.End.In(user.Timezone)
-
-			startMins := lesson.Start.Hour()*60 + lesson.Start.Minute()
-			endMins := lesson.End.Hour()*60 + lesson.End.Minute()
-			duration := endMins - startMins
-
-			c := colorList[lesson.Class]
-			hexColor := fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
-
-			textColor := "#ffffff"
-			luminance := (0.299*float32(c.R) + 0.587*float32(c.G) + 0.114*float32(c.B)) / 255
-			if luminance > 0.5 {
-				textColor = "#000000"
-			}
-
-			topOffset := math.Round(float64(startMins)*10/6 - dayStart)
-			height := math.Round(float64(duration) * 10 / 6)
-
-			classInfo := ttLesson{
-				Class:     lesson.Class,
-				Height:    height,
-				TopOffset: topOffset,
-				Room:      lesson.Room,
-				Teacher:   lesson.Teacher,
-				Notice:    lesson.Notice,
-				Color:     textColor,
-				BGColor:   hexColor,
-			}
-
-			classInfo.FormattedTime = lesson.Start.Format("15:04") + "–" + lesson.End.Format("15:04")
-			classInfo.Duration = fmt.Sprintf(
-				"%d mins",
-				int(lesson.End.Sub(lesson.Start).Minutes()),
-			)
-			data.Days[curDay].Lessons = append(data.Days[curDay].Lessons, classInfo)
+	for _, lesson := range lessons {
+		if lesson.Start.After(monday.AddDate(0, 0, curDay+1)) {
+			curDay++
 		}
+
+		if curDay > numOfDays {
+			break
+		}
+
+		lesson.Start = lesson.Start.In(user.Timezone)
+		lesson.End = lesson.End.In(user.Timezone)
+
+		startMins := lesson.Start.Hour()*60 + lesson.Start.Minute()
+		endMins := lesson.End.Hour()*60 + lesson.End.Minute()
+		duration := endMins - startMins
+
+		c := colorList[lesson.Class]
+		hexColor := fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
+
+		textColor := "#ffffff"
+		luminance := (0.299*float32(c.R) + 0.587*float32(c.G) + 0.114*float32(c.B)) / 255
+		if luminance > 0.5 {
+			textColor = "#000000"
+		}
+
+		topOffset := math.Round(float64(startMins)*10/6 - dayStart)
+		height := math.Round(float64(duration) * 10 / 6)
+
+		classInfo := ttLesson{
+			Class:     lesson.Class,
+			Height:    height,
+			TopOffset: topOffset,
+			Room:      lesson.Room,
+			Teacher:   lesson.Teacher,
+			Notice:    lesson.Notice,
+			Color:     textColor,
+			BGColor:   hexColor,
+		}
+
+		classInfo.FormattedTime = lesson.Start.Format("15:04") + "–" + lesson.End.Format("15:04")
+		classInfo.Duration = fmt.Sprintf(
+			"%d mins",
+			int(lesson.End.Sub(lesson.Start).Minutes()),
+		)
+		data.Days[curDay].Lessons = append(data.Days[curDay].Lessons, classInfo)
+	}
 
 	if time.Now().In(user.Timezone).Before(monday) {
 		data.CurrentDay = 0
