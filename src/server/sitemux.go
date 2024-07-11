@@ -10,7 +10,6 @@ import (
 	"main/logger"
 	"main/site"
 	"main/site/daymap"
-	"main/site/gclass"
 )
 
 func getLessons(user site.User) ([][]site.Lesson, error) {
@@ -99,16 +98,6 @@ func getTasks(user site.User) map[string][]site.Task {
 }
 
 func getResources(user site.User) ([]string, map[string][]site.Resource) {
-	gResChan := make(chan []site.Resource)
-	gErrChan := make(chan []error)
-
-	gcCreds := gclass.User{
-		Timezone: user.Timezone,
-		Token:    user.SiteTokens["gclass"],
-	}
-
-	go gclass.ListRes(gcCreds, gResChan, gErrChan)
-
 	dmResChan := make(chan []site.Resource)
 	dmErrChan := make(chan []error)
 
@@ -121,22 +110,11 @@ func getResources(user site.User) ([]string, map[string][]site.Resource) {
 
 	unordered := map[string][]site.Resource{}
 
-	gcResLinks, errs := <-gResChan, <-gErrChan
-	for _, err := range errs {
-		if err != nil {
-			logger.Debug(errors.New("failed to get list of resources from gclass", err))
-		}
-	}
-
 	dmResLinks, errs := <-dmResChan, <-dmErrChan
 	for _, err := range errs {
 		if err != nil {
 			logger.Debug(errors.New("failed to get list of resources from daymap", err))
 		}
-	}
-
-	for _, r := range gcResLinks {
-		unordered[r.Class] = append(unordered[r.Class], site.Resource(r))
 	}
 
 	for _, r := range dmResLinks {
@@ -180,14 +158,6 @@ func getTask(platform, taskId string, user site.User) (site.Task, error) {
 	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
-	case "gclass":
-		gcCreds := gclass.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["gclass"],
-		}
-		gcTask, gcErr := gclass.GetTask(gcCreds, taskId)
-		assignment = site.Task(gcTask)
-		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: user.Timezone,
@@ -207,14 +177,6 @@ func getResource(platform, resId string, user site.User) (site.Resource, error) 
 	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
-	case "gclass":
-		gcCreds := gclass.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["gclass"],
-		}
-		gcRes, gcErr := gclass.GetResource(gcCreds, resId)
-		res = site.Resource(gcRes)
-		err = gcErr
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: user.Timezone,
@@ -228,20 +190,8 @@ func getResource(platform, resId string, user site.User) (site.Resource, error) 
 	return res, err
 }
 
-// Submit task to a given platform.
 func submitTask(user site.User, platform, taskId string) error {
-	err := errors.Raise(site.ErrNoPlatform)
-
-	switch platform {
-	case "gclass":
-		gcCreds := gclass.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["gclass"],
-		}
-		err = gclass.SubmitTask(gcCreds, taskId)
-	}
-
-	return err
+	return errors.Raise(site.ErrNoPlatform)
 }
 
 // Return an appropriate reader for a multipart MIME file upload request.
@@ -262,12 +212,6 @@ func uploadWork(user site.User, platform string, id string, r *http.Request) err
 
 	err = errors.Raise(site.ErrNoPlatform)
 	switch platform {
-	case "gclass":
-		gcCreds := gclass.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["gclass"],
-		}
-		err = gclass.UploadWork(gcCreds, id, files)
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: user.Timezone,
@@ -284,12 +228,6 @@ func removeWork(user site.User, platform, taskId string, filenames []string) err
 	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
-	case "gclass":
-		gcCreds := gclass.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["gclass"],
-		}
-		err = gclass.RemoveWork(gcCreds, taskId, filenames)
 	case "daymap":
 		dmCreds := daymap.User{
 			Timezone: user.Timezone,
