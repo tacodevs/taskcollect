@@ -21,7 +21,7 @@ import (
 	"golang.org/x/image/math/fixed"
 
 	"main/logger"
-	"main/plat"
+	"main/site"
 )
 
 var colors = []color.RGBA{
@@ -37,7 +37,7 @@ var colors = []color.RGBA{
 	{0x00, 0x38, 0x34, 0xff}, // Myrtle green
 }
 
-func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l plat.Lesson) {
+func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l site.Lesson) {
 	defer daymapWG.Done()
 
 	canvas := image.NewRGBA(
@@ -121,7 +121,7 @@ func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h
 	*img = canvas
 }
 
-func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, colorList map[string]color.RGBA, day []plat.Lesson) {
+func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA, colorList map[string]color.RGBA, day []site.Lesson) {
 	defer wg.Done()
 
 	minPerDay := float64(600)
@@ -192,7 +192,7 @@ func genDayImg(wg *sync.WaitGroup, img *image.Image, w int, h int, c color.RGBA,
 }
 
 // Generate a timetable image in PNG format.
-func genTimetableImg(user plat.User, w http.ResponseWriter) {
+func genTimetableImg(user site.User, w http.ResponseWriter) {
 	lessons, err := getLessons(user)
 	if err != nil {
 		logger.Error(errors.New("failed to get lessons", err))
@@ -339,7 +339,7 @@ func genTimetableImg(user plat.User, w http.ResponseWriter) {
 	}
 }
 
-func TimetableHTML(user plat.User) (timetableData, error) {
+func TimetableHTML(user site.User) (timetableData, error) {
 	data := timetableData{}
 
 	var weekStartIdx, weekEndIdx int

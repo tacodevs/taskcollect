@@ -6,7 +6,7 @@ import (
 
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 // Example fetch function
@@ -32,8 +32,8 @@ func fetch(link, email, username, password string) (string, string, error) {
 }
 
 // Example auth function
-func Auth(user plat.User, c chan plat.Pair[[2]string, error]) {
-	var result plat.Pair[[2]string, error]
+func Auth(user site.User, c chan site.Pair[[2]string, error]) {
+	var result site.Pair[[2]string, error]
 
 	link := "https://example.com"
 	_, token, err := fetch(link, user.Email, user.Username, user.Password)

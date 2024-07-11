@@ -11,7 +11,7 @@ import (
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 type dmJsonEntry struct {
@@ -24,7 +24,7 @@ type dmJsonEntry struct {
 }
 
 // Get a list of lessons for the week from DayMap for a user.
-func GetLessons(creds User) ([][]plat.Lesson, error) {
+func GetLessons(creds User) ([][]site.Lesson, error) {
 	var weekStartIdx, weekEndIdx int
 	t := time.Now().In(creds.Timezone)
 
@@ -74,14 +74,14 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 		return nil, errors.New("failed to decode JSON", err)
 	}
 
-	lessons := make([][]plat.Lesson, 5)
+	lessons := make([][]site.Lesson, 5)
 
 	for _, l := range dmJson {
 		if l.Type != "Lesson" {
 			continue
 		}
 
-		lesson := plat.Lesson{}
+		lesson := site.Lesson{}
 		lesson.Start, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, creds.Timezone)
 
 		if err != nil {
@@ -89,7 +89,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			endIdx := strings.Index(l.Start, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errors.Raise(plat.ErrInvalidDmJson)
+				return nil, errors.Raise(site.ErrInvalidDmJson)
 			}
 
 			startStr := l.Start[startIdx:endIdx]
@@ -104,7 +104,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 			endIdx = strings.Index(l.Finish, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errors.Raise(plat.ErrInvalidDmJson)
+				return nil, errors.Raise(site.ErrInvalidDmJson)
 			}
 
 			finishStr := l.Finish[startIdx:endIdx]
@@ -183,7 +183,7 @@ func GetLessons(creds User) ([][]plat.Lesson, error) {
 	return lessons, nil
 }
 
-func Lessons(user plat.User, start, end time.Time) ([]plat.Lesson, error) {
+func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 	lessonsUrl := "https://gihs.daymap.net/daymap/DWS/Diary.ashx"
 	lessonsUrl += "?cmd=EventList&from="
 	lessonsUrl += start.Format("2006-01-02") + "&to="
@@ -210,14 +210,14 @@ func Lessons(user plat.User, start, end time.Time) ([]plat.Lesson, error) {
 		return nil, errors.New("failed to decode JSON", err)
 	}
 
-	lessons := []plat.Lesson{}
+	lessons := []site.Lesson{}
 
 	for _, l := range dmJson {
 		if l.Type != "Lesson" {
 			continue
 		}
 
-		lesson := plat.Lesson{}
+		lesson := site.Lesson{}
 		lesson.Start, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Start, user.Timezone)
 
 		if err != nil {
@@ -225,7 +225,7 @@ func Lessons(user plat.User, start, end time.Time) ([]plat.Lesson, error) {
 			endIdx := strings.Index(l.Start, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errors.Raise(plat.ErrInvalidDmJson)
+				return nil, errors.Raise(site.ErrInvalidDmJson)
 			}
 
 			startStr := l.Start[startIdx:endIdx]
@@ -240,7 +240,7 @@ func Lessons(user plat.User, start, end time.Time) ([]plat.Lesson, error) {
 			endIdx = strings.Index(l.Finish, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errors.Raise(plat.ErrInvalidDmJson)
+				return nil, errors.Raise(site.ErrInvalidDmJson)
 			}
 
 			finishStr := l.Finish[startIdx:endIdx]

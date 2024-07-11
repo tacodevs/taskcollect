@@ -1,17 +1,17 @@
 package server
 
 import (
-	"main/plat"
-	"main/plat/daymap"
-	"main/plat/example"
-	"main/plat/saml"
+	"main/site"
+	"main/site/daymap"
+	"main/site/example"
+	"main/site/saml"
 )
 
 func enrol(institutes ...string) {
 	for _, institute := range institutes {
 		switch institute {
 		case "gihs":
-			schools["gihs"] = plat.NewMux()
+			schools["gihs"] = site.NewMux()
 			schools["gihs"].AddAuth(saml.Auth)
 			schools["gihs"].AddAuth(daymap.Auth)
 			//schools["gihs"].AddAuth(classroom.Auth)
@@ -28,7 +28,7 @@ func enrol(institutes ...string) {
 			//schools["gihs"].AddMessages(daymap.Messages)
 			//schools["gihs"].SetReports(learnprof.Reports)
 		case "example":
-			schools["example"] = plat.NewMux()
+			schools["example"] = site.NewMux()
 			schools["example"].AddAuth(example.Auth)
 			schools["example"].SetLessons(example.Lessons)
 		}

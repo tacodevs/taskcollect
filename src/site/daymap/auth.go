@@ -15,7 +15,7 @@ import (
 
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 // TODO: delete
@@ -591,8 +591,8 @@ func fetch(link, username, password string) (string, string, error) {
 	return s11page, authToken, nil
 }
 
-func Auth(user plat.User, c chan plat.Pair[[2]string, error]) {
-	var result plat.Pair[[2]string, error]
+func Auth(user site.User, c chan site.Pair[[2]string, error]) {
+	var result site.Pair[[2]string, error]
 	link := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	_, token, err := fetch(link, user.Username, user.Password)
 	if err != nil {

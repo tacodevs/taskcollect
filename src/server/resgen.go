@@ -14,7 +14,7 @@ import (
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/logger"
-	"main/plat"
+	"main/site"
 )
 
 var gradeColors = []color.RGBA{
@@ -24,7 +24,7 @@ var gradeColors = []color.RGBA{
 	{0x03, 0x6e, 0x05, 0xff}, // Green, #036e05
 }
 
-func genDueStr(due time.Time, user plat.User) string {
+func genDueStr(due time.Time, user site.User) string {
 	var dueDate string
 	now := time.Now().In(user.Timezone)
 	localDueDate := due.In(user.Timezone)
@@ -64,7 +64,7 @@ func genDueStr(due time.Time, user plat.User) string {
 	return dueDate
 }
 
-func genPostStr(posted time.Time, user plat.User) string {
+func genPostStr(posted time.Time, user site.User) string {
 	var postDate string
 	now := time.Now().In(user.Timezone)
 	localPostDate := posted.In(user.Timezone)
@@ -105,7 +105,7 @@ func genPostStr(posted time.Time, user plat.User) string {
 }
 
 // Generate a single task and format it in HTML (for the list of tasks)
-func genTask(assignment plat.Task, noteType string, user plat.User) taskItem {
+func genTask(assignment site.Task, noteType string, user site.User) taskItem {
 	task := taskItem{
 		Id:       assignment.Id,
 		Name:     assignment.Name,
@@ -134,7 +134,7 @@ func genTask(assignment plat.Task, noteType string, user plat.User) taskItem {
 }
 
 // Generate the HTML page for viewing a single task
-func genTaskPage(assignment plat.Task, user plat.User) pageData {
+func genTaskPage(assignment site.Task, user site.User) pageData {
 	data := pageData{
 		PageType: "task",
 		Head: headData{
@@ -264,7 +264,7 @@ func genTaskPage(assignment plat.Task, user plat.User) pageData {
 }
 
 // Generate the HTML page for viewing a single resource
-func genResPage(res plat.Resource, user plat.User) pageData {
+func genResPage(res site.Resource, user site.User) pageData {
 	data := pageData{
 		PageType: "resource",
 		Head: headData{
@@ -334,7 +334,7 @@ func genResPage(res plat.Resource, user plat.User) pageData {
 }
 
 // Generate a resource link
-func genHtmlResLink(className string, res []plat.Resource, user plat.User) resClass {
+func genHtmlResLink(className string, res []site.Resource, user site.User) resClass {
 	class := resClass{
 		Name: className,
 	}
@@ -353,7 +353,7 @@ func genHtmlResLink(className string, res []plat.Resource, user plat.User) resCl
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, user plat.User) (pageData, error) {
+func genRes(resPath string, resURL string, user site.User) (pageData, error) {
 	var data pageData
 	data.User.Name = user.DispName
 
@@ -457,7 +457,7 @@ func genRes(resPath string, resURL string, user plat.User) (pageData, error) {
 		}
 
 	} else {
-		return data, plat.ErrNotFound
+		return data, site.ErrNotFound
 	}
 
 	return data, nil

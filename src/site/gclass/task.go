@@ -3,11 +3,11 @@ package gclass
 import (
 	"mime/multipart"
 
-	"main/plat"
+	"main/site"
 )
 
-func GetTask(creds User, id string) (plat.Task, error) {
-	return plat.Task{}, nil
+func GetTask(creds User, id string) (site.Task, error) {
+	return site.Task{}, nil
 }
 
 func SubmitTask(creds User, id string) error {

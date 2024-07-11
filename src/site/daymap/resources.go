@@ -13,7 +13,7 @@ import (
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
 
-	"main/plat"
+	"main/site"
 )
 
 type resJson struct {
@@ -69,13 +69,13 @@ func auxClassInfo(creds User, link string) (string, string, error) {
 	classDiv := `<td><span id="ctl00_ctl00_cp_cp_divHeader" class="Header14" style="padding-left: 20px">`
 	i := strings.Index(page, classDiv)
 	if i == -1 {
-		return "", "", errors.New("can't find class name", errors.Raise(plat.ErrInvalidResp))
+		return "", "", errors.New("can't find class name", errors.Raise(site.ErrInvalidResp))
 	}
 	i += len(classDiv)
 	page = page[i:]
 	i = strings.Index(page, "</span>")
 	if i == -1 {
-		return "", "", errors.New("can't find class name end", errors.Raise(plat.ErrInvalidResp))
+		return "", "", errors.New("can't find class name end", errors.Raise(site.ErrInvalidResp))
 	}
 	class := page[:i]
 
@@ -83,7 +83,7 @@ func auxClassInfo(creds User, link string) (string, string, error) {
 }
 
 // Get a list of resources for a DayMap class.
-func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync.WaitGroup) {
+func getClassRes(creds User, id string, res *[]site.Resource, e *error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	resUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx/InitialiseResources"
 	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
@@ -139,7 +139,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 	i, div := nextRes(b, planDiv, fileDiv, linkDiv)
 
 	for i != -1 {
-		resource := plat.Resource{}
+		resource := site.Resource{}
 		resource.Class = class
 		resource.Platform = "daymap"
 		dateRegion := b[:i]
@@ -147,7 +147,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		dates := re.FindAllString(dateRegion, -1)
 
 		if len(dates) == 0 && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
-			*e = errors.Raise(plat.ErrNoDateFound)
+			*e = errors.Raise(site.ErrNoDateFound)
 			return
 		} else if len(dates) > 0 {
 			postStr := dates[len(dates)-1]
@@ -176,7 +176,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		i = strings.Index(b, ");")
 
 		if i == -1 {
-			*e = errors.Raise(plat.ErrInvalidResp)
+			*e = errors.Raise(site.ErrInvalidResp)
 			return
 		}
 
@@ -185,7 +185,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 		if div == fileDiv {
 			i = strings.Index(b, "&nbsp;")
 			if i == -1 {
-				*e = errors.Raise(plat.ErrInvalidResp)
+				*e = errors.Raise(site.ErrInvalidResp)
 				return
 			}
 
@@ -193,7 +193,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			b = b[i:]
 			i = strings.Index(b, "</a>")
 			if i == -1 {
-				*e = errors.Raise(plat.ErrInvalidResp)
+				*e = errors.Raise(site.ErrInvalidResp)
 				return
 			}
 		} else {
@@ -201,7 +201,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 			b = b[i:]
 			i = strings.Index(b, "</div>")
 			if i == -1 {
-				*e = errors.Raise(plat.ErrInvalidResp)
+				*e = errors.Raise(site.ErrInvalidResp)
 				return
 			}
 		}
@@ -231,7 +231,7 @@ func getClassRes(creds User, id string, res *[]plat.Resource, e *error, wg *sync
 }
 
 // Get a list of resources from DayMap for a user.
-func ListRes(creds User, r chan []plat.Resource, e chan []error) {
+func ListRes(creds User, r chan []site.Resource, e chan []error) {
 	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
 	client := &http.Client{}
 
@@ -270,7 +270,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 
 		if i == -1 {
 			r <- nil
-			e <- []error{errors.Raise(plat.ErrInvalidResp)}
+			e <- []error{errors.Raise(site.ErrInvalidResp)}
 			return
 		}
 
@@ -280,7 +280,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 
 		if i == -1 {
 			r <- nil
-			e <- []error{errors.Raise(plat.ErrInvalidResp)}
+			e <- []error{errors.Raise(site.ErrInvalidResp)}
 			return
 		}
 
@@ -290,7 +290,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 		i = strings.Index(b, "plans/class.aspx?id=")
 	}
 
-	unordered := make([][]plat.Resource, len(classes))
+	unordered := make([][]site.Resource, len(classes))
 	errs := make([]error, len(classes))
 	var wg sync.WaitGroup
 	x := 0
@@ -309,7 +309,7 @@ func ListRes(creds User, r chan []plat.Resource, e chan []error) {
 		return
 	}
 
-	resources := []plat.Resource{}
+	resources := []site.Resource{}
 
 	for _, resList := range unordered {
 		resources = append(resources, resList...)
