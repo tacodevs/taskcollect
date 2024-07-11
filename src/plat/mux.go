@@ -127,7 +127,7 @@ func (m *Mux) Classes(user User) ([]Class, error) {
 		go f(user, ch)
 	}
 	for _ = range m.classes {
-		result := <- ch
+		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
 			return nil, errors.New("cannot get class list", err)

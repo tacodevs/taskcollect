@@ -35,7 +35,7 @@ func fetch(link, email, username, password string) (string, string, error) {
 func Auth(user plat.User, c chan plat.Pair[[2]string, error]) {
 	var result plat.Pair[[2]string, error]
 
-	link :=  "https://example.com"
+	link := "https://example.com"
 	_, token, err := fetch(link, user.Email, user.Username, user.Password)
 	if err != nil {
 		// result.Second is the error returned by Auth

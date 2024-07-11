@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	creds Creds
-	respath string
-	schools = make(map[string]*plat.Mux)
+	creds     Creds
+	respath   string
+	schools   = make(map[string]*plat.Mux)
 	templates *template.Template
 )
 
@@ -69,7 +69,7 @@ func Run(version string, tlsConn bool) {
 	mux.HandleFunc("/assets/", assetHandler)
 	mux.HandleFunc("/res", resHandler)
 	mux.HandleFunc("/res/", resourceHandler)
-	mux.HandleFunc("/tasks",tasksHandler)
+	mux.HandleFunc("/tasks", tasksHandler)
 	mux.HandleFunc("/tasks/", taskHandler)
 	mux.HandleFunc("/timetable", timetableHandler)
 	mux.HandleFunc("/grades", gradesHandler)
@@ -165,7 +165,7 @@ func initTemplates(respath string) error {
 }
 
 type config struct {
-	Logging  loggingConfig  `json:"logging"`
+	Logging loggingConfig `json:"logging"`
 }
 
 type loggingConfig struct {

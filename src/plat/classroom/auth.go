@@ -92,12 +92,12 @@ func fetch(link, email, user, password string) (string, string, error) {
 
 	// BUG: replace all the following with safe slicing operations in case len(x) = 0
 	// Extract required strings from search results.
-	s2dsh = s2dsh[4:len(s2dsh)-4]
-	s2flow = s2flow[9:len(s2flow)-4]
-	s2ifkv = s2ifkv[5:len(s2ifkv)-4]
-	s2fsid = s2fsid[10:len(s2fsid)-1]
-	s2bl = s2bl[1:len(s2bl)-1]
-	s2at = s2at[7:len(s2at)-54]
+	s2dsh = s2dsh[4 : len(s2dsh)-4]
+	s2flow = s2flow[9 : len(s2flow)-4]
+	s2ifkv = s2ifkv[5 : len(s2ifkv)-4]
+	s2fsid = s2fsid[10 : len(s2fsid)-1]
+	s2bl = s2bl[1 : len(s2bl)-1]
+	s2at = s2at[7 : len(s2at)-54]
 
 	// Forge counterfeit request token.
 	s2tm := time.Now()
