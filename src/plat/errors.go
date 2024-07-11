@@ -18,7 +18,7 @@ var (
 	ErrUnterminatedClientRequestID = errors.New("client request ID has no end", nil)
 
 	// Google Classroom errors
-	ErrInvalidTaskID        = errors.New("invalid task ID", nil)
+	ErrInvalidTaskID = errors.New("invalid task ID", nil)
 
 	// File errors
 	ErrFileRead     = errors.New("file could not be read", nil)

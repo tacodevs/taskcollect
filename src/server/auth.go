@@ -1,9 +1,9 @@
 package server
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"crypto/rand"
 	"net/url"
 	"strings"
 	"sync"
