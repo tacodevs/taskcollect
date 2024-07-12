@@ -93,7 +93,7 @@ func handleTaskReq(r *http.Request, user site.User) (int, pageData, [][2]string)
 	index = strings.Index(taskId, "/")
 
 	if index == -1 {
-		assignment, err := getTask(platform, taskId, user)
+		assignment, err := schools[user.School].Task(user, platform, taskId)
 		if err != nil {
 			logger.Debug(errors.New("failed to get task", err))
 			data = statusServerErrorData
