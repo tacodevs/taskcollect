@@ -20,8 +20,7 @@ import (
 	"main/site"
 )
 
-// Return information about a DayMap task by its ID.
-func GetTask(creds User, id string) (site.Task, error) {
+func Task(user site.User, id string) (site.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 
 	task := site.Task{
@@ -37,7 +36,7 @@ func GetTask(creds User, id string) (site.Task, error) {
 		return site.Task{}, errors.New("GET request failed", err)
 	}
 
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -128,9 +127,9 @@ func GetTask(creds User, id string) (site.Task, error) {
 		b = b[i:]
 
 		if !strings.Contains(dueStr, ":") {
-			task.Due, err = time.ParseInLocation("2/01/2006", dueStr, creds.Timezone)
+			task.Due, err = time.ParseInLocation("2/01/2006", dueStr, user.Timezone)
 		} else {
-			task.Due, err = time.ParseInLocation("2/01/2006 3:04 PM", dueStr, creds.Timezone)
+			task.Due, err = time.ParseInLocation("2/01/2006 3:04 PM", dueStr, user.Timezone)
 		}
 
 		if err != nil {
@@ -316,7 +315,7 @@ func randStr(n int) string {
 }
 
 // Upload files from an HTTP request as student file submissions for a DayMap task.
-func UploadWork(creds User, id string, files *multipart.Reader) error {
+func UploadWork(user User, id string, files *multipart.Reader) error {
 	selectUrl := "https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID="
 	selectUrl += id
 	client := &http.Client{}
@@ -384,7 +383,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) error {
 			}
 
 			s1req.Header.Set("Accept", "application/json")
-			s1req.Header.Set("Cookie", creds.Token)
+			s1req.Header.Set("Cookie", user.Token)
 			s1req.Header.Set("Referer", selectUrl)
 
 			s1resp, err := client.Do(s1req)
@@ -414,7 +413,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) error {
 
 			s2req.Header.Set("Accept", "*/*")
 			s2req.Header.Set("Access-Control-Request-Method", "PUT")
-			s2req.Header.Set("Cookie", creds.Token)
+			s2req.Header.Set("Cookie", user.Token)
 			s2req.Header.Set("Origin", "https://gihs.daymap.net")
 
 			_, err = client.Do(s2req)
@@ -459,7 +458,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) error {
 		accHeaders := "x-ms-blob-type,x-ms-meta-linkid,x-ms-meta-qqfilename,x-ms-meta-t"
 		s4req.Header.Set("Access-Control-Request-Headers", accHeaders)
 		s4req.Header.Set("Access-Control-Request-Method", "PUT")
-		s4req.Header.Set("Cookie", creds.Token)
+		s4req.Header.Set("Cookie", user.Token)
 		s4req.Header.Set("Origin", "https://gihs.daymap.net")
 
 		_, err = client.Do(s4req)
@@ -516,7 +515,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) error {
 
 		s6req.Header.Set("Accept", "application/json")
 		s6req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		s6req.Header.Set("Cookie", creds.Token)
+		s6req.Header.Set("Cookie", user.Token)
 		s6req.Header.Set("Origin", "https://gihs.daymap.net")
 		s6req.Header.Set("Referer", selectUrl)
 		s6req.Header.Set("X-Requested-With", "XMLHttpRequest")
@@ -555,7 +554,7 @@ func UploadWork(creds User, id string, files *multipart.Reader) error {
 }
 
 // Remove the specified student file submissions from a DayMap task.
-func RemoveWork(creds User, id string, filenames []string) error {
+func RemoveWork(user User, id string, filenames []string) error {
 	removeUrl := "https://gihs.daymap.net/daymap/student/attachments.aspx?Type=1&LinkID="
 	removeUrl += id
 	client := &http.Client{}
@@ -565,7 +564,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 		return errors.New("GET request failed", err)
 	}
 
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", user.Token)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -713,7 +712,7 @@ func RemoveWork(creds User, id string, filenames []string) error {
 	}
 
 	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	post.Header.Set("Cookie", creds.Token)
+	post.Header.Set("Cookie", user.Token)
 
 	_, err = client.Do(post)
 	if err != nil {

@@ -152,25 +152,6 @@ func getResources(user site.User) ([]string, map[string][]site.Resource) {
 	return classes, resources
 }
 
-// Get a task from the given platform.
-func getTask(platform, taskId string, user site.User) (site.Task, error) {
-	assignment := site.Task{}
-	err := errors.Raise(site.ErrNoPlatform)
-
-	switch platform {
-	case "daymap":
-		dmCreds := daymap.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["daymap"],
-		}
-		dmTask, dmErr := daymap.GetTask(dmCreds, taskId)
-		assignment = site.Task(dmTask)
-		err = dmErr
-	}
-
-	return assignment, err
-}
-
 // Get a resource from the given platform.
 func getResource(platform, resId string, user site.User) (site.Resource, error) {
 	res := site.Resource{}

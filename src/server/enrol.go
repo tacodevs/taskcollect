@@ -27,6 +27,7 @@ func enrol(institutes ...string) {
 			schools["gihs"].SetLessons(daymap.Lessons)
 			//schools["gihs"].AddMessages(daymap.Messages)
 			//schools["gihs"].SetReports(learnprof.Reports)
+			schools["gihs"].AddTask("daymap", daymap.Task)
 		case "example":
 			schools["example"] = site.NewMux()
 			schools["example"].AddAuth(example.Auth)

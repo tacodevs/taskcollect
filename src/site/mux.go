@@ -32,7 +32,13 @@ type Mux struct {
 
 // Return a new instance of Mux.
 func NewMux() *Mux {
-	return &Mux{}
+	m := new(Mux)
+	m.remove = make(map[string]func(User, string, []string) error)
+	m.resource = make(map[string]func(User, string) (Resource, error))
+	m.submit = make(map[string]func(User, string) error)
+	m.task = make(map[string]func(User, string) (Task, error))
+	m.upload = make(map[string]func(User, string, *http.Request) error)
+	return m
 }
 
 // AddAuth adds the authentication function f to m for platform authentication
@@ -75,6 +81,12 @@ func (m *Mux) AddItems(f func(User, chan Pair[[]Item, error], []Class)) {
 // multiplexing.
 func (m *Mux) AddMessages(f func(User, chan Pair[[]Message, error])) {
 	m.messages = append(m.messages, f)
+}
+
+// AddTask adds the task information retrieval function f to m for platform
+// multiplexing.
+func (m *Mux) AddTask(platform string, f func(User, string) (Task, error)) {
+	m.task[platform] = f
 }
 
 // SetLessons sets the lessons retrieval function for m as f for platform
@@ -267,4 +279,15 @@ func (m *Mux) Reports(user User) ([]Report, error) {
 		return reports[i].Released.After(reports[j].Released)
 	})
 	return reports, nil
+}
+
+// Task returns the task information specified by id from the given platform. An
+// error is returned if either the task information could not be retrieved or
+// the platform is not supported by the platform multiplexer m.
+func (m *Mux) Task(user User, platform, id string) (Task, error) {
+	f, ok := m.task[platform]
+	if !ok {
+		return Task{}, errors.New("unsupported platform", nil)
+	}
+	return f(user, id)
 }
