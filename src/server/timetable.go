@@ -37,6 +37,14 @@ var colors = []color.RGBA{
 	{0x00, 0x38, 0x34, 0xff}, // Myrtle green
 }
 
+func midnight(t time.Time) time.Time {
+	return time.Date(
+		t.Year(), t.Month(), t.Day(),
+		0, 0, 0, 0,
+		t.Location(),
+	)
+}
+
 func genLessonImg(daymapWG *sync.WaitGroup, c color.RGBA, img *image.Image, w, h int, l site.Lesson) {
 	defer daymapWG.Done()
 
@@ -343,13 +351,7 @@ func TimetableHTML(user site.User) (timetableData, error) {
 	data := timetableData{}
 
 	var weekStartIdx, weekEndIdx int
-	t := time.Now().In(user.Timezone)
-
-	now := time.Date(
-		t.Year(), t.Month(), t.Day(),
-		0, 0, 0, 0,
-		user.Timezone,
-	)
+	now := midnight(time.Now().In(user.Timezone))
 
 	weekday := now.Weekday()
 
