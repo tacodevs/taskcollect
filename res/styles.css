@@ -456,7 +456,6 @@ select:focus {
   flex-wrap: wrap;
   margin: 0 auto;
   width: 100%;
-  min-height: 1050px;
   background-color: #c5c5d5;
   color: #000000;
 }
@@ -479,7 +478,6 @@ select:focus {
   overflow-y: auto;
   width: 20%;
   border-left: 2px solid var(--bg-color);
-  padding-bottom: 1.5em;
 }
 #timetable .day > h2 {
   align-items: center;
@@ -513,28 +511,30 @@ select:focus {
   }
 }
 #timetable .day .lessons {
+  margin: 10px 0 !important;
   position: relative;
 }
 #timetable .day .lessons > .lesson {
+  font-size: 11pt;
   position: absolute;
   left: 0;
   right: 0;
   margin: 0 auto;
-  overflow: scroll;
-  padding: 5px;
+  overflow: none;
+  padding: 5px 7px;
   width: 95%;
   box-sizing: border-box;
 }
 #timetable .day .lessons > .lesson .class-name {
   margin-top: 2px;
   margin-bottom: 5px;
-  font-size: 1.1rem;
+  font-size: 110%;
   font-weight: bold;
 }
 #timetable .day .lessons > .lesson .notice,
 #timetable .day .lessons > .lesson .teacher,
 #timetable .day .lessons > .lesson .time-room {
-  font-size: 0.9em;
+  font-size: 90%;
   margin: 5px 0;
 }
 #timetable .day .lessons > .lesson .notice {
@@ -558,10 +558,7 @@ select:focus {
   #timetable .lessons > .lesson {
     position: static !important;
     top: 0px !important;
-    min-height: 90px !important;
-  }
-  #timetable .lessons > .lesson:first-child {
-    margin-top: 1.2em;
+    height: 105px !important;
   }
 }
 @media (min-width: 480px) and (max-width: 767px) {
@@ -579,12 +576,31 @@ select:focus {
   #timetable .lessons > .lesson {
     position: static !important;
     top: 0px !important;
-    min-height: 90px !important;
+    height: 105px !important;
   }
   #timetable .lessons > .lesson:first-child {
     margin-top: 1.2em;
   }
+  #timetable .lessons > .lesson:last-child {
+    margin-top: 1.2em;
+  }
 }
+@media (min-width: 768px) and (max-width: 1023px) {
+  #timetable {
+    height: 100%;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  #timetable {
+    height: 100%;
+  }
+}
+@media (min-width: 1200px) {
+  #timetable {
+    height: 100%;
+  }
+}
+
 .task-header {
   display: flex;
   flex: 1;
