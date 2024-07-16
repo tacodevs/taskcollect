@@ -17,11 +17,11 @@ ifeq ("$(COMMIT)", "")
 	COMMIT = unknown
 endif
 
-build: res/styles.css version
+build: styles version
 	mkdir -p prg/$(OS)/$(ARCH)/
 	cd src/; CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o ../prg/$(OS)/$(ARCH)/taskcollect$(EXT) .
 
-all: res/styles.css version
+all: styles version
 	cd src/; for os in linux android; do \
 		for arch in amd64 386 arm64 arm; do \
 			echo make: building for $$os/$$arch...; \
@@ -47,7 +47,7 @@ version:
 	echo >> src/version.go
 	echo 'const version = "TaskCollect $(VERSION) (build $(COMMIT))"' >> src/version.go
 
-res/styles.css:
+styles:
 	sass src/styles/styles.scss res/styles.css --no-source-map
 
 run:	
