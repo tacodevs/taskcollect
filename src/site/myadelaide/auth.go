@@ -1,4 +1,4 @@
-package example
+package myadelaide
 
 import (
 	"fmt"
