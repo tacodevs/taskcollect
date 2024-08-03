@@ -367,7 +367,11 @@ func TimetableHTML(user site.User) (timetableData, error) {
 	weekStart := now.AddDate(0, 0, weekStartIdx)
 	weekEnd := now.AddDate(0, 0, weekEndIdx)
 
-	lessons, err := schools[user.School].Lessons(user, weekStart, weekEnd)
+	school, ok := schools[user.School]
+	if !ok {
+		return data, errors.New("unsupported platform", nil)
+	}
+	lessons, err := school.Lessons(user, weekStart, weekEnd)
 	if err != nil {
 		return data, errors.New("failed to get lessons", err)
 	}
