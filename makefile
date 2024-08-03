@@ -1,4 +1,4 @@
-.PHONY: build all run deploy version
+.PHONY: build all run deploy version styles prog
 
 VERSION := $(shell git describe --tags --abbrev=0)
 COMMIT := $(shell git rev-parse HEAD)
@@ -17,7 +17,9 @@ ifeq ("$(COMMIT)", "")
 	COMMIT = unknown
 endif
 
-build: styles version
+build: styles version prog
+
+prog:
 	mkdir -p prg/$(OS)/$(ARCH)/
 	cd src/; CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o ../prg/$(OS)/$(ARCH)/taskcollect$(EXT) .
 

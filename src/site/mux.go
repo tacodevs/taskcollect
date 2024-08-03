@@ -110,6 +110,9 @@ func (m *Mux) SetReports(f func(User) ([]Report, error)) {
 // fails is logged at debug level.
 func (m *Mux) Auth(user *User) error {
 	ch := make(chan Pair[[2]string, error])
+	if user == nil {
+		return errors.New("user is nil", nil)
+	}
 	for _, f := range m.auth {
 		go f(*user, ch)
 	}
@@ -238,6 +241,9 @@ func (m *Mux) Items(user User, classes ...Class) ([]Item, error) {
 
 // Lessons returns a list of lessons occuring from start to end.
 func (m *Mux) Lessons(user User, start, end time.Time) ([]Lesson, error) {
+	if m.lessons == nil {
+		return nil, errors.New("lessons function not set", nil)
+	}
 	lessons, err := m.lessons(user, start, end)
 	if err != nil {
 		return nil, err
@@ -271,6 +277,9 @@ func (m *Mux) Messages(user User) ([]Message, error) {
 
 // Reports returns a series of report cards.
 func (m *Mux) Reports(user User) ([]Report, error) {
+	if m.reports == nil {
+		return nil, errors.New("reports function not set", nil)
+	}
 	reports, err := m.reports(user)
 	if err != nil {
 		return nil, err

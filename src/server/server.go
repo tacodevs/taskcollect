@@ -19,6 +19,7 @@ import (
 )
 
 var (
+	cfgpath   string
 	creds     Creds
 	respath   string
 	schools   = make(map[string]*site.Mux)
@@ -27,7 +28,7 @@ var (
 
 func Run(version string, tlsConn bool) {
 	logger.Info("Running %s", version)
-	enrol("gihs")
+	enrol("example", "gihs", "uofa")
 
 	creds.Tokens = make(map[string]site.Uid)
 	creds.Users = make(map[site.Uid]site.User)
@@ -36,6 +37,7 @@ func Run(version string, tlsConn bool) {
 	if err != nil {
 		logger.Fatal(errors.New("cannot get path to executable", err))
 	}
+	cfgpath = path.Join(path.Dir(execpath), "../../../cfg/")
 	respath = path.Join(path.Dir(execpath), "../../../res/")
 	config := path.Join(respath, "config.json")
 	cert := path.Join(respath, "cert.pem")
@@ -84,7 +86,6 @@ func Run(version string, tlsConn bool) {
 		err = http.ListenAndServeTLS(":443", cert, key, mux)
 	} else {
 		logger.Warn("Running on port 8080 (without TLS). DO NOT USE THIS IN PRODUCTION!")
-		enrol("example")
 		err = http.ListenAndServe("localhost:8080", mux)
 	}
 

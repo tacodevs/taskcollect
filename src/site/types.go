@@ -112,4 +112,11 @@ type User struct {
 	Username   string
 	Password   string
 	SiteTokens map[string]string
+	Config     map[string]UserConfig
+}
+
+// UserConfig represnts an individual user's TaskCollect configuration for a
+// single platform.
+type UserConfig struct {
+	HotpKey string
 }

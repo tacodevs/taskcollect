@@ -4,6 +4,7 @@ import (
 	"main/site"
 	"main/site/daymap"
 	"main/site/example"
+	"main/site/myadelaide"
 	"main/site/saml"
 )
 
@@ -28,6 +29,9 @@ func enrol(institutes ...string) {
 			//schools["gihs"].AddMessages(daymap.Messages)
 			//schools["gihs"].SetReports(learnprof.Reports)
 			schools["gihs"].AddTask("daymap", daymap.Task)
+		case "uofa":
+			schools["uofa"] = site.NewMux()
+			schools["uofa"].AddAuth(myadelaide.Auth)
 		case "example":
 			schools["example"] = site.NewMux()
 			schools["example"].AddAuth(example.Auth)

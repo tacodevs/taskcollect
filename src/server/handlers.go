@@ -93,7 +93,14 @@ func handleTaskReq(r *http.Request, user site.User) (int, pageData, [][2]string)
 	index = strings.Index(taskId, "/")
 
 	if index == -1 {
-		assignment, err := schools[user.School].Task(user, platform, taskId)
+		school, ok := schools[user.School]
+		if !ok {
+			logger.Debug(errors.New("unsupported platform", nil))
+			data = statusServerErrorData
+			statusCode = 500
+			return statusCode, data, headers
+		}
+		assignment, err := school.Task(user, platform, taskId)
 		if err != nil {
 			logger.Debug(errors.New("failed to get task", err))
 			data = statusServerErrorData
