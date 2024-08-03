@@ -113,6 +113,10 @@ func (m *Mux) Auth(user *User) error {
 	if user == nil {
 		return errors.New("user is nil", nil)
 	}
+	err := LoadConfig(user)
+	if err != nil {
+		return errors.New("", err)
+	}
 	for _, f := range m.auth {
 		go f(*user, ch)
 	}

@@ -7,32 +7,31 @@ import (
 	path "path/filepath"
 
 	"git.sr.ht/~kvo/go-std/errors"
+	"github.com/BurntSushi/toml"
 )
 
 func readcfg(path string) (map[string]UserConfig, error) {
 	config := make(map[string]UserConfig)
-	file, err := os.Open(path)
+	_, err := toml.DecodeFile(path, &config)
 	if err != nil {
-		errstr := fmt.Sprintf("cannot open %s", path)
+		errstr := fmt.Sprintf("cannot parse user config: %s", path)
 		return config, errors.New(errstr, err)
 	}
-	defer file.Close()
-	// TODO: parse config
 	return config, nil
 }
 
-func LoadConfig(user User) (User, error) {
+func LoadConfig(user *User) error {
 	username := url.PathEscape(user.Username)
 	filename := username + ".cfg"
 	execpath, err := os.Executable()
 	if err != nil {
-		return User{}, errors.New("cannot get path to executable", err)
+		return errors.New("cannot get path to executable", err)
 	}
 	cfgpath := path.Join(path.Dir(execpath), "../../../cfg/user/", user.School, filename)
 	config, err := readcfg(cfgpath)
 	if err != nil {
-		return User{}, errors.New("", err)
+		return errors.New("", err)
 	}
 	user.Config = config
-	return user, nil
+	return nil
 }
