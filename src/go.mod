@@ -9,4 +9,7 @@ require (
 	golang.org/x/image v0.18.0
 )
 
-require golang.org/x/net v0.26.0 // indirect
+require (
+	github.com/BurntSushi/toml v1.4.0 // indirect
+	golang.org/x/net v0.26.0 // indirect
+)

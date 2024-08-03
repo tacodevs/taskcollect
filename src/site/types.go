@@ -118,5 +118,5 @@ type User struct {
 // UserConfig represents an individual user's TaskCollect configuration for a
 // single platform.
 type UserConfig struct {
-	HotpKey string
+	HotpKey string `toml:"hotp-key"`
 }

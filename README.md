@@ -84,7 +84,6 @@ Please send patches to <~kvo/taskcollect-devel@lists.sr.ht>. A detailed contribu
 TaskCollect currently has a lot of moldy spots that need to be fixed:
   * Bad UX due to bad UI (see the issue tracker)
   * It does too many tasks at once (scraping, muxing, UI, auth, etc.)
-  * Some feature requests need a persistent-memory database
   * It's a web server (GUI app would be nicer)
   * The codebase is ugly (refactor required)
   * The official website is on Codeberg (slow) and badly designed
