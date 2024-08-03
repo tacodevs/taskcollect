@@ -115,7 +115,7 @@ type User struct {
 	Config     map[string]UserConfig
 }
 
-// UserConfig represnts an individual user's TaskCollect configuration for a
+// UserConfig represents an individual user's TaskCollect configuration for a
 // single platform.
 type UserConfig struct {
 	HotpKey string

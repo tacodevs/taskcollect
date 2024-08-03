@@ -200,7 +200,9 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s3rstate := regexp.MustCompile(`"stateToken":"[_0-9\\\-\.a-zA-Z]+","helpLinks"`)
 	s3state := s3rstate.FindString(s2page)
-	// BUG: replace the following with safe slicing operation in case len(x) = 0
+	if len(s3state) < 27 {
+		return "", "", errors.New("cannot find stage 3 state token", nil)
+	}
 	s3state, err = strconv.Unquote(fmt.Sprintf(`"%s"`, s3state[14:len(s3state)-13]))
 	if err != nil {
 		return "", "", errors.New("cannot unquote stage 3 state token", err)
@@ -450,7 +452,9 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s10rloc := regexp.MustCompile("#code=[-A-Za-z0-9]+&state=")
 	s10loc := s10rloc.FindString(s8loc)
-	// BUG: replace the following with safe slicing operation in case len(x) = 0
+	if len(s10loc) < 13 {
+		return "", "", errors.New("cannot find stage 10 redirect link", nil)
+	}
 	s10loc = s10loc[6 : len(s10loc)-7]
 
 	s10form := url.Values{}

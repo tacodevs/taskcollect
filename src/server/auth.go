@@ -117,7 +117,6 @@ func auth(school, email, username, password string) (site.User, error) {
 		if err != nil {
 			return site.User{}, errors.New("cannot load timezone", err)
 		}
-		user.DispName = strings.TrimPrefix(username, `CURRIC\`)
 		err = schools["uofa"].Auth(&user)
 		if err != nil {
 			return site.User{}, errors.New("", err)
