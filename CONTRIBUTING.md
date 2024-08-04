@@ -88,11 +88,9 @@ that your patch email subject follows the same naming conventions as those for
 commit messages.
 
 If for some reason you need to send your contribution from an email that you do
-not want to be public, you should send your patch to [taskcollect-discuss][3]
-and use the [`--from`][4] flag to specify a public email address that you
-control (e.g. your anonymous GitHub noreply address). If you choose this option,
-you will need to provide evidence that you control the alternative email address
-you provide.
+not want to be public, you should send your patch to [taskcollect-discuss][3].
+If you choose this option, you will need to make sure your commits are not
+authored or signed off with your private email.
 
 ## Platform support
 
@@ -141,4 +139,3 @@ To add support for a new institution, you will need to:
 [1]: https://git-send-email.io
 [2]: https://developercertificate.org/
 [3]: https://lists.sr.ht/~kvo/taskcollect-discuss
-[4]: https://git-scm.com/docs/git-send-email#Documentation/git-send-email.txt---fromltaddressgt
