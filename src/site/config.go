@@ -12,7 +12,13 @@ import (
 
 func readcfg(path string) (map[string]UserConfig, error) {
 	config := make(map[string]UserConfig)
-	_, err := toml.DecodeFile(path, &config)
+	file, err := os.Open(path)
+	if err != nil {
+		// user has empty config
+		return config, nil
+	}
+	defer file.Close()
+	_, err = toml.NewDecoder(file).Decode(&config)
 	if err != nil {
 		errstr := fmt.Sprintf("cannot parse user config: %s", path)
 		return config, errors.New(errstr, err)
