@@ -32,6 +32,7 @@ func enrol(institutes ...string) {
 		case "uofa":
 			schools["uofa"] = site.NewMux()
 			schools["uofa"].AddAuth(myadelaide.Auth)
+			schools["uofa"].SetLessons(myadelaide.Lessons)
 		case "example":
 			schools["example"] = site.NewMux()
 			schools["example"].AddAuth(example.Auth)
