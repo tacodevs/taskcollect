@@ -122,7 +122,7 @@ func genTask(assignment site.Task, noteType string, user site.User) taskItem {
 	case "grade":
 		task.Grade = "N/A"
 		if assignment.Grade != "" && assignment.Score == 0.0 {
-			task.Grade = fmt.Sprintf("%s", assignment.Grade)
+			task.Grade = assignment.Grade
 		} else if assignment.Grade != "" && assignment.Score != 0.0 {
 			task.Grade = fmt.Sprintf("%s (%.f%%)", assignment.Grade, assignment.Score)
 		} else if assignment.Score != 0.0 {
@@ -353,7 +353,7 @@ func genHtmlResLink(className string, res []site.Resource, user site.User) resCl
 }
 
 // Generate resources and components for the webpage
-func genRes(resPath string, resURL string, user site.User) (pageData, error) {
+func genRes(resURL string, user site.User) (pageData, error) {
 	var data pageData
 	data.User.Name = user.DispName
 

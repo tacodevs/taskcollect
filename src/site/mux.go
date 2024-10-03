@@ -122,13 +122,13 @@ func (m *Mux) Auth(user *User) error {
 	}
 	var errs error
 	valid := false
-	for _ = range m.auth {
+	for range m.auth {
 		result := <-ch
 		token, err := result.First, result.Second
 		if err != nil {
 			logger.Debug(err)
 			errors.Join(errs, err)
-		} else if !valid && err == nil {
+		} else if !valid {
 			valid = true
 		}
 		if err == nil {
@@ -145,7 +145,7 @@ func (m *Mux) Classes(user User) ([]Class, error) {
 	for _, f := range m.classes {
 		go f(user, ch)
 	}
-	for _ = range m.classes {
+	for range m.classes {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
@@ -166,7 +166,7 @@ func (m *Mux) DueTasks(user User) ([]Task, error) {
 	for _, f := range m.duetasks {
 		go f(user, ch)
 	}
-	for _ = range m.duetasks {
+	for range m.duetasks {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
@@ -187,7 +187,7 @@ func (m *Mux) Events(user User) ([]Event, error) {
 	for _, f := range m.events {
 		go f(user, ch)
 	}
-	for _ = range m.events {
+	for range m.events {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
@@ -208,7 +208,7 @@ func (m *Mux) Graded(user User) ([]Task, error) {
 	for _, f := range m.graded {
 		go f(user, ch)
 	}
-	for _ = range m.graded {
+	for range m.graded {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
@@ -229,7 +229,7 @@ func (m *Mux) Items(user User, classes ...Class) ([]Item, error) {
 	for _, f := range m.items {
 		go f(user, ch, classes)
 	}
-	for _ = range m.items {
+	for range m.items {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
@@ -265,7 +265,7 @@ func (m *Mux) Messages(user User) ([]Message, error) {
 	for _, f := range m.messages {
 		go f(user, ch)
 	}
-	for _ = range m.messages {
+	for range m.messages {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {

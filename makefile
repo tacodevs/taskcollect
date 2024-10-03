@@ -17,9 +17,9 @@ ifeq ("$(COMMIT)", "")
 	COMMIT = unknown
 endif
 
-build: styles version prog
+build: styles version server
 
-prog:
+server:
 	mkdir -p prg/$(OS)/$(ARCH)/
 	cd src/; CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -o ../prg/$(OS)/$(ARCH)/taskcollect$(EXT) .
 

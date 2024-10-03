@@ -417,7 +417,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validAuth {
-		webpageData, err := genRes(respath, "/tasks", user)
+		webpageData, err := genRes("/tasks", user)
 		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
@@ -450,7 +450,7 @@ func timetableHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validAuth {
-		webpageData, err := genRes(respath, "/timetable", user)
+		webpageData, err := genRes("/timetable", user)
 		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
@@ -483,7 +483,7 @@ func gradesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validAuth {
-		webpageData, err := genRes(respath, "/grades", user)
+		webpageData, err := genRes("/grades", user)
 		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
@@ -518,7 +518,7 @@ func resHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validAuth {
-		webpageData, err := genRes(respath, "/res", user)
+		webpageData, err := genRes("/res", user)
 		if errors.Is(err, site.ErrNotFound) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
@@ -559,7 +559,10 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", redirect)
 		w.WriteHeader(302)
 	} else if validAuth && res == "/timetable.png" {
-		genTimetableImg(user, w)
+		err := TimetablePNG(user, w)
+		if err != nil {
+			logger.Error(err)
+		}
 	} else if validAuth && res == "/" {
 		w.Header().Set("Location", "/timetable")
 		w.WriteHeader(302)

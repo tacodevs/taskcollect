@@ -19,7 +19,6 @@ import (
 )
 
 var (
-	cfgpath   string
 	creds     Creds
 	respath   string
 	schools   = make(map[string]*site.Mux)
@@ -37,7 +36,6 @@ func Run(version string, tlsConn bool) {
 	if err != nil {
 		logger.Fatal(errors.New("cannot get path to executable", err))
 	}
-	cfgpath = path.Join(path.Dir(execpath), "../../../cfg/")
 	respath = path.Join(path.Dir(execpath), "../../../res/")
 	config := path.Join(respath, "config.json")
 	cert := path.Join(respath, "cert.pem")

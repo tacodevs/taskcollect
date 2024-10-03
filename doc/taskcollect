@@ -1,7 +1,7 @@
 APPS                                                                 TASKCOLLECT
 
 NAME
-    taskcollect - multiplex functionality from web platforms for students
+    taskcollect - client for active learning systems
 
 INVOCATION
     taskcollect [-w]
@@ -34,6 +34,3 @@ FILES
     $data/res/taskcollect/script.js                   JavaScript functions
     $data/res/taskcollect/styles.css                  Webpage styling rules
     $data/res/taskcollect/templates/                  HTML templates
-
-SOURCE
-    /src/taskcollect/

@@ -12,30 +12,6 @@ import (
 	"main/site/daymap"
 )
 
-func getLessons(user site.User) ([][]site.Lesson, error) {
-	lessons := [][]site.Lesson{}
-
-	dmCreds := daymap.User{
-		Timezone: user.Timezone,
-		Token:    user.SiteTokens["daymap"],
-	}
-
-	dmLessons, err := daymap.GetLessons(dmCreds)
-
-	for i := 0; i < len(dmLessons); i++ {
-		day := []site.Lesson{}
-		for j := 0; j < len(dmLessons[i]); j++ {
-			day = append(day, site.Lesson(dmLessons[i][j]))
-		}
-		sort.SliceStable(day, func(i, j int) bool {
-			return day[i].Start.In(user.Timezone).Unix() < day[j].Start.In(user.Timezone).Unix()
-		})
-		lessons = append(lessons, day)
-	}
-
-	return lessons, err
-}
-
 func getTasks(user site.User) map[string][]site.Task {
 	dmChan := make(chan map[string][]site.Task)
 	dmErrChan := make(chan [][]error)

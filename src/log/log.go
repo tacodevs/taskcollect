@@ -21,6 +21,7 @@
 //
 // Variable names and values can also be logged at level DEBUG with the Values
 // function:
+//
 //	2006-01-02 15:04:05 DEBUG: key1=value1 key2=value2
 //
 // If the default logger does not suffice, a custom logger may be implemented.
@@ -34,9 +35,9 @@
 package log
 
 import (
-	"fmt"
+	//"fmt"
 	"io"
-	"time"
+	//"time"
 )
 
 func Fatal(v ...any) {
@@ -79,8 +80,8 @@ func SetPrefix(format string) {
 func SetWriter(w io.Writer) {
 }
 
-func Values(v ...Vars) {
-}
+//func Values(v ...Vars) {
+//}
 
 func Writer() io.Writer {
 	return nil
@@ -137,8 +138,8 @@ func (l *Logger) SetPrefix(format string) {
 func (l *Logger) SetWriter(w io.Writer) {
 }
 
-func (l *Logger) Values(v ...Vars) {
-}
+//func (l *Logger) Values(v ...Vars) {
+//}
 
 func (l *Logger) Writer() io.Writer {
 	return nil

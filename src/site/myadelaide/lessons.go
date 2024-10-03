@@ -96,7 +96,7 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 	if endIndex == 0 {
 		endIndex = 7
 	}
-	endWeek := end.AddDate(0, 0, -(endIndex-1))
+	endWeek := end.AddDate(0, 0, -(endIndex - 1))
 	numWeeks := int(math.Floor(float64((endWeek.Unix()-startWeek.Unix())/(60*60*24*7)))) + 1
 	if numWeeks > 2 {
 		lessons, err = listResp(user)
@@ -105,16 +105,15 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 		}
 		_ = lessons
 
-
 	} else {
 		var weeks [2]int
 		nowIndex := int(time.Now().Weekday())
 		if nowIndex == 0 {
 			nowIndex = 7
 		}
-		nowWeek := time.Now().AddDate(0, 0, -(nowIndex-1))
+		nowWeek := time.Now().AddDate(0, 0, -(nowIndex - 1))
 		nowWeek = time.Date(nowWeek.Year(), nowWeek.Month(), nowWeek.Day(), 0, 0, 0, 0, user.Timezone)
-		weeks[0] = int(math.Ceil(float64((startWeek.Unix()-nowWeek.Unix())/(60*60*24))))
+		weeks[0] = int(math.Ceil(float64((startWeek.Unix() - nowWeek.Unix()) / (60 * 60 * 24))))
 
 		for i := 1; i < numWeeks; i++ {
 			weeks[i] = weeks[0] + i*7
@@ -142,8 +141,7 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 			break
 		}
 	}
-	lessons = lessons[point1 : point2]
-
+	lessons = lessons[point1:point2]
 
 	return lessons, nil
 }
@@ -231,8 +229,8 @@ func listResp(user site.User) ([]site.Lesson, error) {
 func weekResp(user site.User, displacements [2]int) ([]site.Lesson, error) {
 	var lessons []site.Lesson
 	for i, value := range displacements {
-		if (i !=0 && displacements[i]<displacements[i-1]){
-			break;
+		if i != 0 && displacements[i] <= displacements[i-1] {
+			break
 		}
 		url := "https://api.adelaide.edu.au/api/generic-query-structured/v1/?target=/system/TIMETABLE_WEEKLY/queryx/" + user.Username[1:] + "," + strconv.Itoa(value) + "&MaxRows=9999"
 		client := &http.Client{}

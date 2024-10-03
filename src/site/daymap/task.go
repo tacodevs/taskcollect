@@ -549,8 +549,6 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 	} else {
 		return errors.New("failed parsing files from multipart MIME request", err)
 	}
-
-	return nil
 }
 
 // Remove the specified student file submissions from a DayMap task.
