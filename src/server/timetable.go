@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"time"
 
+	"io"
+	"crypto/rand"
+
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
 	"github.com/golang/freetype"
@@ -21,6 +24,8 @@ import (
 
 	"main/site"
 )
+
+type UUID [16]byte
 
 var (
 	colors   = make(map[string]color.RGBA)
@@ -364,4 +369,67 @@ func TimetableHTML(user site.User) (timetableData, error) {
 	}
 
 	return data, nil
+}
+
+// Export the user calendar as a .ics file
+
+func TimetableIcal(user site.User, start, end time.Time, w http.ResponseWriter) error {
+	var err error
+	iCalString := ""
+
+	school, ok := schools[user.School]
+	if !ok {
+		w.WriteHeader(500)
+		return errors.New("unsupported platform", nil)
+	}
+	lessons, err := school.Lessons(user, start, end)
+
+	if err != nil {
+		w.WriteHeader(500)
+		return errors.New("failed to get lessons", err)
+	}
+	//build the start of the string
+	iCalString += "BEGIN:VCALENDAR\n"
+	iCalString += "VERSION:2.0\n"
+	iCalString += "PRODID:taco/calendar\n"
+	iCalString += "CALSCALE:GREGORIAN\n"
+	iCalString += "METHOD:PUBLISH\n"
+	for _, lesson := range lessons {
+		uuid, err := GenerateUUID()
+		if err != nil {
+			w.WriteHeader(500)
+			return errors.New("failed to generate UUID", err)
+		}
+
+		iCalString += "BEGIN:VEVENT\n"
+		iCalString += string(uuid[:]) + "\n"
+		iCalString += "DTSTAMP:" + time.Now().Format("20060102T150405Z") + "\n"
+		iCalString += "DTSTART:" + lesson.Start.Format("20060102T150405Z") + "\n"
+		iCalString += "DTEND:" + lesson.End.Format("20060102T150405Z") + "\n"
+		iCalString += "SUMMARY:" + lesson.Class + "\n"
+		iCalString += "DESCRIPTION:" + lesson.Teacher + "\n"
+		iCalString += "LOCATION:" + lesson.Room + "\n"
+		iCalString += "END:VEVENT\n"
+	}
+	iCalString += "END:VCALENDAR\n"
+
+	_, err = io.WriteString(w, iCalString);
+	if err!=nil{
+		w.WriteHeader(500)
+		return errors.New("Failed to write calendar file", err)
+	}
+	return nil
+}
+
+func GenerateUUID() (u *UUID, err error){
+	// generates a version 4 UUID and returns the byte string
+	u = new(UUID)
+	_, err = rand.Read(u[:])
+	if err != nil {
+		return nil, errors.New("failed to generate UUID", err)
+	}
+	u[8] = (u[8] | 0x40) & 0x7F
+	u[6] = (u[6] & 0xF) | (4 << 4)
+
+	return u, nil
 }
