@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sort"
 
 	"git.sr.ht/~kvo/go-std/errors"
 )
@@ -223,6 +224,9 @@ func listResp(user site.User) ([]site.Lesson, error) {
 			})
 		}
 	}
+	sort.Slice(lessons, func(i, j int) bool {
+		return lessons[i].Start.Before(lessons[j].Start)
+	})
 	return lessons, nil
 }
 
