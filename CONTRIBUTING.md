@@ -131,7 +131,7 @@ To add support for a new institution, you will need to:
      case "newschool":
      	schools["newschool"] = site.NewMux()
      	schools["newschool"].AddAuth(newsite.Auth)
-     	schools["newschool"].AddLessons(newsite.Lessons)
+     	schools["newschool"].SetLessons(newsite.Lessons)
      	schools["newschool"].SetReports(newsite.Reports)
      ```
 
