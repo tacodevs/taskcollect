@@ -11,18 +11,11 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/site"
 )
-
-// TODO: delete
-type User struct {
-	Timezone *time.Location
-	Token    string
-}
 
 // Auxiliary structures for the fetch function.
 

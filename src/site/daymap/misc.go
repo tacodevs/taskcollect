@@ -1,13 +1,6 @@
 package daymap
 
-import (
-	"strings"
-
-	"git.sr.ht/~kvo/go-std/errors"
-)
-
-// Daymap tasks page size.
-// Must be extremely high so that all tasks can be retrieved.
+// Daymap tasks page size; must be extremely high so that all tasks can be retrieved.
 // NOTE: Daymap has an (unknown) upper bound to how many tasks can be retrieved.
 const auxSize = `1000000`
 
@@ -32,38 +25,4 @@ var tasksFormValues = map[string]string{
 	auxTarget: auxAssignments,
 	auxArg:    auxCommand,
 	auxScript: auxKey,
-}
-
-// Helper types and functions for substring extraction.
-
-type Page string
-
-type Extractor interface {
-	Advance(bound string) error
-	UpTo(bound string) (string, error)
-}
-
-// Advance advances page past the substring bound in page, discarding the
-// contents of page before the substring bound. If bound does not exist in page,
-// an error is returned.
-func (page *Page) Advance(bound string) error {
-	strPage := string(*page)
-	i := strings.Index(strPage, bound)
-	if i == -1 {
-		return errors.New("can't find substring", nil)
-	}
-	i += len(bound)
-	*page = Page(strPage[i:])
-	return nil
-}
-
-// UpTo extracts substring sub (which starts from the beginning of page and
-// is enclosed by substring bound on the right) from page. If bound does not
-// exist in page, an error is returned.
-func (page Page) UpTo(bound string) (string, error) {
-	i := strings.Index(string(page), bound)
-	if i == -1 {
-		return "", errors.New("can't find substring", nil)
-	}
-	return string(page)[:i], nil
 }

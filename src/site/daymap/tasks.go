@@ -12,6 +12,12 @@ import (
 	"main/site"
 )
 
+// TODO: delete
+type User struct {
+	Timezone *time.Location
+	Token    string
+}
+
 // Retrieve a webpage of all DayMap tasks for a user.
 func tasksPage(creds site.User) (string, error) {
 	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
