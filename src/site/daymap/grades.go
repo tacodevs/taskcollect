@@ -2,6 +2,7 @@ package daymap
 
 import (
 	"bufio"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,85 +13,6 @@ import (
 	"main/site"
 )
 
-type taskGrade struct {
-	Exists bool
-	Grade  string
-	Mark   float64
-}
-
-// Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(webpage *string) (taskGrade, error) {
-	var grade string
-	var percent float64
-	i := strings.Index(*webpage, "Grade:")
-
-	if i != -1 {
-		i = strings.Index(*webpage, "TaskGrade'>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		*webpage = (*webpage)[i:]
-		i = len("TaskGrade'>")
-		*webpage = (*webpage)[i:]
-		i = strings.Index(*webpage, "</div>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		grade = (*webpage)[:i]
-		*webpage = (*webpage)[i:]
-	}
-
-	i = strings.Index(*webpage, "Mark:")
-
-	if i != -1 {
-		i = strings.Index(*webpage, "TaskGrade'>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		*webpage = (*webpage)[i:]
-		i = len("TaskGrade'>")
-		*webpage = (*webpage)[i:]
-		i = strings.Index(*webpage, "</div>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		markStr := (*webpage)[:i]
-		*webpage = (*webpage)[i:]
-
-		x := strings.Index(markStr, " / ")
-
-		if x == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		st := markStr[:x]
-		sb := markStr[x+3:]
-
-		it, err := strconv.ParseFloat(st, 64)
-		if err != nil {
-			return taskGrade{}, errors.New("(1) string to float64 conversion failed", err)
-		}
-
-		ib, err := strconv.ParseFloat(sb, 64)
-		if err != nil {
-			return taskGrade{}, errors.New("(2) string to float64 conversion failed", err)
-		}
-
-		percent = it / ib * 100
-	}
-
-	result := taskGrade{Exists: true, Grade: grade, Mark: percent}
-	return result, nil
-}
-
 func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 	var result site.Pair[[]site.Task, error]
 
@@ -99,14 +21,13 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 	link := "https://gihs.daymap.net/daymap/student/portfolio.aspx/AssessmentReport"
 	referrer := "https://gihs.daymap.net/daymap/student/portfolio.aspx?tab=Assessment_Results"
 	form := `{"id":5303,"classId":0,"viewMode":"tabular","allCompleted":false,"taskType":0,`
-	times := `"fromDate":"YYYY-01-01T00:00:00.000Z","toDate":"YYYY-12-31T23:59:59.999Z"}`
 	year := strconv.Itoa(time.Now().In(user.Timezone).Year())
-	times = strings.ReplaceAll(times, "YYYY", year)
+	times := strings.ReplaceAll(`"fromDate":"YYYY-01-01T00:00:00.000Z","toDate":"YYYY-12-31T23:59:59.999Z"}`, "YYYY", year)
 	data := strings.NewReader(form + times)
 
 	req, err := http.NewRequest("POST", link, data)
 	if err != nil {
-		result.Second = errors.New("GET request failed", err)
+		result.Second = errors.New("cannot create grades request", err)
 		c <- result
 		return
 	}
@@ -118,7 +39,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		result.Second = errors.New("failed to get resp", err)
+		result.Second = errors.New("cannot execute grades request", err)
 		c <- result
 		return
 	}
@@ -133,7 +54,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 			line = line[i:]
 			i = strings.Index(line, " (")
 			if i == -1 {
-				result.Second = errors.Raise(site.ErrInvalidResp)
+				result.Second = errors.New("invalid HTML response", nil)
 				c <- result
 				return
 			}
@@ -150,7 +71,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `);">`)
 		if i == -1 {
-			result.Second = errors.Raise(site.ErrInvalidResp)
+			result.Second = errors.New("invalid HTML response", nil)
 			c <- result
 			return
 		}
@@ -161,7 +82,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `</a>`)
 		if i == -1 {
-			result.Second = errors.Raise(site.ErrInvalidResp)
+			result.Second = errors.New("invalid HTML response", nil)
 			c <- result
 			return
 		}
@@ -170,7 +91,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 		for j := 0; j < 2; j++ {
 			i = strings.Index(line, `<td nowrap>`)
 			if i == -1 {
-				result.Second = errors.Raise(site.ErrInvalidResp)
+				result.Second = errors.New("invalid HTML response", nil)
 				c <- result
 				return
 			}
@@ -180,7 +101,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			result.Second = errors.Raise(site.ErrInvalidResp)
+			result.Second = errors.New("invalid HTML response", nil)
 			c <- result
 			return
 		}
@@ -188,7 +109,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `<td nowrap>`)
 		if i == -1 {
-			result.Second = errors.Raise(site.ErrInvalidResp)
+			result.Second = errors.New("invalid HTML response", nil)
 			c <- result
 			return
 		}
@@ -197,7 +118,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			result.Second = errors.Raise(site.ErrInvalidResp)
+			result.Second = errors.New("invalid HTML response", nil)
 			c <- result
 			return
 		}
@@ -207,13 +128,13 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 		if len(marks) == 2 {
 			top, err := strconv.ParseFloat(marks[0], 64)
 			if err != nil {
-				result.Second = errors.New("numerator float64 conversion failed", err)
+				result.Second = errors.New(fmt.Sprintf(`cannot convert "%s" to float64`, marks[0]), err)
 				c <- result
 				return
 			}
 			bottom, err := strconv.ParseFloat(marks[1], 64)
 			if err != nil {
-				result.Second = errors.New("denominator float64 conversion failed", err)
+				result.Second = errors.New(fmt.Sprintf(`cannot convert "%s" to float64`, marks[1]), err)
 				c <- result
 				return
 			}
@@ -223,7 +144,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 		result.First = append(result.First, task)
 	}
 	if err := scanner.Err(); err != nil {
-		result.Second = errors.New("error reading response body", err)
+		result.Second = errors.New("cannot read grades response body", err)
 		c <- result
 		return
 	}

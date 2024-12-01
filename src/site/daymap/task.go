@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,85 @@ import (
 
 	"main/site"
 )
+
+type taskGrade struct {
+	Exists bool
+	Grade  string
+	Mark   float64
+}
+
+// Return the grade for a DayMap task from a DayMap task webpage.
+func findGrade(webpage *string) (taskGrade, error) {
+	var grade string
+	var percent float64
+	i := strings.Index(*webpage, "Grade:")
+
+	if i != -1 {
+		i = strings.Index(*webpage, "TaskGrade'>")
+
+		if i == -1 {
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
+		}
+
+		*webpage = (*webpage)[i:]
+		i = len("TaskGrade'>")
+		*webpage = (*webpage)[i:]
+		i = strings.Index(*webpage, "</div>")
+
+		if i == -1 {
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
+		}
+
+		grade = (*webpage)[:i]
+		*webpage = (*webpage)[i:]
+	}
+
+	i = strings.Index(*webpage, "Mark:")
+
+	if i != -1 {
+		i = strings.Index(*webpage, "TaskGrade'>")
+
+		if i == -1 {
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
+		}
+
+		*webpage = (*webpage)[i:]
+		i = len("TaskGrade'>")
+		*webpage = (*webpage)[i:]
+		i = strings.Index(*webpage, "</div>")
+
+		if i == -1 {
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
+		}
+
+		markStr := (*webpage)[:i]
+		*webpage = (*webpage)[i:]
+
+		x := strings.Index(markStr, " / ")
+
+		if x == -1 {
+			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
+		}
+
+		st := markStr[:x]
+		sb := markStr[x+3:]
+
+		it, err := strconv.ParseFloat(st, 64)
+		if err != nil {
+			return taskGrade{}, errors.New("(1) string to float64 conversion failed", err)
+		}
+
+		ib, err := strconv.ParseFloat(sb, 64)
+		if err != nil {
+			return taskGrade{}, errors.New("(2) string to float64 conversion failed", err)
+		}
+
+		percent = it / ib * 100
+	}
+
+	result := taskGrade{Exists: true, Grade: grade, Mark: percent}
+	return result, nil
+}
 
 func Task(user site.User, id string) (site.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
