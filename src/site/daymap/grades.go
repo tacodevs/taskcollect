@@ -91,8 +91,7 @@ func findGrade(webpage *string) (taskGrade, error) {
 	return result, nil
 }
 
-// Retrieve a list of graded tasks from DayMap for a user.
-func Graded(creds site.User, c chan site.Pair[[]site.Task, error]) {
+func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 	var result site.Pair[[]site.Task, error]
 
 	client := &http.Client{}
@@ -101,7 +100,7 @@ func Graded(creds site.User, c chan site.Pair[[]site.Task, error]) {
 	referrer := "https://gihs.daymap.net/daymap/student/portfolio.aspx?tab=Assessment_Results"
 	form := `{"id":5303,"classId":0,"viewMode":"tabular","allCompleted":false,"taskType":0,`
 	times := `"fromDate":"YYYY-01-01T00:00:00.000Z","toDate":"YYYY-12-31T23:59:59.999Z"}`
-	year := strconv.Itoa(time.Now().In(creds.Timezone).Year())
+	year := strconv.Itoa(time.Now().In(user.Timezone).Year())
 	times = strings.ReplaceAll(times, "YYYY", year)
 	data := strings.NewReader(form + times)
 
@@ -113,7 +112,7 @@ func Graded(creds site.User, c chan site.Pair[[]site.Task, error]) {
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
+	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 	req.Header.Set("Origin", "https://gihs.daymap.net")
 	req.Header.Set("Referer", referrer)
 
