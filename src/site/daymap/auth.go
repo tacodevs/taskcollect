@@ -210,8 +210,7 @@ func fetch(link, username, password string) (string, string, error) {
 
 	s5index := strings.Index(s4page, `action="`)
 	if s5index == -1 {
-		return "", "", errors.New(
-			"cannot find 'action' form attribute for stage 5", nil)
+		return "", "", errors.New("cannot find 'action' form attribute for stage 5", nil)
 	}
 	s5search := s4page[s5index+8:]
 	s5url := s5search

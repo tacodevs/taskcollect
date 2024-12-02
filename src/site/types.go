@@ -1,6 +1,7 @@
 package site
 
 import (
+	"net/mail"
 	"image/color"
 	"time"
 )
@@ -52,10 +53,12 @@ type Lesson struct {
 
 // Message represents a parsed email-like message of a proprietary format.
 type Message struct {
-	From    string
-	To      string
+	From    mail.Address
+	To      []mail.Address
+	Cc      []mail.Address
 	Sent    time.Time
 	Subject string
+	Body    string
 }
 
 // Report represents a report card.
