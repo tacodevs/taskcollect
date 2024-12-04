@@ -38,9 +38,6 @@ type Grade struct {
 	Score float64
 }
 
-// Item represents a generic task/resource item.
-type Item Task
-
 // Lesson represents a lesson.
 type Lesson struct {
 	Start   time.Time

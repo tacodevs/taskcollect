@@ -14,20 +14,21 @@ import (
 // platform functions to multiplex, and alternatively to create a multi-platform
 // function call.
 type Mux struct {
-	auth     []func(User, chan Pair[[2]string, error])
-	classes  []func(User, chan Pair[[]Class, error])
-	duetasks []func(User, chan Pair[[]Task, error])
-	events   []func(User, chan Pair[[]Event, error])
-	graded   []func(User, chan Pair[[]Task, error])
-	items    []func(User, chan Pair[[]Item, error], []Class)
-	lessons  func(User, time.Time, time.Time) ([]Lesson, error)
-	messages []func(User, chan Pair[[]Message, error])
-	remove   map[string]func(User, string, []string) error
-	reports  func(User) ([]Report, error)
-	resource map[string]func(User, string) (Resource, error)
-	submit   map[string]func(User, string) error
-	task     map[string]func(User, string) (Task, error)
-	upload   map[string]func(User, string, *http.Request) error
+	auth      []func(User, chan Pair[[2]string, error])
+	classes   []func(User, chan Pair[[]Class, error])
+	duetasks  []func(User, chan Pair[[]Task, error])
+	events    []func(User, chan Pair[[]Event, error])
+	graded    []func(User, chan Pair[[]Task, error])
+	lessons   func(User, time.Time, time.Time) ([]Lesson, error)
+	messages  []func(User, chan Pair[[]Message, error])
+	remove    map[string]func(User, string, []string) error
+	reports   func(User) ([]Report, error)
+	resource  map[string]func(User, string) (Resource, error)
+	resources map[string]func(User, chan Pair[[]Resource, error], []Class)
+	submit    map[string]func(User, string) error
+	task      map[string]func(User, string) (Task, error)
+	tasks     map[string]func(User, chan Pair[[]Task, error], []Class)
+	upload    map[string]func(User, string, *http.Request) error
 }
 
 // Return a new instance of Mux.
@@ -35,8 +36,10 @@ func NewMux() *Mux {
 	m := new(Mux)
 	m.remove = make(map[string]func(User, string, []string) error)
 	m.resource = make(map[string]func(User, string) (Resource, error))
+	m.resources = make(map[string]func(User, chan Pair[[]Resource, error], []Class))
 	m.submit = make(map[string]func(User, string) error)
 	m.task = make(map[string]func(User, string) (Task, error))
+	m.tasks = make(map[string]func(User, chan Pair[[]Task, error], []Class))
 	m.upload = make(map[string]func(User, string, *http.Request) error)
 	return m
 }
@@ -71,22 +74,28 @@ func (m *Mux) AddGraded(f func(User, chan Pair[[]Task, error])) {
 	m.graded = append(m.graded, f)
 }
 
-// AddItems adds the class tasks/resources retrieval function f to m for
-// platform multiplexing.
-func (m *Mux) AddItems(f func(User, chan Pair[[]Item, error], []Class)) {
-	m.items = append(m.items, f)
-}
-
 // AddMessages adds the unread messages retrieval function f to m for platform
 // multiplexing.
 func (m *Mux) AddMessages(f func(User, chan Pair[[]Message, error])) {
 	m.messages = append(m.messages, f)
 }
 
+// AddResources adds the class resources retrieval function f to m for platform
+// multiplexing.
+func (m *Mux) AddResources(platform string, f func(User, chan Pair[[]Resource, error], []Class)) {
+	m.resources[platform] = f
+}
+
 // AddTask adds the task information retrieval function f to m for platform
 // multiplexing.
 func (m *Mux) AddTask(platform string, f func(User, string) (Task, error)) {
 	m.task[platform] = f
+}
+
+// AddTasks adds the class tasks retrieval function f to m for platform
+// multiplexing.
+func (m *Mux) AddTasks(platform string, f func(User, chan Pair[[]Task, error], []Class)) {
+	m.tasks[platform] = f
 }
 
 // SetLessons sets the lessons retrieval function for m as f for platform
@@ -222,27 +231,6 @@ func (m *Mux) Graded(user User) ([]Task, error) {
 	return graded, nil
 }
 
-// Items returns a list of tasks and resources for all specified classes.
-func (m *Mux) Items(user User, classes ...Class) ([]Item, error) {
-	var items []Item
-	ch := make(chan Pair[[]Item, error])
-	for _, f := range m.items {
-		go f(user, ch, classes)
-	}
-	for range m.items {
-		result := <-ch
-		list, err := result.First, result.Second
-		if err != nil {
-			return nil, errors.New("cannot get task/resource list", err)
-		}
-		items = append(items, list...)
-	}
-	sort.SliceStable(items, func(i, j int) bool {
-		return items[i].Posted.After(items[j].Posted)
-	})
-	return items, nil
-}
-
 // Lessons returns a list of lessons occuring from start to end.
 func (m *Mux) Lessons(user User, start, end time.Time) ([]Lesson, error) {
 	if m.lessons == nil {
@@ -303,4 +291,29 @@ func (m *Mux) Task(user User, platform, id string) (Task, error) {
 		return Task{}, errors.New("unsupported platform", nil)
 	}
 	return f(user, id)
+}
+
+// Tasks returns a list of tasks for all specified classes.
+func (m *Mux) Tasks(user User, classes ...Class) ([]Task, error) {
+	var tasks []Task
+	ch := make(chan Pair[[]Task, error])
+	classMap := make(map[string][]Class)
+	for _, class := range classes {
+		classMap[class.Platform] = append(classMap[class.Platform], class)
+	}
+	for platform, courses := range classMap {
+		go m.tasks[platform](user, ch, courses)
+	}
+	for range m.tasks {
+		result := <-ch
+		list, err := result.First, result.Second
+		if err != nil {
+			return nil, errors.New("cannot get task list", err)
+		}
+		tasks = append(tasks, list...)
+	}
+	sort.SliceStable(tasks, func(i, j int) bool {
+		return tasks[i].Posted.After(tasks[j].Posted)
+	})
+	return tasks, nil
 }

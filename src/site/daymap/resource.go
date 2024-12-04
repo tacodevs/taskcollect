@@ -6,12 +6,19 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
 
 	"main/site"
 )
+
+// TODO: delete
+type User struct {
+	Timezone *time.Location
+	Token    string
+}
 
 // Get a file resource from DayMap for a user.
 func fileRes(creds User, courseId, id string) (site.Resource, error) {

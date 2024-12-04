@@ -45,7 +45,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 			Posted:    time.Date(2021, 1, 27, 21, 23, 55, 0, user.Timezone),
 			ResLinks:  [][2]string{{"https://example.com", "Year 10 Chemistry - SHE task sheet"}, {"https://example.com", "SHE task past topics"}},
 			Upload:    true,
-			WorkLinks: [][2]string{{"https://example.com", ""}},
+			WorkLinks: [][2]string{{"https://example.com", "John SMITH - SHE task proposal"}},
 			Submitted: true,
 			Graded:    true,
 			Grade:     "",
