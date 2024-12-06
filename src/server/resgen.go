@@ -147,11 +147,12 @@ func genTaskPage(assignment site.Task, user site.User) pageData {
 				Platform:    assignment.Platform,
 				Class:       assignment.Class,
 				URL:         assignment.Link,
+				Submitted:   assignment.Submitted,
+				Graded:      assignment.Graded,
 				IsDue:       false,
 				Desc:        "",
 				ResLinks:    nil,
 				WorkLinks:   nil,
-				HasResLinks: false,
 			},
 		},
 		User: userData{
@@ -162,10 +163,6 @@ func genTaskPage(assignment site.Task, user site.User) pageData {
 	if !assignment.Due.IsZero() {
 		data.Body.TaskData.IsDue = true
 		data.Body.TaskData.DueDate = genDueStr(assignment.Due, user)
-	}
-
-	if assignment.Submitted {
-		data.Body.TaskData.Submitted = true
 	}
 
 	if assignment.Desc != "" {
@@ -199,7 +196,7 @@ func genTaskPage(assignment site.Task, user site.User) pageData {
 		}
 	}
 
-	if assignment.ResLinks != nil {
+	if assignment.ResLinks != nil && len(assignment.ResLinks) != 0 {
 		data.Body.TaskData.HasResLinks = true
 
 		data.Body.TaskData.ResLinks = make(map[string]string)

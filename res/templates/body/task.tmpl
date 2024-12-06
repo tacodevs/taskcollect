@@ -31,6 +31,9 @@
                     {{end}}
                 </ul>
             {{end}}
+            {{if and (eq .Body.TaskData.IsDue false) (eq .Body.TaskData.Desc "") (eq .Body.TaskData.HasResLinks false)}}
+                <p><i>No task description.</i></p>
+            {{end}}
         </div>
         <div class="grid-element">
             {{if eq .Body.TaskData.HasUpload true}}
@@ -61,8 +64,11 @@
             <form class="task-form" action="/tasks/{{.Body.TaskData.Platform}}/{{.Body.TaskData.Id}}/submit">
                 <input type="submit" value="Submit work">
             </form>
+            {{end}}
+            {{if and (eq .Body.TaskData.Graded true) (eq .Body.TaskData.Submitted false)}}
             <hr style="margin: 35px 0px">
             {{end}}
+            {{if or (eq .Body.TaskData.Graded true) (eq .Body.TaskData.Submitted true)}}
             {{$taskGrade := .Body.TaskData.TaskGrade}}
             <h3>Grade</h3>
             <div id="grade" style="color: {{$taskGrade.Color}}; background-color: {{$taskGrade.BGColor}};">
@@ -73,6 +79,7 @@
                     <h2>{{$taskGrade.Mark}}</h2>
                 {{end}}
             </div>
+            {{end}}
             {{if ne .Body.TaskData.Comment ""}}
                 <h4>Teacher comment:</h4>
                 <p id="teacher-comment">{{.Body.TaskData.Comment}}</p>

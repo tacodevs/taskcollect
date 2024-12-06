@@ -41,6 +41,7 @@ func enrol(institutes ...string) {
 			schools["example"].AddClasses(example.Classes)
 			schools["example"].AddGraded(example.Graded)
 			schools["example"].SetLessons(example.Lessons)
+			schools["example"].AddTask("example", example.Task)
 			schools["example"].AddTasks("example", example.Tasks)
 		}
 	}

@@ -149,6 +149,7 @@ type taskData struct {
 	WorkLinks    map[string]string
 	HasUpload    bool
 	Comment      template.HTML
+	Graded       bool
 	TaskGrade    taskGrade
 }
 

@@ -151,7 +151,7 @@ func reqFiles(r *http.Request) (*multipart.Reader, error) {
 	return reader, nil
 }
 
-// Upload work to a given platform.
+// TODO: delete
 func uploadWork(user site.User, platform string, id string, r *http.Request) error {
 	files, err := reqFiles(r)
 	if err != nil {
@@ -161,27 +161,19 @@ func uploadWork(user site.User, platform string, id string, r *http.Request) err
 	err = errors.Raise(site.ErrNoPlatform)
 	switch platform {
 	case "daymap":
-		dmCreds := daymap.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["daymap"],
-		}
-		err = daymap.UploadWork(dmCreds, id, files)
+		err = daymap.UploadWork(user, id, files)
 	}
 
 	return err
 }
 
-// Remove work from a given platform.
+// TODO: delete
 func removeWork(user site.User, platform, taskId string, filenames []string) error {
 	err := errors.Raise(site.ErrNoPlatform)
 
 	switch platform {
 	case "daymap":
-		dmCreds := daymap.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["daymap"],
-		}
-		err = daymap.RemoveWork(dmCreds, taskId, filenames)
+		err = daymap.RemoveWork(user, taskId, filenames)
 	}
 
 	return err

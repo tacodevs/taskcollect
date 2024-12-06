@@ -21,85 +21,6 @@ import (
 	"main/site"
 )
 
-type taskGrade struct {
-	Exists bool
-	Grade  string
-	Mark   float64
-}
-
-// Return the grade for a DayMap task from a DayMap task webpage.
-func findGrade(webpage *string) (taskGrade, error) {
-	var grade string
-	var percent float64
-	i := strings.Index(*webpage, "Grade:")
-
-	if i != -1 {
-		i = strings.Index(*webpage, "TaskGrade'>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		*webpage = (*webpage)[i:]
-		i = len("TaskGrade'>")
-		*webpage = (*webpage)[i:]
-		i = strings.Index(*webpage, "</div>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		grade = (*webpage)[:i]
-		*webpage = (*webpage)[i:]
-	}
-
-	i = strings.Index(*webpage, "Mark:")
-
-	if i != -1 {
-		i = strings.Index(*webpage, "TaskGrade'>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		*webpage = (*webpage)[i:]
-		i = len("TaskGrade'>")
-		*webpage = (*webpage)[i:]
-		i = strings.Index(*webpage, "</div>")
-
-		if i == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		markStr := (*webpage)[:i]
-		*webpage = (*webpage)[i:]
-
-		x := strings.Index(markStr, " / ")
-
-		if x == -1 {
-			return taskGrade{}, errors.Raise(site.ErrInvalidTaskResp)
-		}
-
-		st := markStr[:x]
-		sb := markStr[x+3:]
-
-		it, err := strconv.ParseFloat(st, 64)
-		if err != nil {
-			return taskGrade{}, errors.New("(1) string to float64 conversion failed", err)
-		}
-
-		ib, err := strconv.ParseFloat(sb, 64)
-		if err != nil {
-			return taskGrade{}, errors.New("(2) string to float64 conversion failed", err)
-		}
-
-		percent = it / ib * 100
-	}
-
-	result := taskGrade{Exists: true, Grade: grade, Mark: percent}
-	return result, nil
-}
-
 func Task(user site.User, id string) (site.Task, error) {
 	taskUrl := "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + id
 
@@ -113,98 +34,96 @@ func Task(user site.User, id string) (site.Task, error) {
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		return site.Task{}, errors.New("GET request failed", err)
+		return site.Task{}, errors.New("cannot create task request", err)
 	}
 
 	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return site.Task{}, errors.New("failed to get resp", err)
+		return site.Task{}, errors.New("cannot execute task request", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return site.Task{}, errors.New("failed to read resp.Body", err)
+		return site.Task{}, errors.New("cannot read task response body", err)
 	}
 
-	b := string(respBody)
-
-	if strings.Contains(b, "My&nbsp;Work") || strings.Contains(b, "My Work</div>") {
+	page := string(body)
+	if strings.Contains(page, "My&nbsp;Work") || strings.Contains(page, "My Work</div>") {
 		task.Upload = true
 	}
 
-	i := strings.Index(b, "ctl00_ctl00_cp_cp_divResults")
-
+	i := strings.Index(page, "ctl00_ctl00_cp_cp_divResults")
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
-	i = strings.Index(b, "SectionHeader")
+	page = page[i:]
+	i = strings.Index(page, "SectionHeader")
 
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
+	page = page[i:]
 	i = len("SectionHeader") + 2
-	b = b[i:]
-	i = strings.Index(b, "</div>")
+	page = page[i:]
+	i = strings.Index(page, "</div>")
 
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	task.Name = b[:i]
-	b = b[i:]
-	i = strings.Index(b, "<div style='padding:6px'>")
+	task.Name = page[:i]
+	page = page[i:]
+	i = strings.Index(page, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
+	page = page[i:]
 	i = len("<div style='padding:6px'>")
-	b = b[i:]
-	i = strings.Index(b, "</div>")
+	page = page[i:]
+	i = strings.Index(page, "</div>")
 
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	task.Class = b[:i]
-	b = b[i:]
-	i = strings.Index(b, "<div style='padding:6px'>")
+	task.Class = page[:i]
+	page = page[i:]
+	i = strings.Index(page, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
+	page = page[i:]
 	i = len("<div style='padding:6px'>")
-	b = b[i:]
-	i = strings.Index(b, "</div>")
+	page = page[i:]
+	i = strings.Index(page, "</div>")
 
 	if i == -1 {
-		return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+		return site.Task{}, errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
-	i = strings.Index(b, "Due on ")
+	page = page[i:]
+	i = strings.Index(page, "Due on ")
 
 	if i != -1 {
-		b = b[i:]
+		page = page[i:]
 		i = len("Due on ")
-		b = b[i:]
-		i = strings.Index(b, "</div>")
+		page = page[i:]
+		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 
-		dueStr := b[:i]
-		b = b[i:]
+		dueStr := page[:i]
+		page = page[i:]
 
 		if !strings.Contains(dueStr, ":") {
 			task.Due, err = time.ParseInLocation("2/01/2006", dueStr, user.Timezone)
@@ -213,154 +132,213 @@ func Task(user site.User, id string) (site.Task, error) {
 		}
 
 		if err != nil {
-			return site.Task{}, errors.New("failed to parse time", err)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 	}
 
-	i = strings.Index(b, "My Work</div>")
+	i = strings.Index(page, "My Work</div>")
 
 	if i != -1 {
-		b = b[i:]
-		i = strings.Index(b, "<div><div>")
+		page = page[i:]
+		i = strings.Index(page, "<div><div>")
 
 		if i == -1 {
-			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 
-		b = b[i:]
-		i = strings.Index(b, "</div></div></div></div>")
+		page = page[i:]
+		i = strings.Index(page, "</div></div></div></div>")
 
 		if i == -1 {
-			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 
-		wlHtml := b[:i]
-		b = b[i:]
-		x := strings.Index(wlHtml, `<a href="`)
+		wlHtml := page[:i]
+		page = page[i:]
+		j := strings.Index(wlHtml, `<a href="`)
 
-		for x != -1 {
-			x += len(`<a href="`)
-			wlHtml = wlHtml[x:]
-			x = strings.Index(wlHtml, `"`)
+		for j != -1 {
+			j += len(`<a href="`)
+			wlHtml = wlHtml[j:]
+			j = strings.Index(wlHtml, `"`)
 
-			if x == -1 {
-				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			if j == -1 {
+				return site.Task{}, errors.New("invalid task HTML response", nil)
 			}
 
-			wll := wlHtml[:x]
-			wlHtml = wlHtml[x:]
-			link := "https://gihs.daymap.net" + wll
-			x = strings.Index(wlHtml, "&nbsp;")
+			wlPath := wlHtml[:j]
+			wlHtml = wlHtml[j:]
+			link := "https://gihs.daymap.net" + wlPath
+			j = strings.Index(wlHtml, "&nbsp;")
 
-			if x == -1 {
-				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			if j == -1 {
+				return site.Task{}, errors.New("invalid task HTML response", nil)
 			}
 
-			x += len("&nbsp;")
-			wlHtml = wlHtml[x:]
-			x = strings.Index(wlHtml, "</a>")
+			j += len("&nbsp;")
+			wlHtml = wlHtml[j:]
+			j = strings.Index(wlHtml, "</a>")
 
-			if x == -1 {
-				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			if j == -1 {
+				return site.Task{}, errors.New("invalid task HTML response", nil)
 			}
 
-			name := wlHtml[:x]
-			wlHtml = wlHtml[x:]
+			name := wlHtml[:j]
+			wlHtml = wlHtml[j:]
 			task.WorkLinks = append(task.WorkLinks, [2]string{link, name})
-			x = strings.Index(wlHtml, `<a href="`)
+			j = strings.Index(wlHtml, `<a href="`)
 		}
 	}
 
-	result, err := findGrade(&b)
-	if err != nil {
-		return site.Task{}, err
-	}
-	task.Graded = result.Exists
-	task.Grade = result.Grade
-	task.Score = result.Mark
-
-	i = strings.Index(b, `class="WhiteBox">`)
+	i = strings.Index(page, "Grade:")
 
 	if i != -1 {
-		b = b[i:]
+		i = strings.Index(page, "TaskGrade'>")
+
+		if i == -1 {
+			return site.Task{}, errors.New("invalid task HTML response", nil)
+		}
+
+		page = page[i:]
+		i = len("TaskGrade'>")
+		page = page[i:]
+		i = strings.Index(page, "</div>")
+
+		if i == -1 {
+			return site.Task{}, errors.New("invalid task HTML response", nil)
+		}
+
+		task.Grade = page[:i]
+		page = page[i:]
+	}
+
+	i = strings.Index(page, "Mark:")
+
+	if i != -1 {
+		i = strings.Index(page, "TaskGrade'>")
+
+		if i == -1 {
+			return site.Task{}, errors.New("invalid task HTML response", nil)
+		}
+
+		page = page[i:]
+		i = len("TaskGrade'>")
+		page = page[i:]
+		i = strings.Index(page, "</div>")
+
+		if i == -1 {
+			return site.Task{}, errors.New("invalid task HTML response", nil)
+		}
+
+		markStr := page[:i]
+		page = page[i:]
+
+		i := strings.Index(markStr, " / ")
+
+		if i == -1 {
+			return site.Task{}, errors.New("invalid task HTML response", nil)
+		}
+
+		var marks [2]string
+		marks[0] = markStr[:i]
+		marks[1] = markStr[i+3:]
+
+		top, err := strconv.ParseFloat(marks[0], 64)
+		if err != nil {
+			return site.Task{}, errors.New(fmt.Sprintf("cannot convert %s to float64", marks[0]), err)
+		}
+
+		bottom, err := strconv.ParseFloat(marks[1], 64)
+		if err != nil {
+			return site.Task{}, errors.New(fmt.Sprintf("cannot convert %s to float64", marks[1]), err)
+		}
+
+		task.Score = top / bottom * 100
+	}
+
+	task.Graded = true
+	i = strings.Index(page, `class="WhiteBox">`)
+
+	if i != -1 {
+		page = page[i:]
 		i = len(`class="WhiteBox">`)
-		b = b[i:]
-		i = strings.Index(b, "</div>")
+		page = page[i:]
+		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 
-		task.Comment = b[:i]
-		b = b[i:]
+		task.Comment = page[:i]
+		page = page[i:]
 	}
 
-	i = strings.Index(b, "Attachments</div>")
+	i = strings.Index(page, "Attachments</div>")
 
 	if i != -1 {
-		b = b[i:]
+		page = page[i:]
 		i = len("Attachments</div>")
-		b = b[i:]
-		i = strings.Index(b, `class='WhiteBox' style='padding:5px;margin:2px'>`)
+		page = page[i:]
+		i = strings.Index(page, `class='WhiteBox' style='padding:5px;margin:2px'>`)
 
 		if i == -1 {
-			i = strings.Index(b, "\n")
+			i = strings.Index(page, "\n")
 		}
 
 		if i == -1 {
-			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 
-		rlHtml := b[:i]
-		b = b[i:]
-		x := strings.Index(rlHtml, "DMU.OpenAttachment(")
+		rlHtml := page[:i]
+		page = page[i:]
+		j := strings.Index(rlHtml, "DMU.OpenAttachment(")
 
-		for x != -1 {
-			x += len("DMU.OpenAttachment(")
-			rlHtml = rlHtml[x:]
-			x = strings.Index(rlHtml, ")")
+		for j != -1 {
+			j += len("DMU.OpenAttachment(")
+			rlHtml = rlHtml[j:]
+			j = strings.Index(rlHtml, ")")
 
-			if x == -1 {
-				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			if j == -1 {
+				return site.Task{}, errors.New("invalid task HTML response", nil)
 			}
 
-			rlId := rlHtml[:x]
-			rlHtml = rlHtml[x:]
+			rlId := rlHtml[:j]
+			rlHtml = rlHtml[j:]
 			link := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + rlId
-			x = strings.Index(rlHtml, "&nbsp;")
+			j = strings.Index(rlHtml, "&nbsp;")
 
-			if x == -1 {
-				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			if j == -1 {
+				return site.Task{}, errors.New("invalid task HTML response", nil)
 			}
 
-			x += len("&nbsp;")
-			rlHtml = rlHtml[x:]
-			x = strings.Index(rlHtml, "</a>")
+			j += len("&nbsp;")
+			rlHtml = rlHtml[j:]
+			j = strings.Index(rlHtml, "</a>")
 
-			if x == -1 {
-				return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			if j == -1 {
+				return site.Task{}, errors.New("invalid task HTML response", nil)
 			}
 
-			name := rlHtml[:x]
-			rlHtml = rlHtml[x:]
+			name := rlHtml[:j]
+			rlHtml = rlHtml[j:]
 			task.ResLinks = append(task.ResLinks, [2]string{link, name})
-			x = strings.Index(rlHtml, "DMU.OpenAttachment(")
+			j = strings.Index(rlHtml, "DMU.OpenAttachment(")
 		}
 	}
 
-	i = strings.Index(b, `class='WhiteBox' style='padding:5px;margin:2px'>`)
+	i = strings.Index(page, `class='WhiteBox' style='padding:5px;margin:2px'>`)
 
 	if i != -1 {
-		b = b[i:]
+		page = page[i:]
 		i = len(`class='WhiteBox' style='padding:5px;margin:2px'>`)
-		b = b[i:]
-		i = strings.Index(b, "</div>")
+		page = page[i:]
+		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.Raise(site.ErrInvalidTaskResp)
+			return site.Task{}, errors.New("invalid task HTML response", nil)
 		}
 
-		task.Desc = b[:i]
+		task.Desc = page[:i]
 	}
 
 	task.Submitted = true
@@ -394,12 +372,10 @@ func randStr(n int) string {
 	return fmt.Sprintf("%x", randBytes)[:n]
 }
 
-// Upload files from an HTTP request as student file submissions for a DayMap task.
-func UploadWork(user User, id string, files *multipart.Reader) error {
+func UploadWork(user site.User, id string, files *multipart.Reader) error {
 	selectUrl := "https://gihs.daymap.net/daymap/Resources/AttachmentAdd.aspx?t=2&LinkID="
 	selectUrl += id
 	client := &http.Client{}
-	var e error
 
 	file, mimeErr := files.NextPart()
 	for mimeErr == nil {
@@ -429,12 +405,13 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 		var blocks []string
 		var chunk io.Reader
 		var s1body []byte
+		var err error
 
 		// Repeat stages 1-3 until the contents of the entire file are sent.
 		for i := 0; ; i++ {
 			if isLast == 0 {
-				buflen, e = io.ReadFull(file, buf)
-				if e != nil {
+				buflen, err = io.ReadFull(file, buf)
+				if err != nil {
 					isLast = 1
 				}
 				chunk = bytes.NewReader(buf[:buflen])
@@ -459,21 +436,21 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 			s1url += "?" + s1form.Encode()
 			s1req, err := http.NewRequest("GET", s1url, nil)
 			if err != nil {
-				return errors.New("GET request failed", err)
+				return errors.New("cannot create stage 1 request", err)
 			}
 
 			s1req.Header.Set("Accept", "application/json")
-			s1req.Header.Set("Cookie", user.Token)
+			s1req.Header.Set("Cookie", user.SiteTokens["daymap"])
 			s1req.Header.Set("Referer", selectUrl)
 
-			s1resp, err := client.Do(s1req)
+			s1, err := client.Do(s1req)
 			if err != nil {
-				return errors.New("failed to get resp", err)
+				return errors.New("cannot execute stage 1 request", err)
 			}
 
-			s1body, err = io.ReadAll(s1resp.Body)
+			s1body, err = io.ReadAll(s1.Body)
 			if err != nil {
-				return errors.New("failed to read resp.Body", err)
+				return errors.New("cannot read stage 1 body", err)
 			}
 
 			if isLast == 2 {
@@ -488,24 +465,24 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 
 			s2req, err := http.NewRequest("OPTIONS", s2url, nil)
 			if err != nil {
-				return errors.New("OPTIONS request failed", err)
+				return errors.New("cannot create stage 2 request", err)
 			}
 
 			s2req.Header.Set("Accept", "*/*")
 			s2req.Header.Set("Access-Control-Request-Method", "PUT")
-			s2req.Header.Set("Cookie", user.Token)
+			s2req.Header.Set("Cookie", user.SiteTokens["daymap"])
 			s2req.Header.Set("Origin", "https://gihs.daymap.net")
 
 			_, err = client.Do(s2req)
 			if err != nil {
-				return errors.New("failed to get resp", err)
+				return errors.New("cannot execute stage 2 request", err)
 			}
 
 			// Stage 3: Send file contents and metadata to the DayMap file upload server.
 
 			s3req, err := http.NewRequest("PUT", s2url, chunk)
 			if err != nil {
-				return errors.New("PUT request failed", err)
+				return errors.New("cannot create stage 3 request", err)
 			}
 
 			s3req.Header.Set("Accept", "*/*")
@@ -518,7 +495,7 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 
 			_, err = client.Do(s3req)
 			if err != nil {
-				return errors.New("failed to get resp", err)
+				return errors.New("cannot execute stage 3 request", err)
 			}
 
 			if isLast == 1 {
@@ -531,19 +508,19 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 		s4url := string(s1body) + `&comp=blocklist`
 		s4req, err := http.NewRequest("OPTIONS", s4url, nil)
 		if err != nil {
-			return errors.New("OPTIONS request failed", err)
+			return errors.New("cannot create stage 4 request", err)
 		}
 
 		s4req.Header.Set("Accept", "*/*")
 		accHeaders := "x-ms-blob-type,x-ms-meta-linkid,x-ms-meta-qqfilename,x-ms-meta-t"
 		s4req.Header.Set("Access-Control-Request-Headers", accHeaders)
 		s4req.Header.Set("Access-Control-Request-Method", "PUT")
-		s4req.Header.Set("Cookie", user.Token)
+		s4req.Header.Set("Cookie", user.SiteTokens["daymap"])
 		s4req.Header.Set("Origin", "https://gihs.daymap.net")
 
 		_, err = client.Do(s4req)
 		if err != nil {
-			return errors.New("failed to get resp", err)
+			return errors.New("cannot execute stage 4 request", err)
 		}
 
 		// Stage 5: Send final PUT request to the Daymap file upload server.
@@ -558,7 +535,7 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 
 		s5req, err := http.NewRequest("PUT", s4url, s5data)
 		if err != nil {
-			return errors.New("PUT request failed", err)
+			return errors.New("cannot create stage 5 request", err)
 		}
 
 		s5req.Header.Set("Accept", "*/*")
@@ -572,7 +549,7 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 
 		_, err = client.Do(s5req)
 		if err != nil {
-			return errors.New("failed to get resp", err)
+			return errors.New("cannot execute stage 5 request", err)
 		}
 
 		// Stage 6: Send the concluding POST request to the Daymap server.
@@ -590,34 +567,34 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 
 		s6req, err := http.NewRequest("POST", s6url, s6data)
 		if err != nil {
-			return errors.New("POST request failed", err)
+			return errors.New("cannot create stage 6 request", err)
 		}
 
 		s6req.Header.Set("Accept", "application/json")
 		s6req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		s6req.Header.Set("Cookie", user.Token)
+		s6req.Header.Set("Cookie", user.SiteTokens["daymap"])
 		s6req.Header.Set("Origin", "https://gihs.daymap.net")
 		s6req.Header.Set("Referer", selectUrl)
 		s6req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
-		s6resp, err := client.Do(s6req)
+		s6, err := client.Do(s6req)
 		if err != nil {
-			return errors.New("failed to get resp", err)
+			return errors.New("cannot execute stage 6 request", err)
 		}
 
-		s6body, err := io.ReadAll(s6resp.Body)
+		s6body, err := io.ReadAll(s6.Body)
 		if err != nil {
-			return errors.New("failed to read resp.Body", err)
+			return errors.New("cannot read stage 6 body", err)
 		}
 
-		jsonResp := chkJson{}
-		err = json.Unmarshal(s6body, &jsonResp)
+		jresp := chkJson{}
+		err = json.Unmarshal(s6body, &jresp)
 		if err != nil {
-			return errors.New("failed to unmarshal JSON", err)
+			return errors.New("cannot unmarshal JSON", err)
 		}
 
-		if !jsonResp.Success || jsonResp.Error != "" {
-			return errors.New("DayMap returned error", errors.New(jsonResp.Error, nil))
+		if !jresp.Success || jresp.Error != "" {
+			return errors.New("daymap returned error", errors.New(jresp.Error, nil))
 		}
 
 		file, mimeErr = files.NextPart()
@@ -627,174 +604,173 @@ func UploadWork(user User, id string, files *multipart.Reader) error {
 	if mimeErr == io.EOF {
 		return nil
 	} else {
-		return errors.New("failed parsing files from multipart MIME request", err)
+		return errors.New("cannot parse files from multipart MIME request", err)
 	}
 }
 
-// Remove the specified student file submissions from a DayMap task.
-func RemoveWork(user User, id string, filenames []string) error {
+func RemoveWork(user site.User, id string, filenames []string) error {
 	removeUrl := "https://gihs.daymap.net/daymap/student/attachments.aspx?Type=1&LinkID="
 	removeUrl += id
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", removeUrl, nil)
+	s1req, err := http.NewRequest("GET", removeUrl, nil)
 	if err != nil {
-		return errors.New("GET request failed", err)
+		return errors.New("cannot create stage 1 request", err)
 	}
 
-	req.Header.Set("Cookie", user.Token)
+	s1req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
-	resp, err := client.Do(req)
+	s1, err := client.Do(s1req)
 	if err != nil {
-		return errors.New("failed to get resp", err)
+		return errors.New("cannot execute stage 1 request", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return errors.New("failed to read resp.Body", err)
+		return errors.New("cannot read stage 1 body", err)
 	}
 
-	b := string(respBody)
-	i := strings.Index(b, "<form")
+	page := string(s1body)
+	i := strings.Index(page, "<form")
 
 	if i == -1 {
-		return errors.Raise(site.ErrInvalidTaskResp)
+		return errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
-	i = strings.Index(b, ` action="`)
+	page = page[i:]
+	i = strings.Index(page, ` action="`)
 
 	if i == -1 {
-		return errors.Raise(site.ErrInvalidTaskResp)
+		return errors.New("invalid task HTML response", nil)
 	}
 
-	b = b[i:]
+	page = page[i:]
 	i = len(` action="`)
-	b = b[i:]
-	i = strings.Index(b, `"`)
+	page = page[i:]
+	i = strings.Index(page, `"`)
 
 	if i == -1 {
-		return errors.Raise(site.ErrInvalidTaskResp)
+		return errors.New("invalid task HTML response", nil)
 	}
 
-	rwUrl := b[:i]
+	rwUrl := page[:i]
 	rwUrl = html.UnescapeString(rwUrl)
-	b = b[i:]
-	rwForm := url.Values{}
-	i = strings.Index(b, "<input ")
+	page = page[i:]
+	s2form := url.Values{}
+	i = strings.Index(page, "<input ")
 
 	for i != -1 {
 		var name, value string
-		b = b[i:]
-		i = strings.Index(b, ` type=`)
+		page = page[i:]
+		i = strings.Index(page, ` type=`)
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		b = b[i:]
+		page = page[i:]
 		i = len(` type=`)
-		b = b[i:]
-		i = strings.Index(b, ` `)
+		page = page[i:]
+		i = strings.Index(page, ` `)
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		inputType := b[:i]
-		b = b[i:]
-		i = strings.Index(b, `name="`)
+		inputType := page[:i]
+		page = page[i:]
+		i = strings.Index(page, `name="`)
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		b = b[i:]
+		page = page[i:]
 		i = len(`name="`)
-		b = b[i:]
-		i = strings.Index(b, `"`)
+		page = page[i:]
+		i = strings.Index(page, `"`)
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		name = b[:i]
-		b = b[i:]
+		name = page[:i]
+		page = page[i:]
 
-		i = strings.Index(b, "\n")
+		i = strings.Index(page, "\n")
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		valTest := b[:i]
+		valTest := page[:i]
 		i = strings.Index(valTest, ` value="`)
 
 		if i != -1 {
-			b = b[i:]
+			page = page[i:]
 			i = len(` value="`)
-			b = b[i:]
-			i = strings.Index(b, `"`)
+			page = page[i:]
+			i = strings.Index(page, `"`)
 
 			if i == -1 {
-				return errors.Raise(site.ErrInvalidTaskResp)
+				return errors.New("invalid task HTML response", nil)
 			}
 
-			value = b[:i]
-			b = b[i:]
+			value = page[:i]
+			page = page[i:]
 		}
 
 		if inputType != "checkbox" {
-			rwForm.Set(name, value)
-			i = strings.Index(b, "<input ")
+			s2form.Set(name, value)
+			i = strings.Index(page, "<input ")
 			continue
 		}
 
-		i = strings.Index(b, `<span name=filename>`)
+		i = strings.Index(page, `<span name=filename>`)
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		b = b[i:]
+		page = page[i:]
 		i = len(`<span name=filename>`)
-		b = b[i:]
-		i = strings.Index(b, `</span>`)
+		page = page[i:]
+		i = strings.Index(page, `</span>`)
 
 		if i == -1 {
-			return errors.Raise(site.ErrInvalidTaskResp)
+			return errors.New("invalid task HTML response", nil)
 		}
 
-		fname := b[:i]
-		b = b[i:]
+		fname := page[:i]
+		page = page[i:]
 
 		if defs.Has(filenames, fname) {
-			rwForm.Set(name, "del")
+			s2form.Set(name, "del")
 		}
 
-		i = strings.Index(b, "<input ")
+		i = strings.Index(page, "<input ")
 	}
 
-	rwForm.Set("Cmd", "delete")
-	rwForm.Set("__EVENTTARGET", "")
-	rwForm.Set("__EVENTARGUMENT", "")
+	s2form.Set("Cmd", "delete")
+	s2form.Set("__EVENTTARGET", "")
+	s2form.Set("__EVENTARGUMENT", "")
 
-	rwData := strings.NewReader(rwForm.Encode())
+	s2data := strings.NewReader(s2form.Encode())
 	if _, err := defs.Get([]byte(rwUrl), 1); err != nil {
 		return errors.New("invalid task HTML response", err)
 	}
-	rwfurl := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]
-	post, err := http.NewRequest("POST", rwfurl, rwData)
+	s2url := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]
+	s2req, err := http.NewRequest("POST", s2url, s2data)
 	if err != nil {
-		return errors.New("POST request failed", err)
+		return errors.New("cannot create stage 2 request", err)
 	}
 
-	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	post.Header.Set("Cookie", user.Token)
+	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	s2req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
-	_, err = client.Do(post)
+	_, err = client.Do(s2req)
 	if err != nil {
-		return errors.New("error returning response body", err)
+		return errors.New("cannot execute stage 2 request", err)
 	}
 
 	return nil
