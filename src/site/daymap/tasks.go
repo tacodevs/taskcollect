@@ -12,46 +12,46 @@ import (
 	"main/site"
 )
 
-// Retrieve a webpage of all DayMap tasks for a user.
-func tasksPage(creds site.User) (string, error) {
-	tasksUrl := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
+func tasksPage(user site.User) (string, error) {
+	link := "https://gihs.daymap.net/daymap/student/assignments.aspx?View=0"
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", tasksUrl, nil)
+	s1req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
-		return "", errors.New("GET request failed", err)
+		return "", errors.New("cannot create stage 1 request", err)
 	}
 
-	req.Header.Set("Cookie", creds.SiteTokens["daymap"])
-	resp, err := client.Do(req)
+	s1req.Header.Set("Cookie", user.SiteTokens["daymap"])
+
+	s1, err := client.Do(s1req)
 	if err != nil {
-		return "", errors.New("failed to get resp", err)
+		return "", errors.New("cannot execute stage 1 request", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return "", errors.New("failed to read resp.Body", err)
+		return "", errors.New("cannot read stage 1 body", err)
 	}
 
-	taskForm := url.Values{}
-	b := string(respBody)
-	i := strings.Index(b, "<input ")
+	form := url.Values{}
+	s1page := string(s1body)
+	i := strings.Index(s1page, "<input ")
 
 	for i != -1 {
 		var value string
-		b = b[i:]
-		i = strings.Index(b, ">")
+		s1page = s1page[i:]
+		i = strings.Index(s1page, ">")
 
 		if i == -1 {
-			return "", errors.Raise(site.ErrInvalidResp)
+			return "", errors.New("invalid HTML response", nil)
 		}
 
-		inputTag := b[:i]
-		b = b[i:]
+		inputTag := s1page[:i]
+		s1page = s1page[i:]
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			return "", errors.Raise(site.ErrInvalidResp)
+			return "", errors.New("invalid HTML response", nil)
 		}
 
 		i += len(`type="`)
@@ -59,20 +59,20 @@ func tasksPage(creds site.User) (string, error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			return "", errors.Raise(site.ErrInvalidResp)
+			return "", errors.New("invalid HTML response", nil)
 		}
 
 		inputType = inputType[:i]
 
 		if inputType != "hidden" {
-			i = strings.Index(b, "<input ")
+			i = strings.Index(s1page, "<input ")
 			continue
 		}
 
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			return "", errors.Raise(site.ErrInvalidResp)
+			return "", errors.New("invalid HTML response", nil)
 		}
 
 		i += len(`name="`)
@@ -80,7 +80,7 @@ func tasksPage(creds site.User) (string, error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			return "", errors.Raise(site.ErrInvalidResp)
+			return "", errors.New("invalid HTML response", nil)
 		}
 
 		name = name[:i]
@@ -92,54 +92,56 @@ func tasksPage(creds site.User) (string, error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				return "", errors.Raise(site.ErrInvalidResp)
+				return "", errors.New("invalid HTML response", nil)
 			}
 
 			value = value[:i]
 		}
 
-		taskForm.Set(name, value)
-		i = strings.Index(b, "<input ")
+		form.Set(name, value)
+		i = strings.Index(s1page, "<input ")
 	}
 
-	for val := range tasksFormValues {
-		taskForm.Set(val, tasksFormValues[val])
+	for k, v := range auxValues {
+		form.Set(k, v)
 	}
 
-	tdata := strings.NewReader(taskForm.Encode())
+	data := strings.NewReader(form.Encode())
 
-	fullReq, err := http.NewRequest("POST", tasksUrl, tdata)
+	s2req, err := http.NewRequest("POST", link, data)
 	if err != nil {
-		return "", errors.New("POST request failed", err)
+		return "", errors.New("cannot create stage 2 request", err)
 	}
 
-	fullReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	fullReq.Header.Set("Cookie", creds.SiteTokens["daymap"])
+	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	s2req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
-	full, err := client.Do(fullReq)
+	s2, err := client.Do(s2req)
 	if err != nil {
-		return "", errors.New("failed to get full resp", err)
+		return "", errors.New("cannot execute stage 2 request", err)
 	}
 
-	fullBody, err := io.ReadAll(full.Body)
+	s2body, err := io.ReadAll(s2.Body)
 	if err != nil {
-		return "", errors.New("failed to read full.Body", err)
+		return "", errors.New("cannot read stage 2 body", err)
 	}
 
-	return string(fullBody), nil
+	return string(s2body), nil
 }
 
-// Retrieve a list of tasks from DayMap for a user.
-func ListTasks(creds site.User, t chan map[string][]site.Task, e chan [][]error) {
-	b, err := tasksPage(creds)
+func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.Class) {
+	var result site.Pair[[]site.Task, error]
+	var tasks []site.Task
+
+	page, err := tasksPage(user)
 	if err != nil {
-		t <- nil
-		e <- [][]error{{errors.New("failed retrieving tasks page", err)}}
+		result.Second = errors.New("cannot fetch tasks page", err)
+		c <- result
 		return
 	}
 
-	unsorted := []site.Task{}
-	i := strings.Index(b, `href="javascript:ViewAssignment(`)
+	var unsorted []site.Task
+	i := strings.Index(page, `href="javascript:ViewAssignment(`)
 
 	for i != -1 {
 		task := site.Task{
@@ -147,93 +149,93 @@ func ListTasks(creds site.User, t chan map[string][]site.Task, e chan [][]error)
 		}
 
 		i += len(`href="javascript:ViewAssignment(`)
-		b = b[i:]
-		i = strings.Index(b, `)">`)
+		page = page[i:]
+		i = strings.Index(page, `)">`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		task.Id = b[:i]
-		b = b[i:]
+		task.Id = page[:i]
+		page = page[i:]
 		task.Link = "https://gihs.daymap.net/daymap/student/assignment.aspx?TaskID=" + task.Id
-		i = strings.Index(b, `<td>`)
+		i = strings.Index(page, `<td>`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
 		i += len(`<td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td>`)
+		page = page[i:]
+		i = strings.Index(page, `</td>`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		task.Class = b[:i]
+		task.Class = page[:i]
 		i += len(`</td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		page = page[i:]
+		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
 		i += len(`</td><td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		page = page[i:]
+		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		task.Name = b[:i]
+		task.Name = page[:i]
 		i += len(`</td><td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		page = page[i:]
+		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		postedString := b[:i]
+		postedStr := page[:i]
 
-		task.Posted, err = time.ParseInLocation("2/01/06", postedString, creds.Timezone)
+		task.Posted, err = time.ParseInLocation("2/01/06", postedStr, user.Timezone)
 		if err != nil {
-			t <- nil
-			e <- [][]error{{errors.New("failed to parse time (postedString)", err)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
 		i += len(`</td><td>`)
-		b = b[i:]
-		i = strings.Index(b, `</td><td>`)
+		page = page[i:]
+		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		dueString := b[:i]
+		dueStr := page[:i]
 
-		task.Due, err = time.ParseInLocation("2/01/06", dueString, creds.Timezone)
+		task.Due, err = time.ParseInLocation("2/01/06", dueStr, user.Timezone)
 		if err != nil {
-			t <- nil
-			e <- [][]error{{errors.New("failed to parse time (dueString)", err)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
@@ -244,18 +246,18 @@ func ListTasks(creds site.User, t chan map[string][]site.Task, e chan [][]error)
 		task.Due = time.Date(
 			task.Due.Year(), task.Due.Month(), task.Due.Day(),
 			23, 59, 59, 999999999,
-			creds.Timezone,
+			user.Timezone,
 		)
 
-		i = strings.Index(b, "\n")
+		i = strings.Index(page, "\n")
 
 		if i == -1 {
-			t <- nil
-			e <- [][]error{{errors.Raise(site.ErrInvalidResp)}}
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		taskLine := b[:i]
+		taskLine := page[:i]
 		i = strings.Index(taskLine, `Results have been published`)
 
 		if i != -1 {
@@ -270,28 +272,20 @@ func ListTasks(creds site.User, t chan map[string][]site.Task, e chan [][]error)
 		}
 
 		unsorted = append(unsorted, task)
-		i = strings.Index(b, `href="javascript:ViewAssignment(`)
+		i = strings.Index(page, `href="javascript:ViewAssignment(`)
 	}
 
-	tasks := map[string][]site.Task{
-		"active":    {},
-		"notDue":    {},
-		"overdue":   {},
-		"submitted": {},
-	}
-
-	for _, utask := range unsorted {
-		if utask.Graded {
-			continue
-		} else if utask.Submitted {
-			tasks["submitted"] = append(tasks["submitted"], utask)
-		} else if utask.Due.Before(time.Now()) {
-			tasks["overdue"] = append(tasks["overdue"], utask)
-		} else {
-			tasks["active"] = append(tasks["active"], utask)
+	// BUG: matching tasks to classes by class name may lead to collisions if
+	// several classes share a name. Sadly the site.Task struct does not store
+	// class ID...
+	for _, task := range unsorted {
+		for _, class := range classes {
+			if task.Class == class.Name {
+				tasks = append(tasks, task)
+			}
 		}
 	}
 
-	t <- tasks
-	e <- nil
+	result.First = tasks
+	c <- result
 }

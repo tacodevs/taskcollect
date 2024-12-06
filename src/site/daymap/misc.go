@@ -19,7 +19,7 @@ const (
 	auxKey         = `;;System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35:en-AU:9ddf364d-d65d-4f01-a69e-8b015049e026:ea597d4b:b25378d2;Telerik.Web.UI, Version=2020.1.219.45, Culture=neutral, PublicKeyToken=121fae78165ba3d4:en-AU:bb184598-9004-47ca-9e82-5def416be84b:16e4e7cd:33715776:58366029:f7645509:24ee1bba:f46195d3:2003d0b8:c128760b:88144a7a:1e771326:aa288e2d:258f1c72`
 )
 
-var tasksFormValues = map[string]string{
+var auxValues = map[string]string{
 	auxClient: auxState,
 	auxPage:   auxSize,
 	auxTarget: auxAssignments,

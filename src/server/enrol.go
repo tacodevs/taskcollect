@@ -26,10 +26,10 @@ func enrol(institutes ...string) {
 			schools["gihs"].SetLessons(daymap.Lessons)
 			//schools["gihs"].AddMessages(daymap.Messages)
 			//schools["gihs"].SetReports(learnprof.Reports)
-			//schools["gihs"].AddResources("daymap", daymap.Tasks)
-			//schools["gihs"].AddResources("classroom", classroom.Tasks)
+			//schools["gihs"].AddResources("daymap", daymap.Resources)
+			//schools["gihs"].AddResources("classroom", classroom.Resources)
 			schools["gihs"].AddTask("daymap", daymap.Task)
-			//schools["gihs"].AddTasks("daymap", daymap.Tasks)
+			schools["gihs"].AddTasks("daymap", daymap.Tasks)
 			//schools["gihs"].AddTasks("classroom", classroom.Tasks)
 		case "uofa":
 			schools["uofa"] = site.NewMux()
@@ -41,7 +41,7 @@ func enrol(institutes ...string) {
 			schools["example"].AddClasses(example.Classes)
 			schools["example"].AddGraded(example.Graded)
 			schools["example"].SetLessons(example.Lessons)
-			//schools["example"].AddTasks("example", example.Tasks)
+			schools["example"].AddTasks("example", example.Tasks)
 		}
 	}
 }

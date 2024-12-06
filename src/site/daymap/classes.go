@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"main/site"
-
 	"git.sr.ht/~kvo/go-std/errors"
+
+	"main/site"
 )
 
 func Classes(user site.User, c chan site.Pair[[]site.Class, error]) {

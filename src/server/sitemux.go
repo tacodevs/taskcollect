@@ -4,6 +4,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"sort"
+	"time"
 
 	"git.sr.ht/~kvo/go-std/errors"
 
@@ -12,65 +13,55 @@ import (
 	"main/site/daymap"
 )
 
+// TODO: delete after v2
 func getTasks(user site.User) map[string][]site.Task {
-	dmChan := make(chan map[string][]site.Task)
-	dmErrChan := make(chan [][]error)
-	go daymap.ListTasks(user, dmChan, dmErrChan)
-
-	t := map[string][]site.Task{}
-	tasks := map[string][]site.Task{}
-
-	dmTasks, dmErrs := <-dmChan, <-dmErrChan
-	for _, classErrs := range dmErrs {
-		for _, err := range classErrs {
-			if err != nil {
-				logger.Debug(errors.New("failed to get task list from daymap", err))
-			}
-		}
+	filtered := map[string][]site.Task{
+		"active":    {},
+		"notDue":    {},
+		"overdue":   {},
+		"submitted": {},
 	}
-
-	for c, taskList := range dmTasks {
-		if c == "graded" {
+	school, ok := schools[user.School]
+	if !ok {
+		logger.Debug(errors.New("unsupported platform", nil))
+		return filtered
+	}
+	classes, err := school.Classes(user)
+	if err != nil {
+		logger.Debug(errors.New("cannot fetch class list", err))
+		return filtered
+	}
+	tasks, err := school.Tasks(user, classes...)
+	if err != nil {
+		logger.Debug(errors.New("cannot fetch task lists", err))
+		return filtered
+	}
+	for _, task := range tasks {
+		if task.Graded {
 			continue
-		}
-		for i := 0; i < len(taskList); i++ {
-			t[c] = append(t[c], site.Task(taskList[i]))
-		}
-	}
-
-	for c, taskList := range t {
-		times := map[int]int{}
-		taskIndexes := []int{}
-
-		for i := 0; i < len(taskList); i++ {
-			var time int
-
-			if c == "active" || c == "overdue" {
-				time = int(taskList[i].Due.UTC().Unix())
-			} else {
-				time = int(taskList[i].Posted.UTC().Unix())
-			}
-
-			times[i] = time
-			taskIndexes = append(taskIndexes, i)
-		}
-
-		if c == "active" {
-			sort.SliceStable(taskIndexes, func(i, j int) bool {
-				return times[taskIndexes[i]] < times[taskIndexes[j]]
-			})
+		} else if task.Submitted {
+			filtered["submitted"] = append(filtered["submitted"], task)
+		} else if task.Due.IsZero() {
+			filtered["notDue"] = append(filtered["notDue"], task)
+		} else if task.Due.Before(time.Now()) {
+			filtered["overdue"] = append(filtered["overdue"], task)
 		} else {
-			sort.SliceStable(taskIndexes, func(i, j int) bool {
-				return times[taskIndexes[i]] > times[taskIndexes[j]]
-			})
-		}
-
-		for _, x := range taskIndexes {
-			tasks[c] = append(tasks[c], taskList[x])
+			filtered["active"] = append(filtered["active"], task)
 		}
 	}
-
-	return tasks
+	sort.SliceStable(filtered["submitted"], func(i, j int) bool {
+		return filtered["submitted"][i].Posted.Unix() > filtered["submitted"][j].Posted.Unix()
+	})
+	sort.SliceStable(filtered["notDue"], func(i, j int) bool {
+		return filtered["notDue"][i].Posted.Unix() > filtered["notDue"][j].Posted.Unix()
+	})
+	sort.SliceStable(filtered["overdue"], func(i, j int) bool {
+		return filtered["overdue"][i].Posted.Unix() > filtered["overdue"][j].Posted.Unix()
+	})
+	sort.SliceStable(filtered["active"], func(i, j int) bool {
+		return filtered["active"][i].Due.Unix() < filtered["active"][j].Due.Unix()
+	})
+	return filtered
 }
 
 func getResources(user site.User) ([]string, map[string][]site.Resource) {
