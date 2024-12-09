@@ -441,9 +441,13 @@ func genRes(resURL string, user site.User) (pageData, error) {
 		data.PageType = "grades"
 		data.Head.Title = "Grades"
 
-		tasks, err := schools[user.School].Graded(user)
+		school, ok := schools[user.School]
+		if !ok {
+			return statusServerErrorData, errors.New("unsupported platform", nil)
+		}
+		tasks, err := school.Graded(user)
 		if err != nil {
-			return data, errors.New("failed getting graded tasks", err)
+			return data, errors.New("cannot fetch graded tasks", err)
 		}
 
 		for _, task := range tasks {

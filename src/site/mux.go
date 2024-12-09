@@ -1,6 +1,7 @@
 package site
 
 import (
+	"mime/multipart"
 	"net/http"
 	"sort"
 	"time"
@@ -28,7 +29,7 @@ type Mux struct {
 	submit    map[string]func(User, string) error
 	task      map[string]func(User, string) (Task, error)
 	tasks     map[string]func(User, chan Pair[[]Task, error], []Class)
-	upload    map[string]func(User, string, *http.Request) error
+	upload    map[string]func(User, string, *multipart.Reader) error
 }
 
 // Return a new instance of Mux.
@@ -40,7 +41,7 @@ func NewMux() *Mux {
 	m.submit = make(map[string]func(User, string) error)
 	m.task = make(map[string]func(User, string) (Task, error))
 	m.tasks = make(map[string]func(User, chan Pair[[]Task, error], []Class))
-	m.upload = make(map[string]func(User, string, *http.Request) error)
+	m.upload = make(map[string]func(User, string, *multipart.Reader) error)
 	return m
 }
 
@@ -80,10 +81,21 @@ func (m *Mux) AddMessages(f func(User, chan Pair[[]Message, error])) {
 	m.messages = append(m.messages, f)
 }
 
+// AddRemoveWork adds the work submission removal function f to m for platform
+// multiplexing.
+func (m *Mux) AddRemoveWork(platform string, f func(User, string, []string) error) {
+	m.remove[platform] = f
+}
+
 // AddResources adds the class resources retrieval function f to m for platform
 // multiplexing.
 func (m *Mux) AddResources(platform string, f func(User, chan Pair[[]Resource, error], []Class)) {
 	m.resources[platform] = f
+}
+
+// AddSubmit adds the task submission function f to m for platform multiplexing.
+func (m *Mux) AddSubmit(platform string, f func(User, string) error) {
+	m.submit[platform] = f
 }
 
 // AddTask adds the task information retrieval function f to m for platform
@@ -96,6 +108,12 @@ func (m *Mux) AddTask(platform string, f func(User, string) (Task, error)) {
 // multiplexing.
 func (m *Mux) AddTasks(platform string, f func(User, chan Pair[[]Task, error], []Class)) {
 	m.tasks[platform] = f
+}
+
+// AddUploadWork adds the work submission upload function f to m for platform
+// multiplexing.
+func (m *Mux) AddUploadWork(platform string, f func(User, string, *multipart.Reader) error) {
+	m.upload[platform] = f
 }
 
 // SetLessons sets the lessons retrieval function for m as f for platform
@@ -267,6 +285,18 @@ func (m *Mux) Messages(user User) ([]Message, error) {
 	return messages, nil
 }
 
+// RemoveWork removes the work submissions specified by filenames from the task
+// with given id from the specified platform. An error is returned if either the
+// removal process fails or the platform is not supported by the platform
+// multiplexer m.
+func (m *Mux) RemoveWork(user User, platform, id string, filenames []string) error {
+	f, ok := m.remove[platform]
+	if !ok {
+		return errors.New("unsupported platform", nil)
+	}
+	return f(user, id, filenames)
+}
+
 // Reports returns a series of report cards.
 func (m *Mux) Reports(user User) ([]Report, error) {
 	if m.reports == nil {
@@ -280,6 +310,17 @@ func (m *Mux) Reports(user User) ([]Report, error) {
 		return reports[i].Released.After(reports[j].Released)
 	})
 	return reports, nil
+}
+
+// Submit submits the task with given id from the specified platform. An error
+// is returned if either the submission process fails or the platform is not
+// supported by the platform multiplexer m.
+func (m *Mux) Submit(user User, platform, id string) error {
+	f, ok := m.submit[platform]
+	if !ok {
+		return errors.New("unsupported platform", nil)
+	}
+	return f(user, id)
 }
 
 // Task returns the task information specified by id from the given platform. An
@@ -316,4 +357,20 @@ func (m *Mux) Tasks(user User, classes ...Class) ([]Task, error) {
 		return tasks[i].Posted.After(tasks[j].Posted)
 	})
 	return tasks, nil
+}
+
+// UploadWork uploads all files in request r as work submissions for the task
+// with given id for the specified platform. An error is returned if either the
+// upload process fails or the platform is not supported by the platform
+// multiplexer m.
+func (m *Mux) UploadWork(user User, platform, id string, r *http.Request) error {
+	f, ok := m.upload[platform]
+	if !ok {
+		return errors.New("unsupported platform", nil)
+	}
+	files, err := r.MultipartReader()
+	if err != nil {
+		return errors.New("cannot parse multipart MIME", err)
+	}
+	return f(user, id, files)
 }

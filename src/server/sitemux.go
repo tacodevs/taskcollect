@@ -1,8 +1,6 @@
 package server
 
 import (
-	"mime/multipart"
-	"net/http"
 	"sort"
 	"time"
 
@@ -136,45 +134,4 @@ func getResource(platform, resId string, user site.User) (site.Resource, error) 
 	}
 
 	return res, err
-}
-
-func submitTask(user site.User, platform, taskId string) error {
-	return errors.Raise(site.ErrNoPlatform)
-}
-
-// Return an appropriate reader for a multipart MIME file upload request.
-func reqFiles(r *http.Request) (*multipart.Reader, error) {
-	reader, err := r.MultipartReader()
-	if err != nil {
-		return reader, err
-	}
-	return reader, nil
-}
-
-// TODO: delete
-func uploadWork(user site.User, platform string, id string, r *http.Request) error {
-	files, err := reqFiles(r)
-	if err != nil {
-		return err
-	}
-
-	err = errors.Raise(site.ErrNoPlatform)
-	switch platform {
-	case "daymap":
-		err = daymap.UploadWork(user, id, files)
-	}
-
-	return err
-}
-
-// TODO: delete
-func removeWork(user site.User, platform, taskId string, filenames []string) error {
-	err := errors.Raise(site.ErrNoPlatform)
-
-	switch platform {
-	case "daymap":
-		err = daymap.RemoveWork(user, taskId, filenames)
-	}
-
-	return err
 }

@@ -23,47 +23,63 @@ func handleTask(r *http.Request, user site.User, platform, id, cmd string) (int,
 	var headers [][2]string
 
 	if cmd == "submit" {
-		err := submitTask(user, platform, id)
-		if err != nil {
-			logger.Debug(errors.New("failed to submit task", err))
+		school, ok := schools[user.School]
+		if !ok {
+			logger.Debug(errors.New("unsupported platform", nil))
 			data = statusServerErrorData
 			statusCode = 500
-		} else {
-			index := strings.Index(res, "/submit")
-			headers = [][2]string{{"Location", res[:index]}}
-			statusCode = 302
+			return statusCode, data, headers
 		}
+		err := school.Submit(user, platform, id)
+		if err != nil {
+			logger.Debug(errors.New("cannot submit task", err))
+			data = statusServerErrorData
+			statusCode = 500
+			return statusCode, data, headers
+		}
+		index := strings.Index(res, "/submit")
+		headers = [][2]string{{"Location", res[:index]}}
+		statusCode = 302
 	} else if cmd == "upload" {
-		err := uploadWork(user, platform, id, r)
-		if err != nil {
-			logger.Debug(errors.New("failed to upload work", err))
+		school, ok := schools[user.School]
+		if !ok {
+			logger.Debug(errors.New("unsupported platform", nil))
 			data = statusServerErrorData
 			statusCode = 500
-		} else {
-			index := strings.Index(res, "/upload")
-			headers = [][2]string{{"Location", res[:index]}}
-			statusCode = 302
+			return statusCode, data, headers
 		}
+		err := school.UploadWork(user, platform, id, r)
+		if err != nil {
+			logger.Debug(errors.New("cannot upload work", err))
+			data = statusServerErrorData
+			statusCode = 500
+			return statusCode, data, headers
+		}
+		index := strings.Index(res, "/upload")
+		headers = [][2]string{{"Location", res[:index]}}
+		statusCode = 302
 	} else if cmd == "remove" {
 		filenames := []string{}
-
 		for name := range r.URL.Query() {
 			filenames = append(filenames, name)
 		}
-
-		err := removeWork(user, platform, id, filenames)
-		if errors.Is(err, site.ErrNoPlatform) {
-			data = statusNotFoundData
-			statusCode = 404
-		} else if err != nil {
-			logger.Debug(errors.New("failed to remove work", err))
+		school, ok := schools[user.School]
+		if !ok {
+			logger.Debug(errors.New("unsupported platform", nil))
 			data = statusServerErrorData
 			statusCode = 500
-		} else {
-			index := strings.Index(res, "/remove")
-			headers = [][2]string{{"Location", res[:index]}}
-			statusCode = 302
+			return statusCode, data, headers
 		}
+		err := school.RemoveWork(user, platform, id, filenames)
+		if err != nil {
+			logger.Debug(errors.New("cannot remove worklink", err))
+			data = statusServerErrorData
+			statusCode = 500
+			return statusCode, data, headers
+		}
+		index := strings.Index(res, "/remove")
+		headers = [][2]string{{"Location", res[:index]}}
+		statusCode = 302
 	} else {
 		data = statusNotFoundData
 		statusCode = 404
@@ -102,7 +118,7 @@ func handleTaskReq(r *http.Request, user site.User) (int, pageData, [][2]string)
 		}
 		assignment, err := school.Task(user, platform, taskId)
 		if err != nil {
-			logger.Debug(errors.New("failed to get task", err))
+			logger.Debug(errors.New("cannot fetch task", err))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers

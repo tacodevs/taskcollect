@@ -341,8 +341,13 @@ func Task(user site.User, id string) (site.Task, error) {
 		task.Desc = page[:i]
 	}
 
+	// Hide submission option as Daymap has no concept of task submission.
 	task.Submitted = true
 	return task, nil
+}
+
+func Submit(user site.User, id string) error {
+	return errors.New("daymap does not support task submission", nil)
 }
 
 type chkJson struct {
@@ -420,11 +425,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 			// Stage 1: Retrieve a DayMap upload URL.
 
 			s1url := "https://gihs.daymap.net/daymap/dws/uploadazure.ashx"
-			utc, err := time.LoadLocation("UTC")
-			if err != nil {
-				return errors.New(`failed to load timezone "UTC"`, err)
-			}
-			timestamp := fmt.Sprintf("%d", time.Now().In(utc).UnixMilli())
+			timestamp := fmt.Sprintf("%d", time.Now().In(time.UTC).UnixMilli())
 
 			s1form := url.Values{}
 			s1form.Set("cmd", "UploadSas")
@@ -604,7 +605,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 	if mimeErr == io.EOF {
 		return nil
 	} else {
-		return errors.New("cannot parse files from multipart MIME request", err)
+		return errors.New("cannot parse multipart MIME", err)
 	}
 }
 

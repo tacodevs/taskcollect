@@ -25,12 +25,15 @@ func enrol(institutes ...string) {
 			//schools["gihs"].AddGraded(classroom.Graded)
 			schools["gihs"].SetLessons(daymap.Lessons)
 			//schools["gihs"].AddMessages(daymap.Messages)
+			schools["gihs"].AddRemoveWork("daymap", daymap.RemoveWork)
 			//schools["gihs"].SetReports(learnprof.Reports)
 			//schools["gihs"].AddResources("daymap", daymap.Resources)
 			//schools["gihs"].AddResources("classroom", classroom.Resources)
+			schools["gihs"].AddSubmit("daymap", daymap.Submit)
 			schools["gihs"].AddTask("daymap", daymap.Task)
 			schools["gihs"].AddTasks("daymap", daymap.Tasks)
 			//schools["gihs"].AddTasks("classroom", classroom.Tasks)
+			schools["gihs"].AddUploadWork("daymap", daymap.UploadWork)
 		case "uofa":
 			schools["uofa"] = site.NewMux()
 			schools["uofa"].AddAuth(myadelaide.Auth)
@@ -41,8 +44,11 @@ func enrol(institutes ...string) {
 			schools["example"].AddClasses(example.Classes)
 			schools["example"].AddGraded(example.Graded)
 			schools["example"].SetLessons(example.Lessons)
+			schools["example"].AddRemoveWork("example", example.RemoveWork)
+			schools["example"].AddSubmit("example", example.Submit)
 			schools["example"].AddTask("example", example.Task)
 			schools["example"].AddTasks("example", example.Tasks)
+			schools["example"].AddUploadWork("example", example.UploadWork)
 		}
 	}
 }
