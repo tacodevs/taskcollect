@@ -312,6 +312,31 @@ func (m *Mux) Reports(user User) ([]Report, error) {
 	return reports, nil
 }
 
+// Resources returns a list of resources for all specified classes.
+func (m *Mux) Resources(user User, classes ...Class) ([]Resource, error) {
+	var resources []Resource
+	ch := make(chan Pair[[]Resource, error])
+	classMap := make(map[string][]Class)
+	for _, class := range classes {
+		classMap[class.Platform] = append(classMap[class.Platform], class)
+	}
+	for platform, courses := range classMap {
+		go m.resources[platform](user, ch, courses)
+	}
+	for range m.tasks {
+		result := <-ch
+		list, err := result.First, result.Second
+		if err != nil {
+			return nil, errors.New("cannot get resources list", err)
+		}
+		resources = append(resources, list...)
+	}
+	sort.SliceStable(resources, func(i, j int) bool {
+		return resources[i].Posted.After(resources[j].Posted)
+	})
+	return resources, nil
+}
+
 // Submit submits the task with given id from the specified platform. An error
 // is returned if either the submission process fails or the platform is not
 // supported by the platform multiplexer m.
@@ -349,7 +374,7 @@ func (m *Mux) Tasks(user User, classes ...Class) ([]Task, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get task list", err)
+			return nil, errors.New("cannot get tasks list", err)
 		}
 		tasks = append(tasks, list...)
 	}

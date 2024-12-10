@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"git.sr.ht/~kvo/go-std/defs"
@@ -37,180 +36,198 @@ func nextRes(buf, planDiv, fileDiv, linkDiv string) (int, string) {
 	}
 }
 
-// Return auxillary class info from a link to a DayMap class page.
-func auxClassInfo(creds User, link string) (string, string, error) {
+// Return class name and secondary "courseId" from specified link to Daymap class page.
+func auxClassInfo(user site.User, link string) (string, string, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
-		return "", "", errors.New("GET request failed", err)
+		return "", "", errors.New("cannot create aux class request", err)
 	}
 
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", user.SiteTokens["daymap"])
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", "", errors.New("failed to get resp", err)
+		return "", "", errors.New("cannot execute aux class request", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", errors.New("failed to read resp.Body", err)
+		return "", "", errors.New("cannot read aux class response body", err)
 	}
 
-	page := string(respBody)
-	re, err := regexp.Compile(`new Classroom\([0-9]+,null,[0-9]+,`)
+	page := string(body)
+	exp, err := regexp.Compile(`new Classroom\([0-9]+,null,[0-9]+,`)
 	if err != nil {
-		return "", "", errors.New("failed to compile regex", err)
+		return "", "", errors.New("cannot compile regex", err)
 	}
-	courseId, err := defs.Get(strings.Split(re.FindString(page), ","), 2)
+	courseId, err := defs.Get(strings.Split(exp.FindString(page), ","), 2)
 	if err != nil {
-		return "", "", errors.New("cannot get class ID", err)
+		return "", "", errors.New("missing secondary course ID", err)
 	}
 
 	classDiv := `<td><span id="ctl00_ctl00_cp_cp_divHeader" class="Header14" style="padding-left: 20px">`
 	i := strings.Index(page, classDiv)
 	if i == -1 {
-		return "", "", errors.New("can't find class name", errors.Raise(site.ErrInvalidResp))
+		return "", "", errors.New("missing class name", nil)
 	}
 	i += len(classDiv)
 	page = page[i:]
 	i = strings.Index(page, "</span>")
 	if i == -1 {
-		return "", "", errors.New("can't find class name end", errors.Raise(site.ErrInvalidResp))
+		return "", "", errors.New("unterminated class name", nil)
 	}
 	class := page[:i]
 
 	return class, courseId, nil
 }
 
-// Get a list of resources for a DayMap class.
-func getClassRes(creds User, id string, res *[]site.Resource, e *error, wg *sync.WaitGroup) {
-	defer wg.Done()
+func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class site.Class) {
+	var result site.Pair[[]site.Resource, error]
 	resUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx/InitialiseResources"
-	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + id
+	classUrl := "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + class.Id
+	var resources []site.Resource
 
-	class, courseId, err := auxClassInfo(creds, classUrl)
+	className, courseId, err := auxClassInfo(user, classUrl)
 	if err != nil {
-		*e = errors.New("failed retrieving secondary class ID", err)
+		result.Second = errors.New("cannot fetch secondary class ID", err)
+		c <- result
 		return
 	}
 
-	jsonReq := fmt.Sprintf(`{"classId":%s,"courseId":%s}`, id, courseId)
+	form := fmt.Sprintf(`{"classId":%s,"courseId":%s}`, class.Id, courseId)
 	client := &http.Client{}
 
-	req, err := http.NewRequest("POST", resUrl, strings.NewReader(jsonReq))
+	req, err := http.NewRequest("POST", resUrl, strings.NewReader(form))
 	if err != nil {
-		*e = errors.New("GET request failed", err)
+		result.Second = errors.New("cannot create resources request", err)
+		c <- result
 		return
 	}
 
 	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 	req.Header.Set("Referer", classUrl)
+
 	resp, err := client.Do(req)
 	if err != nil {
-		*e = errors.New("failed to get resp", err)
+		result.Second = errors.New("cannot execute resources request", err)
+		c <- result
 		return
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		*e = errors.New("failed to read resp.Body", err)
+		result.Second = errors.New("cannot read resources response body", err)
+		c <- result
 		return
 	}
 
-	re, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
+	exp, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
 	if err != nil {
-		*e = errors.New("failed to compile regex", err)
+		result.Second = errors.New("cannot compile regex", err)
+		c <- result
 		return
 	}
 
 	var data resJson
-	err = json.Unmarshal(respBody, &data)
+	err = json.Unmarshal(body, &data)
 	if err != nil {
-		*e = errors.New("failed to unmarshal JSON", err)
+		result.Second = errors.New("cannot unmarshal JSON", err)
+		c <- result
 		return
 	}
 
-	b := data.D
+	page := data.D
 	planDiv := `</td><td class='active itm' onclick="DMU.ViewPlan(`
 	fileDiv := `<div class='fLinkDiv'><a href='#' onclick="DMU.OpenAttachment(`
 	linkDiv := `<a href='javascript:DMU.OpenNewWindow("`
-	i, div := nextRes(b, planDiv, fileDiv, linkDiv)
+	i, div := nextRes(page, planDiv, fileDiv, linkDiv)
 
 	for i != -1 {
-		resource := site.Resource{}
-		resource.Class = class
-		resource.Platform = "daymap"
-		dateRegion := b[:i]
-		b = b[i:]
-		dates := re.FindAllString(dateRegion, -1)
+		resource := site.Resource{
+			Class:    className,
+			Platform: "daymap",
+		}
+		dateRegion := page[:i]
+		page = page[i:]
+		dates := exp.FindAllString(dateRegion, -1)
 
-		if len(dates) == 0 && strings.Index(b, planDiv) == -1 && strings.Index(b, fileDiv) == -1 {
-			*e = errors.Raise(site.ErrNoDateFound)
+		if len(dates) == 0 && strings.Index(page, planDiv) == -1 && strings.Index(page, fileDiv) == -1 {
+			result.Second = errors.New("resource has no post date", nil)
+			c <- result
 			return
 		} else if len(dates) > 0 {
 			postStr := dates[len(dates)-1]
-			resource.Posted, err = time.ParseInLocation("2/01/2006", postStr, creds.Timezone)
+			resource.Posted, err = time.ParseInLocation("2/01/2006", postStr, user.Timezone)
 			if err != nil {
-				*e = errors.New("failed to parse time", err)
+				result.Second = errors.New("cannot parse time", err)
+				c <- result
 				return
 			}
 		} else {
-			if _, err = defs.Get([]byte(b), len(div)); err != nil {
-				*e = errors.New("invalid HTML response", err)
+			if _, err = defs.Get([]byte(page), len(div)); err != nil {
+				result.Second = errors.New("invalid HTML response", err)
+				c <- result
 				return
 			}
-			b = b[len(div):]
-			i, div = nextRes(b, planDiv, fileDiv, linkDiv)
+			page = page[len(div):]
+			i, div = nextRes(page, planDiv, fileDiv, linkDiv)
 			continue
 		}
 
 		i = len(div)
-		if _, err = defs.Get([]byte(b), i); err != nil {
-			*e = errors.New("invalid HTML response", err)
+		if _, err = defs.Get([]byte(page), i); err != nil {
+			result.Second = errors.New("invalid HTML response", err)
+			c <- result
 			return
 		}
-		b = b[i:]
+		page = page[i:]
 
-		i = strings.Index(b, ");")
+		i = strings.Index(page, ");")
 
 		if i == -1 {
-			*e = errors.Raise(site.ErrInvalidResp)
+			result.Second = errors.New("invalid HTML response", nil)
+			c <- result
 			return
 		}
 
-		resource.Id = b[:i]
+		resource.Id = page[:i]
 
 		if div == fileDiv {
-			i = strings.Index(b, "&nbsp;")
+			i = strings.Index(page, "&nbsp;")
 			if i == -1 {
-				*e = errors.Raise(site.ErrInvalidResp)
+				result.Second = errors.New("invalid HTML response", nil)
+				c <- result
 				return
 			}
 
 			i += len("&nbsp;")
-			b = b[i:]
-			i = strings.Index(b, "</a>")
+			page = page[i:]
+			i = strings.Index(page, "</a>")
 			if i == -1 {
-				*e = errors.Raise(site.ErrInvalidResp)
+				result.Second = errors.New("invalid HTML response", nil)
+				c <- result
 				return
 			}
 		} else {
 			i += len(`);;"><div class='lpTitle'>`)
-			b = b[i:]
-			i = strings.Index(b, "</div>")
+			page = page[i:]
+			i = strings.Index(page, "</div>")
 			if i == -1 {
-				*e = errors.Raise(site.ErrInvalidResp)
+				result.Second = errors.New("invalid HTML response", nil)
+				c <- result
 				return
 			}
 		}
 
-		if _, err = defs.Get([]byte(b), i); err != nil {
-			*e = errors.New("invalid HTML response", err)
+		if _, err = defs.Get([]byte(page), i); err != nil {
+			result.Second = errors.New("invalid HTML response", err)
+			c <- result
 			return
 		}
-		resource.Name = b[:i]
+		resource.Name = page[:i]
 
 		if div == fileDiv {
 			resource.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + resource.Id
@@ -219,102 +236,38 @@ func getClassRes(creds User, id string, res *[]site.Resource, e *error, wg *sync
 			resource.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + resource.Id
 		}
 
-		resource.Id = id + "-" + resource.Id
-		*res = append(*res, resource)
-		if _, err = defs.Get([]byte(b), i); err != nil {
-			*e = errors.New("invalid HTML response", err)
+		resource.Id = class.Id + "-" + resource.Id
+		resources = append(resources, resource)
+
+		if _, err = defs.Get([]byte(page), i); err != nil {
+			result.Second = errors.New("invalid HTML response", err)
+			c <- result
 			return
 		}
-		b = b[i:]
-		i, div = nextRes(b, planDiv, fileDiv, linkDiv)
+		page = page[i:]
+		i, div = nextRes(page, planDiv, fileDiv, linkDiv)
 	}
+	result.First = resources
+	c <- result
 }
 
-// Get a list of resources from DayMap for a user.
-func ListRes(creds User, r chan []site.Resource, e chan []error) {
-	homeUrl := "https://gihs.daymap.net/daymap/student/dayplan.aspx"
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", homeUrl, nil)
-	if err != nil {
-		r <- nil
-		e <- []error{errors.New("GET request failed", err)}
-		return
+func Resources(user site.User, c chan site.Pair[[]site.Resource, error], classes []site.Class) {
+	var result site.Pair[[]site.Resource, error]
+	var resources []site.Resource
+	ch := make(chan site.Pair[[]site.Resource, error])
+	for _, class := range classes {
+		go classRes(user, ch, class)
 	}
-
-	req.Header.Set("Cookie", creds.Token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		r <- nil
-		e <- []error{errors.New("failed to get resp", err)}
-		return
-	}
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		r <- nil
-		e <- []error{errors.New("failed to read resp.Body", err)}
-		return
-	}
-
-	classes := map[string]string{}
-	b := string(respBody)
-	i := strings.Index(b, "plans/class.aspx?id=")
-
-	for i != -1 {
-		b = b[i:]
-		i = len("plans/class.aspx?id=")
-		b = b[i:]
-		i = strings.Index(b, "'>")
-
-		if i == -1 {
-			r <- nil
-			e <- []error{errors.Raise(site.ErrInvalidResp)}
+	for range classes {
+		sent := <-ch
+		list, err := sent.First, sent.Second
+		if err != nil {
+			result.Second = errors.New("", err)
+			c <- result
 			return
 		}
-
-		id := b[:i]
-		b = b[i+2:]
-		i = strings.Index(b, "</a>")
-
-		if i == -1 {
-			r <- nil
-			e <- []error{errors.Raise(site.ErrInvalidResp)}
-			return
-		}
-
-		class := b[:i]
-		b = b[i:]
-		classes[class] = id
-		i = strings.Index(b, "plans/class.aspx?id=")
+		resources = append(resources, list...)
 	}
-
-	unordered := make([][]site.Resource, len(classes))
-	errs := make([]error, len(classes))
-	var wg sync.WaitGroup
-	x := 0
-
-	for _, id := range classes {
-		wg.Add(1)
-		go getClassRes(creds, id, &unordered[x], &errs[x], &wg)
-		x++
-	}
-
-	wg.Wait()
-
-	if errors.Join(errs...) != nil {
-		r <- nil
-		e <- errs
-		return
-	}
-
-	resources := []site.Resource{}
-
-	for _, resList := range unordered {
-		resources = append(resources, resList...)
-	}
-
-	r <- resources
-	e <- nil
+	result.First = resources
+	c <- result
 }

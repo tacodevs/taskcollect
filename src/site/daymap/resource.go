@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"git.sr.ht/~kvo/go-std/defs"
@@ -27,12 +26,25 @@ func fileRes(creds User, courseId, id string) (site.Resource, error) {
 	res.Id = courseId + "-f" + id
 	res.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + id
 
-	var resources []site.Resource
-	var err error
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go getClassRes(creds, courseId, &resources, &err, &wg)
-	wg.Wait()
+	user := site.User{
+		SiteTokens: map[string]string{"daymap": creds.Token},
+		Timezone: creds.Timezone,
+	}
+	class := site.Class{
+		Link: "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + courseId,
+		Platform: "daymap",
+		Id: courseId,
+	}
+	//var resources []site.Resource
+	//var err error
+	//var wg sync.WaitGroup
+	//wg.Add(1)
+	//go getClassRes(creds, courseId, &resources, &err, &wg)
+	//wg.Wait()
+	ch := make(chan site.Pair[[]site.Resource, error])
+	go classRes(user, ch, class)
+	sent := <-ch
+	resources, err := sent.First, sent.Second
 	if err != nil {
 		return site.Resource{}, errors.New("failed retrieving class resources", err)
 	}
@@ -140,11 +152,25 @@ func planRes(creds User, courseId, id string) (site.Resource, error) {
 
 	res.Desc = page[:i]
 
-	var resources []site.Resource
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go getClassRes(creds, courseId, &resources, &err, &wg)
-	wg.Wait()
+	user := site.User{
+		SiteTokens: map[string]string{"daymap": creds.Token},
+		Timezone: creds.Timezone,
+	}
+	class := site.Class{
+		Link: "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + courseId,
+		Platform: "daymap",
+		Id: courseId,
+	}
+	//var resources []site.Resource
+	//var err error
+	//var wg sync.WaitGroup
+	//wg.Add(1)
+	//go getClassRes(creds, courseId, &resources, &err, &wg)
+	//wg.Wait()
+	ch := make(chan site.Pair[[]site.Resource, error])
+	go classRes(user, ch, class)
+	sent := <-ch
+	resources, err := sent.First, sent.Second
 	if err != nil {
 		return site.Resource{}, errors.New("failed retrieving class resources", err)
 	}

@@ -31,7 +31,7 @@ func getTasks(user site.User) map[string][]site.Task {
 	}
 	tasks, err := school.Tasks(user, classes...)
 	if err != nil {
-		logger.Debug(errors.New("cannot fetch task lists", err))
+		logger.Debug(errors.New("cannot fetch tasks list", err))
 		return filtered
 	}
 	for _, task := range tasks {
@@ -54,7 +54,7 @@ func getTasks(user site.User) map[string][]site.Task {
 		return filtered["notDue"][i].Posted.Unix() > filtered["notDue"][j].Posted.Unix()
 	})
 	sort.SliceStable(filtered["overdue"], func(i, j int) bool {
-		return filtered["overdue"][i].Posted.Unix() > filtered["overdue"][j].Posted.Unix()
+		return filtered["overdue"][i].Due.Unix() > filtered["overdue"][j].Due.Unix()
 	})
 	sort.SliceStable(filtered["active"], func(i, j int) bool {
 		return filtered["active"][i].Due.Unix() < filtered["active"][j].Due.Unix()
@@ -62,59 +62,38 @@ func getTasks(user site.User) map[string][]site.Task {
 	return filtered
 }
 
+// TODO: delete after v2
 func getResources(user site.User) ([]string, map[string][]site.Resource) {
-	dmResChan := make(chan []site.Resource)
-	dmErrChan := make(chan []error)
-
-	dmCreds := daymap.User{
-		Timezone: user.Timezone,
-		Token:    user.SiteTokens["daymap"],
+	var classList []string
+	resMap := make(map[string][]site.Resource)
+	school, ok := schools[user.School]
+	if !ok {
+		logger.Debug(errors.New("unsupported platform", nil))
+		return classList, resMap
 	}
-
-	go daymap.ListRes(dmCreds, dmResChan, dmErrChan)
-
-	unordered := map[string][]site.Resource{}
-
-	dmResLinks, errs := <-dmResChan, <-dmErrChan
-	for _, err := range errs {
-		if err != nil {
-			logger.Debug(errors.New("failed to get list of resources from daymap", err))
-		}
+	classes, err := school.Classes(user)
+	if err != nil {
+		logger.Debug(errors.New("cannot fetch class list", err))
+		return classList, resMap
 	}
-
-	for _, r := range dmResLinks {
-		unordered[r.Class] = append(unordered[r.Class], site.Resource(r))
+	resources, err := school.Resources(user, classes...)
+	if err != nil {
+		logger.Debug(errors.New("cannot fetch resources list", err))
+		return classList, resMap
 	}
-
-	resources := map[string][]site.Resource{}
-	classes := []string{}
-
-	for c := range unordered {
-		classes = append(classes, c)
+	for _, resource := range resources {
+		resMap[resource.Class] = append(resMap[resource.Class], resource)
 	}
-
-	sort.Strings(classes)
-
-	for c, resList := range unordered {
-		times := map[int]int{}
-		resIndexes := []int{}
-
-		for i, r := range resList {
-			posted := int(r.Posted.UTC().Unix())
-			times[i] = posted
-			resIndexes = append(resIndexes, i)
-		}
-
-		sort.SliceStable(resIndexes, func(i, j int) bool {
-			return times[resIndexes[i]] > times[resIndexes[j]]
+	for class := range resMap {
+		classList = append(classList, class)
+	}
+	sort.Strings(classList)
+	for class := range resMap {
+		sort.SliceStable(resMap[class], func(i, j int) bool {
+			return resMap[class][i].Posted.Unix() > resMap[class][j].Posted.Unix()
 		})
-
-		for _, x := range resIndexes {
-			resources[c] = append(resources[c], resList[x])
-		}
 	}
-
-	return classes, resources
+	return classList, resMap
 }
 
 // Get a resource from the given platform.
