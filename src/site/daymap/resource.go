@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
@@ -13,198 +12,166 @@ import (
 	"main/site"
 )
 
-// TODO: delete
-type User struct {
-	Timezone *time.Location
-	Token    string
-}
-
-// Get a file resource from DayMap for a user.
-func fileRes(creds User, courseId, id string) (site.Resource, error) {
-	res := site.Resource{}
-	res.Platform = "daymap"
-	res.Id = courseId + "-f" + id
-	res.Link = "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + id
-
-	user := site.User{
-		SiteTokens: map[string]string{"daymap": creds.Token},
-		Timezone: creds.Timezone,
-	}
-	class := site.Class{
-		Link: "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + courseId,
-		Platform: "daymap",
-		Id: courseId,
-	}
-	//var resources []site.Resource
-	//var err error
-	//var wg sync.WaitGroup
-	//wg.Add(1)
-	//go getClassRes(creds, courseId, &resources, &err, &wg)
-	//wg.Wait()
+func fileRes(user site.User, id string, class site.Class) (site.Resource, error) {
 	ch := make(chan site.Pair[[]site.Resource, error])
+	resource := site.Resource{
+		Link:     "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + id,
+		Platform: "daymap",
+		Id:       class.Id + "-f" + id,
+	}
 	go classRes(user, ch, class)
 	sent := <-ch
 	resources, err := sent.First, sent.Second
 	if err != nil {
-		return site.Resource{}, errors.New("failed retrieving class resources", err)
+		return site.Resource{}, errors.New("cannot fetch resources list", err)
 	}
-
-	for _, r := range resources {
-		if r.Id == res.Id {
-			res.Posted = r.Posted
-			res.Name = r.Name
-			res.Class = r.Class
+	for _, res := range resources {
+		if res.Id == resource.Id {
+			resource.Posted = res.Posted
+			resource.Name = res.Name
+			resource.Class = res.Class
+			break
 		}
 	}
-
-	res.ResLinks = [][2]string{{res.Link, res.Name}}
-
-	return res, nil
+	resource.ResLinks = [][2]string{{resource.Link, resource.Name}}
+	return resource, nil
 }
 
-// Get a plan resource from DayMap for a user.
-func planRes(creds User, courseId, id string) (site.Resource, error) {
-	res := site.Resource{}
-	res.Platform = "daymap"
-	res.Id = courseId + "-" + id
-	res.Link = "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + id
+func planRes(user site.User, id string, class site.Class) (site.Resource, error) {
+	ch := make(chan site.Pair[[]site.Resource, error])
+	resource := site.Resource{
+		Link:     "https://gihs.daymap.net/DayMap/curriculum/plan.aspx?id=" + id,
+		Platform: "daymap",
+		Id:       class.Id + "-" + id,
+	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", res.Link, nil)
+	req, err := http.NewRequest("GET", resource.Link, nil)
 	if err != nil {
-		return site.Resource{}, errors.New("GET request failed", err)
+		return site.Resource{}, errors.New("cannot create resource request", err)
 	}
 
-	req.Header.Set("Cookie", creds.Token)
+	req.Header.Set("Cookie", user.SiteTokens["daymap"])
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return site.Resource{}, errors.New("failed to get resp", err)
+		return site.Resource{}, errors.New("cannot execute resource request", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return site.Resource{}, errors.New("failed to read resp.Body", err)
+		return site.Resource{}, errors.New("cannot read resource response body", err)
 	}
 
-	page := string(respBody)
+	page := string(body)
 	nameDiv := `<div id="ctl00_cp_divPlan"><div><h3>`
 	i := strings.Index(page, nameDiv)
+
 	if i == -1 {
-		return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+		return site.Resource{}, errors.New("invalid HTML response", nil)
 	}
 
 	i += len(nameDiv)
 	page = page[i:]
 	fileDiv := `</h3></div><br>`
 	i = strings.Index(page, fileDiv)
+
 	if i == -1 {
-		return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+		return site.Resource{}, errors.New("invalid HTML response", nil)
 	}
 
-	res.Name = page[:i]
+	resource.Name = page[:i]
 	i += len(fileDiv)
 	page = page[i:]
 	descDiv := fmt.Sprintf(`<div  ><div class="lpAll" id="Note%s">`, id)
 	i = strings.Index(page, descDiv)
+
 	if i == -1 {
-		return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+		return site.Resource{}, errors.New("invalid HTML response", nil)
 	}
 
 	fileSect := page[:i]
 	i += len(descDiv)
 	page = page[i:]
+
 	for i = strings.Index(fileSect, "DMU.OpenAttachment("); i != -1; {
 		i += len("DMU.OpenAttachment(")
 		fileSect = fileSect[i:]
 		i = strings.Index(fileSect, ");")
+
 		if i == -1 {
-			return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+			return site.Resource{}, errors.New("invalid HTML response", nil)
 		}
+
 		rlLink := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + fileSect[:i]
 		fileSect = fileSect[i:]
-
 		i = strings.Index(fileSect, "&nbsp;")
+
 		if i == -1 {
-			return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+			return site.Resource{}, errors.New("invalid HTML response", nil)
 		}
+
 		i += len("&nbsp;")
 		fileSect = fileSect[i:]
 		i = strings.Index(fileSect, "</a>")
+
 		if i == -1 {
-			return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+			return site.Resource{}, errors.New("invalid HTML response", nil)
 		}
+
 		rlName := fileSect[:i]
 		fileSect = fileSect[i:]
+		resource.ResLinks = append(resource.ResLinks, [2]string{rlLink, rlName})
 
-		res.ResLinks = append(res.ResLinks, [2]string{rlLink, rlName})
 		i = strings.Index(fileSect, "DMU.OpenAttachment(")
 	}
 
-	endDiv := fmt.Sprintf(
-		"</div></div></div>\r\n%s\r\n    \r\n </div>\r\n\r\n%s",
-		` <div style="margin: 25px 0px; width:25%;">`,
-		"    </form>\r\n\r\n    <script>\r\n",
-	)
+	endDiv := "</div></div></div>\r\n" + ` <div style="margin: 25px 0px; width:25%;">`
+	endDiv += "\r\n    \r\n </div>\r\n\r\n    </form>\r\n\r\n    <script>\r\n"
 	i = strings.Index(page, endDiv)
 	if i == -1 {
-		return site.Resource{}, errors.Raise(site.ErrInvalidResp)
+		return site.Resource{}, errors.New("invalid HTML response", nil)
 	}
 
-	res.Desc = page[:i]
-
-	user := site.User{
-		SiteTokens: map[string]string{"daymap": creds.Token},
-		Timezone: creds.Timezone,
-	}
-	class := site.Class{
-		Link: "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + courseId,
-		Platform: "daymap",
-		Id: courseId,
-	}
-	//var resources []site.Resource
-	//var err error
-	//var wg sync.WaitGroup
-	//wg.Add(1)
-	//go getClassRes(creds, courseId, &resources, &err, &wg)
-	//wg.Wait()
-	ch := make(chan site.Pair[[]site.Resource, error])
+	resource.Desc = page[:i]
 	go classRes(user, ch, class)
 	sent := <-ch
 	resources, err := sent.First, sent.Second
 	if err != nil {
-		return site.Resource{}, errors.New("failed retrieving class resources", err)
+		return site.Resource{}, errors.New("cannot fetch resources list", err)
 	}
 
-	for _, r := range resources {
-		if r.Id == res.Id {
-			res.Posted = r.Posted
-			res.Class = r.Class
+	for _, res := range resources {
+		if res.Id == resource.Id {
+			resource.Posted = res.Posted
+			resource.Class = res.Class
+			break
 		}
 	}
 
-	return res, nil
+	return resource, nil
 }
 
-// Get a resource from DayMap for a user.
-func GetResource(creds User, id string) (site.Resource, error) {
-	idSlice := strings.Split(id, "-")
+func Resource(user site.User, id string) (site.Resource, error) {
 	var res site.Resource
 	var err error
-
-	courseId, err := defs.Get(idSlice, 0)
+	ids := strings.Split(id, "-")
+	class := site.Class{
+		Platform: "daymap",
+	}
+	class.Id, err = defs.Get(ids, 0)
 	if err != nil {
 		return site.Resource{}, errors.New("invalid resource ID", err)
 	}
-	resId, err := defs.Get(idSlice, 1)
+	class.Link = "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + class.Id
+	resId, err := defs.Get(ids, 1)
 	if err != nil {
 		return site.Resource{}, errors.New("invalid resource ID", err)
 	}
-
 	if strings.HasPrefix(resId, "f") {
-		res, err = fileRes(creds, courseId, resId[1:])
+		res, err = fileRes(user, resId[1:], class)
 	} else {
-		res, err = planRes(creds, courseId, resId)
+		res, err = planRes(user, resId, class)
 	}
-
 	return res, err
 }

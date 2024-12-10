@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"io"
 	"crypto/rand"
+	"io"
 
 	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
@@ -413,15 +413,15 @@ func TimetableIcal(user site.User, start, end time.Time, w http.ResponseWriter) 
 	}
 	iCalString += "END:VCALENDAR\n"
 
-	_, err = io.WriteString(w, iCalString);
-	if err!=nil{
+	_, err = io.WriteString(w, iCalString)
+	if err != nil {
 		w.WriteHeader(500)
 		return errors.New("Failed to write calendar file", err)
 	}
 	return nil
 }
 
-func GenerateUUID() (u *UUID, err error){
+func GenerateUUID() (u *UUID, err error) {
 	// generates a version 4 UUID and returns the byte string
 	u = new(UUID)
 	_, err = rand.Read(u[:])

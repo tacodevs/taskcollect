@@ -22,7 +22,7 @@ var core = []site.Resource{
 		Link:     "https://example.com",
 		Desc:     "Some examples to help guide you with your exhibition ideas.",
 		Posted:   time.Date(2022, 3, 27, 8, 56, 13, 0, time.UTC),
-		ResLinks: [][2]string{{"https://example.com/1", ""}, {"https://example.com/2", ""}, {"https://example.com/3", ""}},
+		ResLinks: [][2]string{{"https://example.com/1", "Commentary 1"}, {"https://example.com/2", "Commentary 2"}, {"https://example.com/3", "Commentary 3"}},
 		Platform: "example",
 		Id:       "985712403",
 	},

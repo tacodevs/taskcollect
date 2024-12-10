@@ -378,9 +378,18 @@ func resourceHandler(w http.ResponseWriter, r *http.Request) {
 		resId := platform[index+1:]
 		platform = platform[:index]
 
-		res, err := getResource(platform, resId, user)
+		school, ok := schools[user.School]
+		if !ok {
+			logger.Debug(errors.New("unsupported platform", nil))
+			w.WriteHeader(500)
+			data := statusServerErrorData
+			data.User = userData{Name: user.DispName}
+			genPage(w, data)
+			return
+		}
+		res, err := school.Resource(user, platform, resId)
 		if err != nil {
-			logger.Debug(errors.New("failed to get resource", err))
+			logger.Debug(errors.New("cannot fetch task", err))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}

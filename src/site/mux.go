@@ -87,6 +87,12 @@ func (m *Mux) AddRemoveWork(platform string, f func(User, string, []string) erro
 	m.remove[platform] = f
 }
 
+// AddResource adds the resource information retrieval function f to m for
+// platform multiplexing.
+func (m *Mux) AddResource(platform string, f func(User, string) (Resource, error)) {
+	m.resource[platform] = f
+}
+
 // AddResources adds the class resources retrieval function f to m for platform
 // multiplexing.
 func (m *Mux) AddResources(platform string, f func(User, chan Pair[[]Resource, error], []Class)) {
@@ -312,6 +318,17 @@ func (m *Mux) Reports(user User) ([]Report, error) {
 	return reports, nil
 }
 
+// Resource returns the resource specified by id from the given platform. An
+// error is returned if either the task information could not be retrieved or
+// the platform is not supported by the platform multiplexer m.
+func (m *Mux) Resource(user User, platform, id string) (Resource, error) {
+	f, ok := m.resource[platform]
+	if !ok {
+		return Resource{}, errors.New("unsupported platform", nil)
+	}
+	return f(user, id)
+}
+
 // Resources returns a list of resources for all specified classes.
 func (m *Mux) Resources(user User, classes ...Class) ([]Resource, error) {
 	var resources []Resource
@@ -348,9 +365,9 @@ func (m *Mux) Submit(user User, platform, id string) error {
 	return f(user, id)
 }
 
-// Task returns the task information specified by id from the given platform. An
-// error is returned if either the task information could not be retrieved or
-// the platform is not supported by the platform multiplexer m.
+// Task returns the task specified by id from the given platform. An error is
+// returned if either the task could not be retrieved or the platform is not
+// supported by the platform multiplexer m.
 func (m *Mux) Task(user User, platform, id string) (Task, error) {
 	f, ok := m.task[platform]
 	if !ok {

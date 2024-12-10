@@ -1,8 +1,8 @@
 package site
 
 import (
-	"net/mail"
 	"image/color"
+	"net/mail"
 	"time"
 )
 

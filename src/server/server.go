@@ -144,7 +144,7 @@ func initTemplates(respath string) error {
 		}
 	}
 	if filesMissing {
-		errStr := fmt.Errorf("%v:\n%+v", site.ErrMissingFiles.Error(), missingFiles)
+		errStr := fmt.Errorf("%v:\n%+v", "the following files are missing", missingFiles)
 		logger.Fatal(errors.New(errStr.Error(), nil))
 	}
 

@@ -14,15 +14,15 @@ import (
 
 func Task(user site.User, id string) (site.Task, error) {
 	tasks := map[string]site.Task{
-		"783663248": bio[0],
-		"873468673": bio[1],
-		"725987605": chem[0],
-		"576252975": chem[1],
-		"756438139": english[0],
-		"723671061": history[0],
-		"547394651": history[1],
-		"125726502": maths[0],
-		"196728422": maths[1],
+		bio[0].Id:     bio[0],
+		bio[1].Id:     bio[1],
+		chem[0].Id:    chem[0],
+		chem[1].Id:    chem[1],
+		english[0].Id: english[0],
+		history[0].Id: history[0],
+		history[1].Id: history[1],
+		maths[0].Id:   maths[0],
+		maths[1].Id:   maths[1],
 	}
 	task, exists := tasks[id]
 	if !exists {
@@ -33,15 +33,15 @@ func Task(user site.User, id string) (site.Task, error) {
 
 func Submit(user site.User, id string) error {
 	tasks := map[string]*site.Task{
-		"783663248": &(bio[0]),
-		"873468673": &(bio[1]),
-		"725987605": &(chem[0]),
-		"576252975": &(chem[1]),
-		"756438139": &(english[0]),
-		"723671061": &(history[0]),
-		"547394651": &(history[1]),
-		"125726502": &(maths[0]),
-		"196728422": &(maths[1]),
+		bio[0].Id:     &(bio[0]),
+		bio[1].Id:     &(bio[1]),
+		chem[0].Id:    &(chem[0]),
+		chem[1].Id:    &(chem[1]),
+		english[0].Id: &(english[0]),
+		history[0].Id: &(history[0]),
+		history[1].Id: &(history[1]),
+		maths[0].Id:   &(maths[0]),
+		maths[1].Id:   &(maths[1]),
 	}
 	_, exists := tasks[id]
 	if !exists {
@@ -72,7 +72,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 		id2, _ := strconv.Atoi(strings.TrimPrefix(task.WorkLinks[j][0], "https://example.com/"))
 		return id1 < id2
 	})
-	index := len(task.WorkLinks)-1
+	index := len(task.WorkLinks) - 1
 	i := 0
 	if index != -1 {
 		last := task.WorkLinks[index]

@@ -8,7 +8,6 @@ import (
 
 	"main/logger"
 	"main/site"
-	"main/site/daymap"
 )
 
 // TODO: delete after v2
@@ -62,7 +61,7 @@ func getTasks(user site.User) map[string][]site.Task {
 	return filtered
 }
 
-// TODO: delete after v2
+// TODO: refactor
 func getResources(user site.User) ([]string, map[string][]site.Resource) {
 	var classList []string
 	resMap := make(map[string][]site.Resource)
@@ -94,23 +93,4 @@ func getResources(user site.User) ([]string, map[string][]site.Resource) {
 		})
 	}
 	return classList, resMap
-}
-
-// Get a resource from the given platform.
-func getResource(platform, resId string, user site.User) (site.Resource, error) {
-	res := site.Resource{}
-	err := errors.Raise(site.ErrNoPlatform)
-
-	switch platform {
-	case "daymap":
-		dmCreds := daymap.User{
-			Timezone: user.Timezone,
-			Token:    user.SiteTokens["daymap"],
-		}
-		dmRes, dmErr := daymap.GetResource(dmCreds, resId)
-		res = site.Resource(dmRes)
-		err = dmErr
-	}
-
-	return res, err
 }
