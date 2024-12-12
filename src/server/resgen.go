@@ -458,7 +458,7 @@ func genRes(resURL string, user site.User) (pageData, error) {
 		}
 
 	} else {
-		return data, site.ErrNotFound
+		return data, errors.New(nil, "cannot find resource")
 	}
 
 	return data, nil

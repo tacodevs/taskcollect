@@ -60,7 +60,7 @@ func Run(version string, tlsConn bool) {
 
 	err = initTemplates(respath)
 	if err != nil {
-		logger.Fatal(errors.New(err, "%s for HTML templates", site.ErrInitFailed.Error()))
+		logger.Fatal(errors.New(err, "initialization failed for HTML templates"))
 	}
 	logger.Info("Successfully initialized HTML templates")
 

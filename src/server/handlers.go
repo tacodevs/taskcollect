@@ -443,7 +443,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes("/tasks", user)
-		if errors.Is(err, site.ErrNotFound) {
+		if errors.Is(err, errors.New(nil, "cannot find resource")) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
@@ -476,7 +476,7 @@ func timetableHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes("/timetable", user)
-		if errors.Is(err, site.ErrNotFound) {
+		if errors.Is(err, errors.New(nil, "cannot find resource")) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
@@ -509,7 +509,7 @@ func gradesHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes("/grades", user)
-		if errors.Is(err, site.ErrNotFound) {
+		if errors.Is(err, errors.New(nil, "cannot find resource")) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
@@ -544,7 +544,7 @@ func resHandler(w http.ResponseWriter, r *http.Request) {
 
 	if validAuth {
 		webpageData, err := genRes("/res", user)
-		if errors.Is(err, site.ErrNotFound) {
+		if errors.Is(err, errors.New(nil, "cannot find resource")) {
 			w.WriteHeader(404)
 			data := statusNotFoundData
 			data.User = userData{Name: user.DispName}
