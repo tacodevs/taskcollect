@@ -2,7 +2,6 @@ package daymap
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -33,19 +32,19 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 
 	req, err := http.NewRequest("GET", lessonsUrl, nil)
 	if err != nil {
-		return nil, errors.New("cannot create lessons request", err)
+		return nil, errors.New(err, "cannot create lessons request")
 	}
 
 	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.New("cannot execute lessons request", err)
+		return nil, errors.New(err, "cannot execute lessons request")
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&fetched)
 	if err != nil {
-		return nil, errors.New("cannot decode lessons JSON", err)
+		return nil, errors.New(err, "cannot decode lessons JSON")
 	}
 
 	for _, l := range fetched {
@@ -61,13 +60,13 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 			endIdx := strings.Index(l.Start, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errors.New("invalid lessons JSON", nil)
+				return nil, errors.New(nil, "invalid lessons JSON")
 			}
 
 			startStr := l.Start[startIdx:endIdx]
 			startInt, err := strconv.Atoi(startStr)
 			if err != nil {
-				return nil, errors.New(fmt.Sprintf(`cannot convert "%s" to int`, startStr), err)
+				return nil, errors.New(err, `cannot convert "%s" to int`, startStr)
 			}
 
 			lesson.Start = time.Unix(int64(startInt), 0)
@@ -76,20 +75,20 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 			endIdx = strings.Index(l.Finish, "000-")
 
 			if startIdx == 0 || endIdx == -1 {
-				return nil, errors.New("invalid lessons JSON", nil)
+				return nil, errors.New(nil, "invalid lessons JSON")
 			}
 
 			finishStr := l.Finish[startIdx:endIdx]
 			finishInt, err := strconv.Atoi(finishStr)
 			if err != nil {
-				return nil, errors.New(fmt.Sprintf(`cannot convert "%s" to int`, finishStr), err)
+				return nil, errors.New(err, `cannot convert "%s" to int`, finishStr)
 			}
 
 			lesson.End = time.Unix(int64(finishInt), 0)
 		} else {
 			lesson.End, err = time.ParseInLocation("2006-01-02T15:04:05.0000000", l.Finish, user.Timezone)
 			if err != nil {
-				return nil, errors.New("cannot parse time", err)
+				return nil, errors.New(err, "cannot parse time")
 			}
 		}
 
@@ -98,7 +97,7 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 
 		exp, err := regexp.Compile("[0-9][A-Z]+[0-9]+")
 		if err != nil {
-			return nil, errors.New("cannot compile regex", err)
+			return nil, errors.New(err, "cannot compile regex")
 		}
 
 		lesson.Room = exp.FindString(class)

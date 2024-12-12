@@ -2,7 +2,6 @@ package daymap
 
 import (
 	"bufio"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 	req, err := http.NewRequest("POST", link, data)
 	if err != nil {
-		result.Second = errors.New("cannot create grades request", err)
+		result.Second = errors.New(err, "cannot create grades request")
 		c <- result
 		return
 	}
@@ -39,7 +38,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		result.Second = errors.New("cannot execute grades request", err)
+		result.Second = errors.New(err, "cannot execute grades request")
 		c <- result
 		return
 	}
@@ -54,7 +53,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 			line = line[i:]
 			i = strings.Index(line, " (")
 			if i == -1 {
-				result.Second = errors.New("invalid HTML response", nil)
+				result.Second = errors.New(nil, "invalid HTML response")
 				c <- result
 				return
 			}
@@ -71,7 +70,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `);">`)
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -82,7 +81,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `</a>`)
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -91,7 +90,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 		for j := 0; j < 2; j++ {
 			i = strings.Index(line, `<td nowrap>`)
 			if i == -1 {
-				result.Second = errors.New("invalid HTML response", nil)
+				result.Second = errors.New(nil, "invalid HTML response")
 				c <- result
 				return
 			}
@@ -101,7 +100,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -109,7 +108,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `<td nowrap>`)
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -118,7 +117,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 
 		i = strings.Index(line, `</td>`)
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -128,13 +127,13 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 		if len(marks) == 2 {
 			top, err := strconv.ParseFloat(marks[0], 64)
 			if err != nil {
-				result.Second = errors.New(fmt.Sprintf(`cannot convert "%s" to float64`, marks[0]), err)
+				result.Second = errors.New(err, `cannot convert "%s" to float64`, marks[0])
 				c <- result
 				return
 			}
 			bottom, err := strconv.ParseFloat(marks[1], 64)
 			if err != nil {
-				result.Second = errors.New(fmt.Sprintf(`cannot convert "%s" to float64`, marks[1]), err)
+				result.Second = errors.New(err, `cannot convert "%s" to float64`, marks[1])
 				c <- result
 				return
 			}
@@ -144,7 +143,7 @@ func Graded(user site.User, c chan site.Pair[[]site.Task, error]) {
 		result.First = append(result.First, task)
 	}
 	if err := scanner.Err(); err != nil {
-		result.Second = errors.New("cannot read grades response body", err)
+		result.Second = errors.New(err, "cannot read grades response body")
 		c <- result
 		return
 	}

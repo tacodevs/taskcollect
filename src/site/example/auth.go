@@ -25,7 +25,7 @@ func fetch(link, email, username, password string) (string, string, error) {
 	buf := make([]byte, 32)
 	_, err := rand.Read(buf)
 	if err != nil {
-		return page, "", errors.New("rand reader", err)
+		return page, "", errors.New(err, "rand reader")
 	}
 	token := base64.StdEncoding.EncodeToString(buf)
 	return page, token, nil
@@ -39,7 +39,7 @@ func Auth(user site.User, c chan site.Pair[[2]string, error]) {
 	_, token, err := fetch(link, user.Email, user.Username, user.Password)
 	if err != nil {
 		// result.Second is the error returned by Auth
-		result.Second = errors.New("example login failed", err)
+		result.Second = errors.New(err, "example login failed")
 		c <- result
 		return
 	}

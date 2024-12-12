@@ -46,7 +46,7 @@ func fetch(link, email, user, password string) (string, string, error) {
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 1 cookie jar", err)
+		return "", "", errors.New(err, "cannot create stage 1 cookie jar")
 	}
 
 	client := &http.Client{Jar: jar}
@@ -55,19 +55,19 @@ func fetch(link, email, user, password string) (string, string, error) {
 	s1link = fmt.Sprintf(s1link, url.QueryEscape(link))
 	s1req, err := http.NewRequest("GET", s1link, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 1 request", err)
+		return "", "", errors.New(err, "cannot create stage 1 request")
 	}
 
 	s1req.Header.Set("User-Agent", browser)
 
 	s1, err := client.Do(s1req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 1 request", err)
+		return "", "", errors.New(err, "cannot execute stage 1 request")
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 1 response body", err)
+		return "", "", errors.New(err, "cannot read stage 1 response body")
 	}
 
 	s1page := string(s1body)
@@ -134,7 +134,7 @@ func fetch(link, email, user, password string) (string, string, error) {
 
 	s2req, err := http.NewRequest("POST", s2link, s2data)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 2 request", err)
+		return "", "", errors.New(err, "cannot create stage 2 request")
 	}
 
 	s2req.Header.Set("Accept-Language", "en-US,en;q=0.5")
@@ -149,12 +149,12 @@ func fetch(link, email, user, password string) (string, string, error) {
 
 	s2, err := client.Do(s2req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 2 request", err)
+		return "", "", errors.New(err, "cannot execute stage 2 request")
 	}
 
 	s2body, err := io.ReadAll(s2.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 2 response body", err)
+		return "", "", errors.New(err, "cannot read stage 2 response body")
 	}
 
 	s2page := string(s2body)

@@ -18,7 +18,7 @@ func Classes(user site.User, c chan site.Pair[[]site.Class, error]) {
 
 	req, err := http.NewRequest("GET", homeUrl, nil)
 	if err != nil {
-		result.Second = errors.New("cannot create classes request", err)
+		result.Second = errors.New(err, "cannot create classes request")
 		c <- result
 		return
 	}
@@ -27,14 +27,14 @@ func Classes(user site.User, c chan site.Pair[[]site.Class, error]) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		result.Second = errors.New("cannot execute classes request", err)
+		result.Second = errors.New(err, "cannot execute classes request")
 		c <- result
 		return
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		result.Second = errors.New("cannot read classes response body", err)
+		result.Second = errors.New(err, "cannot read classes response body")
 		c <- result
 		return
 	}
@@ -51,7 +51,7 @@ func Classes(user site.User, c chan site.Pair[[]site.Class, error]) {
 		i = strings.Index(page, "'>")
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -61,7 +61,7 @@ func Classes(user site.User, c chan site.Pair[[]site.Class, error]) {
 		i = strings.Index(page, "</a>")
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}

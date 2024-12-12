@@ -34,13 +34,13 @@ func UseConfigFile(logPath string) error {
 
 	err := os.MkdirAll(logPath, os.ModePerm)
 	if err != nil {
-		return errors.New("failed to create directory", err)
+		return errors.New(err, "failed to create directory")
 	}
 
 	logFileName = filepath.Join(logPath, time.Now().Format("2006-01-02_150405")+".log")
 	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		return errors.New("could not open log file", err)
+		return errors.New(err, "could not open log file")
 	}
 	defer logFile.Close()
 
@@ -58,7 +58,7 @@ func write() {
 		logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
 			logFileFailCount += 1
-			Error(errors.New("could not open log file", err))
+			Error(errors.New(err, "could not open log file"))
 		}
 		defer logFile.Close()
 
@@ -66,7 +66,7 @@ func write() {
 		_, err = f.WriteString(buf.String())
 		if err != nil {
 			logFileFailCount += 1
-			Error(errors.New("could not write to log file", err))
+			Error(errors.New(err, "could not write to log file"))
 		}
 		f.Flush()
 
@@ -93,7 +93,7 @@ func Info(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		infoLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errors.New("invalid interface type", nil))
+		Fatal(errors.New(nil, "invalid interface type"))
 	}
 	write()
 }
@@ -114,7 +114,7 @@ func Debug(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		debugLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errors.New("invalid interface type", nil))
+		Fatal(errors.New(nil, "invalid interface type"))
 	}
 	write()
 }
@@ -134,7 +134,7 @@ func Warn(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		warnLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errors.New("invalid interface type", nil))
+		Fatal(errors.New(nil, "invalid interface type"))
 	}
 	write()
 }
@@ -154,7 +154,7 @@ func Error(format any, v ...any) {
 		err := fmt.Errorf("%v", a)
 		errorLogger.logWrite(err.Error(), v...)
 	default:
-		Fatal(errors.New("invalid interface type", nil))
+		Fatal(errors.New(nil, "invalid interface type"))
 	}
 	write()
 }

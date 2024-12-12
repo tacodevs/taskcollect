@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
+	"git.sr.ht/~kvo/go-std/slices"
 
 	"main/site"
 )
@@ -23,7 +23,7 @@ func fileRes(user site.User, id string, class site.Class) (site.Resource, error)
 	sent := <-ch
 	resources, err := sent.First, sent.Second
 	if err != nil {
-		return site.Resource{}, errors.New("cannot fetch resources list", err)
+		return site.Resource{}, errors.New(err, "cannot fetch resources list")
 	}
 	for _, res := range resources {
 		if res.Id == resource.Id {
@@ -48,19 +48,19 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", resource.Link, nil)
 	if err != nil {
-		return site.Resource{}, errors.New("cannot create resource request", err)
+		return site.Resource{}, errors.New(err, "cannot create resource request")
 	}
 
 	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return site.Resource{}, errors.New("cannot execute resource request", err)
+		return site.Resource{}, errors.New(err, "cannot execute resource request")
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return site.Resource{}, errors.New("cannot read resource response body", err)
+		return site.Resource{}, errors.New(err, "cannot read resource response body")
 	}
 
 	page := string(body)
@@ -68,7 +68,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 	i := strings.Index(page, nameDiv)
 
 	if i == -1 {
-		return site.Resource{}, errors.New("invalid HTML response", nil)
+		return site.Resource{}, errors.New(nil, "invalid HTML response")
 	}
 
 	i += len(nameDiv)
@@ -77,7 +77,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 	i = strings.Index(page, fileDiv)
 
 	if i == -1 {
-		return site.Resource{}, errors.New("invalid HTML response", nil)
+		return site.Resource{}, errors.New(nil, "invalid HTML response")
 	}
 
 	resource.Name = page[:i]
@@ -87,7 +87,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 	i = strings.Index(page, descDiv)
 
 	if i == -1 {
-		return site.Resource{}, errors.New("invalid HTML response", nil)
+		return site.Resource{}, errors.New(nil, "invalid HTML response")
 	}
 
 	fileSect := page[:i]
@@ -100,7 +100,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 		i = strings.Index(fileSect, ");")
 
 		if i == -1 {
-			return site.Resource{}, errors.New("invalid HTML response", nil)
+			return site.Resource{}, errors.New(nil, "invalid HTML response")
 		}
 
 		rlLink := "https://gihs.daymap.net/daymap/attachment.ashx?ID=" + fileSect[:i]
@@ -108,7 +108,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 		i = strings.Index(fileSect, "&nbsp;")
 
 		if i == -1 {
-			return site.Resource{}, errors.New("invalid HTML response", nil)
+			return site.Resource{}, errors.New(nil, "invalid HTML response")
 		}
 
 		i += len("&nbsp;")
@@ -116,7 +116,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 		i = strings.Index(fileSect, "</a>")
 
 		if i == -1 {
-			return site.Resource{}, errors.New("invalid HTML response", nil)
+			return site.Resource{}, errors.New(nil, "invalid HTML response")
 		}
 
 		rlName := fileSect[:i]
@@ -130,7 +130,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 	endDiv += "\r\n    \r\n </div>\r\n\r\n    </form>\r\n\r\n    <script>\r\n"
 	i = strings.Index(page, endDiv)
 	if i == -1 {
-		return site.Resource{}, errors.New("invalid HTML response", nil)
+		return site.Resource{}, errors.New(nil, "invalid HTML response")
 	}
 
 	resource.Desc = page[:i]
@@ -138,7 +138,7 @@ func planRes(user site.User, id string, class site.Class) (site.Resource, error)
 	sent := <-ch
 	resources, err := sent.First, sent.Second
 	if err != nil {
-		return site.Resource{}, errors.New("cannot fetch resources list", err)
+		return site.Resource{}, errors.New(err, "cannot fetch resources list")
 	}
 
 	for _, res := range resources {
@@ -159,14 +159,14 @@ func Resource(user site.User, id string) (site.Resource, error) {
 	class := site.Class{
 		Platform: "daymap",
 	}
-	class.Id, err = defs.Get(ids, 0)
+	class.Id, err = slices.Get(ids, 0)
 	if err != nil {
-		return site.Resource{}, errors.New("invalid resource ID", err)
+		return site.Resource{}, errors.New(err, "invalid resource ID")
 	}
 	class.Link = "https://gihs.daymap.net/daymap/student/plans/class.aspx?id=" + class.Id
-	resId, err := defs.Get(ids, 1)
+	resId, err := slices.Get(ids, 1)
 	if err != nil {
-		return site.Resource{}, errors.New("invalid resource ID", err)
+		return site.Resource{}, errors.New(err, "invalid resource ID")
 	}
 	if strings.HasPrefix(resId, "f") {
 		res, err = fileRes(user, resId[1:], class)

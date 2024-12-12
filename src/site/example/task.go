@@ -1,7 +1,6 @@
 package example
 
 import (
-	"fmt"
 	"io"
 	"main/site"
 	"mime/multipart"
@@ -26,7 +25,7 @@ func Task(user site.User, id string) (site.Task, error) {
 	}
 	task, exists := tasks[id]
 	if !exists {
-		return task, errors.New(fmt.Sprintf("no task with ID %s exists", id), nil)
+		return task, errors.New(nil, "no task with ID %s exists", id)
 	}
 	return task, nil
 }
@@ -45,7 +44,7 @@ func Submit(user site.User, id string) error {
 	}
 	_, exists := tasks[id]
 	if !exists {
-		return errors.New(fmt.Sprintf("no task with ID %s exists", id), nil)
+		return errors.New(nil, "no task with ID %s exists", id)
 	}
 	tasks[id].Submitted = true
 	return nil
@@ -65,7 +64,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 	}
 	task, exists := tasks[id]
 	if !exists {
-		return errors.New(fmt.Sprintf("no task with ID %s exists", id), nil)
+		return errors.New(nil, "no task with ID %s exists", id)
 	}
 	sort.SliceStable(task.WorkLinks, func(i, j int) bool {
 		id1, _ := strconv.Atoi(strings.TrimPrefix(task.WorkLinks[i][0], "https://example.com/"))
@@ -86,11 +85,11 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 		tasks[id].WorkLinks = append(tasks[id].WorkLinks, [2]string{link, filename})
 		file, mimeErr = files.NextPart()
 	}
-	err := errors.New(mimeErr.Error(), nil)
+	err := errors.New(nil, mimeErr.Error())
 	if mimeErr == io.EOF {
 		return nil
 	} else {
-		return errors.New("cannot parse multipart MIME", err)
+		return errors.New(err, "cannot parse multipart MIME")
 	}
 	return nil
 }
@@ -109,7 +108,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 	}
 	task, exists := tasks[id]
 	if !exists {
-		return errors.New(fmt.Sprintf("no task with ID %s exists", id), nil)
+		return errors.New(nil, "no task with ID %s exists", id)
 	}
 	var cleaned [][2]string
 	for _, worklink := range task.WorkLinks {

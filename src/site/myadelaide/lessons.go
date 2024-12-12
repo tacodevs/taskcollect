@@ -102,7 +102,7 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 	if numWeeks > 2 {
 		lessons, err = listResp(user)
 		if err != nil {
-			return nil, errors.New("failed to get lessons", err)
+			return nil, errors.New(err, "cannot fetch lessons")
 		}
 		_ = lessons
 
@@ -121,7 +121,7 @@ func Lessons(user site.User, start, end time.Time) ([]site.Lesson, error) {
 		}
 		lessons, err = weekResp(user, weeks)
 		if err != nil {
-			return nil, errors.New("failed to get lessons", err)
+			return nil, errors.New(err, "cannot fetch lessons")
 		}
 		_ = lessons
 	}
@@ -153,7 +153,7 @@ func listResp(user site.User) ([]site.Lesson, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", strmURL, nil)
 	if err != nil {
-		return nil, errors.New("GET request for STRM info failed", err)
+		return nil, errors.New(err, "GET request for STRM info failed")
 	}
 	req.Header.Set("Authorization", "Bearer "+user.SiteTokens["myadelaide"])
 	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
@@ -166,7 +166,7 @@ func listResp(user site.User) ([]site.Lesson, error) {
 	var strmJSON jsonSTRM
 	err = json.NewDecoder(resp.Body).Decode(&strmJSON)
 	if err != nil {
-		return nil, errors.New("failed to decode json", err)
+		return nil, errors.New(err, "failed to decode json")
 	}
 
 	STRM := strmJSON.Data.Query.Rows[0].Strm
@@ -175,7 +175,7 @@ func listResp(user site.User) ([]site.Lesson, error) {
 
 	req, err = http.NewRequest("GET", listURL, nil)
 	if err != nil {
-		return nil, errors.New("GET request for STRM info failed", err)
+		return nil, errors.New(err, "GET request for STRM info failed")
 	}
 	req.Header.Set("Authorization", "Bearer "+user.SiteTokens["myadelaide"])
 	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
@@ -187,18 +187,18 @@ func listResp(user site.User) ([]site.Lesson, error) {
 	var listJSON jsonLessonList
 	err = json.NewDecoder(resp.Body).Decode(&listJSON)
 	if err != nil {
-		return nil, errors.New("failed to decode json", err)
+		return nil, errors.New(err, "failed to decode json")
 	}
 	for _, lesson := range listJSON.Data.Query.Rows {
 		now := time.Now()
 		now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 		start, err := time.ParseInLocation("2006-01-02", lesson.StartDate, user.Timezone)
 		if err != nil {
-			return nil, errors.New("failed to parse date", err)
+			return nil, errors.New(err, "failed to parse date")
 		}
 		end, err := time.ParseInLocation("2006-01-02", lesson.EndDate, user.Timezone)
 		if err != nil {
-			return nil, errors.New("failed to parse date", err)
+			return nil, errors.New(err, "failed to parse date")
 		}
 		if now.After(end) {
 			continue
@@ -206,11 +206,11 @@ func listResp(user site.User) ([]site.Lesson, error) {
 		// n is the number of lesson instances
 		time_start, err := time.ParseInLocation("2006-01-02 3:04 PM", strings.Join([]string{lesson.StartDate, lesson.StartTime}, " "), user.Timezone)
 		if err != nil {
-			return nil, errors.New("failed to parse time", err)
+			return nil, errors.New(err, "failed to parse time")
 		}
 		time_end, err := time.ParseInLocation("2006-01-02 3:04 PM", strings.Join([]string{lesson.StartDate, lesson.EndTime}, " "), user.Timezone)
 		if err != nil {
-			return nil, errors.New("failed to parse time", err)
+			return nil, errors.New(err, "failed to parse time")
 		}
 		n := int(end.UnixMilli()-start.UnixMilli())/(7*24*60*60*1000) + 1
 		for i := 0; i < n; i++ {
@@ -240,7 +240,7 @@ func weekResp(user site.User, displacements [2]int) ([]site.Lesson, error) {
 		client := &http.Client{}
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			return nil, errors.New("GET request for lesson info failed", err)
+			return nil, errors.New(err, "GET request for lesson info failed")
 		}
 		req.Header.Set("Authorization", "Bearer "+user.SiteTokens["myadelaide"])
 		req.Header.Set("Accept-Encoding", "gzip, deflate, br")
@@ -252,19 +252,19 @@ func weekResp(user site.User, displacements [2]int) ([]site.Lesson, error) {
 		var respjson jsonLessonWeek
 		err = json.NewDecoder(resp.Body).Decode(&respjson)
 		if err != nil {
-			return nil, errors.New("failed to decode json", err)
+			return nil, errors.New(err, "failed to decode json")
 		}
 		for _, lesson := range respjson.Data.Query.Rows {
 			// n is the number of lesson instances
 			time_start, err := time.ParseInLocation("02 Jan 2006 15.04", strings.Join([]string{lesson.Date, lesson.StartTime}, " "), user.Timezone)
 
 			if err != nil {
-				return nil, errors.New("failed to parse date", err)
+				return nil, errors.New(err, "failed to parse date")
 			}
 
 			time_end, err := time.ParseInLocation("02 Jan 2006 15.04", strings.Join([]string{lesson.Date, lesson.EndTime}, " "), user.Timezone)
 			if err != nil {
-				return nil, errors.New("failed to parse date", err)
+				return nil, errors.New(err, "failed to parse date")
 			}
 			lessons = append(lessons, site.Lesson{
 				Start:   time_start,

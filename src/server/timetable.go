@@ -1,20 +1,19 @@
 package server
 
 import (
+	"crypto/rand"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
+	"io"
 	"math"
 	"net/http"
 	"time"
 
-	"crypto/rand"
-	"io"
-
-	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
+	"git.sr.ht/~kvo/go-std/slices"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
@@ -101,11 +100,11 @@ func mkblock(canvas *image.RGBA, lesson site.Lesson, day, y, h int) error {
 	}
 	boldttf, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
-		return errors.New("cannot parse bold font", nil)
+		return errors.New(nil, "cannot parse bold font")
 	}
 	regttf, err := freetype.ParseFont(goregular.TTF)
 	if err != nil {
-		return errors.New("cannot parse regular font", nil)
+		return errors.New(nil, "cannot parse regular font")
 	}
 	headface := truetype.NewFace(boldttf, &truetype.Options{
 		Size:    16.0,
@@ -178,7 +177,7 @@ func mkcanvas(width, height int, monday time.Time, days int) (*image.RGBA, error
 	}
 	bold, err := freetype.ParseFont(gobold.TTF)
 	if err != nil {
-		return nil, errors.New("cannot parse bold font", err)
+		return nil, errors.New(err, "cannot parse bold font")
 	}
 	face := truetype.NewFace(bold, &truetype.Options{
 		Size:    16.0,
@@ -215,15 +214,15 @@ func TimetablePNG(user site.User, w http.ResponseWriter) error {
 	school, ok := schools[user.School]
 	if !ok {
 		w.WriteHeader(500)
-		return errors.New("unsupported platform", nil)
+		return errors.New(nil, "unsupported platform")
 	}
 	lessons, err := school.Lessons(user, start, end)
 	if err != nil {
 		w.WriteHeader(500)
-		return errors.New("cannot get lessons", err)
+		return errors.New(err, "cannot get lessons")
 	}
 	for _, lesson := range lessons {
-		if !defs.Has(classes, lesson.Class) {
+		if !slices.Has(classes, lesson.Class) {
 			classes = append(classes, lesson.Class)
 		}
 	}
@@ -233,15 +232,15 @@ func TimetablePNG(user site.User, w http.ResponseWriter) error {
 	canvas, err := mkcanvas(width, height, start, days)
 	if err != nil {
 		w.WriteHeader(500)
-		return errors.New("cannot make timetable canvas", err)
+		return errors.New(err, "cannot make timetable canvas")
 	}
 	if err := mkblocks(canvas, lessons, start, days); err != nil {
 		w.WriteHeader(500)
-		return errors.New("cannot draw lesson blocks", err)
+		return errors.New(err, "cannot draw lesson blocks")
 	}
 	if err := png.Encode(w, canvas); err != nil {
 		w.WriteHeader(500)
-		return errors.New("cannot render PNG timetable", err)
+		return errors.New(err, "cannot render PNG timetable")
 	}
 	return nil
 }
@@ -268,11 +267,11 @@ func TimetableHTML(user site.User) (timetableData, error) {
 
 	school, ok := schools[user.School]
 	if !ok {
-		return data, errors.New("unsupported platform", nil)
+		return data, errors.New(nil, "unsupported platform")
 	}
 	lessons, err := school.Lessons(user, weekStart, weekEnd)
 	if err != nil {
-		return data, errors.New("failed to get lessons", err)
+		return data, errors.New(err, "failed to get lessons")
 	}
 
 	const numOfDays = 5
@@ -283,7 +282,7 @@ func TimetableHTML(user site.User) (timetableData, error) {
 	classes := []string{}
 
 	for _, lesson := range lessons {
-		if !defs.Has(classes, lesson.Class) {
+		if !slices.Has(classes, lesson.Class) {
 			classes = append(classes, lesson.Class)
 		}
 	}
@@ -380,13 +379,13 @@ func TimetableIcal(user site.User, start, end time.Time, w http.ResponseWriter) 
 	school, ok := schools[user.School]
 	if !ok {
 		w.WriteHeader(500)
-		return errors.New("unsupported platform", nil)
+		return errors.New(nil, "unsupported platform")
 	}
 	lessons, err := school.Lessons(user, start, end)
 
 	if err != nil {
 		w.WriteHeader(500)
-		return errors.New("failed to get lessons", err)
+		return errors.New(err, "failed to get lessons")
 	}
 	//build the start of the string
 	iCalString += "BEGIN:VCALENDAR\n"
@@ -398,7 +397,7 @@ func TimetableIcal(user site.User, start, end time.Time, w http.ResponseWriter) 
 		uuid, err := GenerateUUID()
 		if err != nil {
 			w.WriteHeader(500)
-			return errors.New("failed to generate UUID", err)
+			return errors.New(err, "failed to generate UUID")
 		}
 
 		iCalString += "BEGIN:VEVENT\n"
@@ -416,7 +415,7 @@ func TimetableIcal(user site.User, start, end time.Time, w http.ResponseWriter) 
 	_, err = io.WriteString(w, iCalString)
 	if err != nil {
 		w.WriteHeader(500)
-		return errors.New("Failed to write calendar file", err)
+		return errors.New(err, "failed to write calendar file")
 	}
 	return nil
 }
@@ -426,7 +425,7 @@ func GenerateUUID() (u *UUID, err error) {
 	u = new(UUID)
 	_, err = rand.Read(u[:])
 	if err != nil {
-		return nil, errors.New("failed to generate UUID", err)
+		return nil, errors.New(err, "failed to generate UUID")
 	}
 	u[8] = (u[8] | 0x40) & 0x7F
 	u[6] = (u[6] & 0xF) | (4 << 4)

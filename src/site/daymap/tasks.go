@@ -18,19 +18,19 @@ func tasksPage(user site.User) (string, error) {
 
 	s1req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
-		return "", errors.New("cannot create stage 1 request", err)
+		return "", errors.New(err, "cannot create stage 1 request")
 	}
 
 	s1req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	s1, err := client.Do(s1req)
 	if err != nil {
-		return "", errors.New("cannot execute stage 1 request", err)
+		return "", errors.New(err, "cannot execute stage 1 request")
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return "", errors.New("cannot read stage 1 body", err)
+		return "", errors.New(err, "cannot read stage 1 body")
 	}
 
 	form := url.Values{}
@@ -43,7 +43,7 @@ func tasksPage(user site.User) (string, error) {
 		i = strings.Index(s1page, ">")
 
 		if i == -1 {
-			return "", errors.New("invalid HTML response", nil)
+			return "", errors.New(nil, "invalid HTML response")
 		}
 
 		inputTag := s1page[:i]
@@ -51,7 +51,7 @@ func tasksPage(user site.User) (string, error) {
 		i = strings.Index(inputTag, `type="`)
 
 		if i == -1 {
-			return "", errors.New("invalid HTML response", nil)
+			return "", errors.New(nil, "invalid HTML response")
 		}
 
 		i += len(`type="`)
@@ -59,7 +59,7 @@ func tasksPage(user site.User) (string, error) {
 		i = strings.Index(inputType, `"`)
 
 		if i == -1 {
-			return "", errors.New("invalid HTML response", nil)
+			return "", errors.New(nil, "invalid HTML response")
 		}
 
 		inputType = inputType[:i]
@@ -72,7 +72,7 @@ func tasksPage(user site.User) (string, error) {
 		i = strings.Index(inputTag, `name="`)
 
 		if i == -1 {
-			return "", errors.New("invalid HTML response", nil)
+			return "", errors.New(nil, "invalid HTML response")
 		}
 
 		i += len(`name="`)
@@ -80,7 +80,7 @@ func tasksPage(user site.User) (string, error) {
 		i = strings.Index(name, `"`)
 
 		if i == -1 {
-			return "", errors.New("invalid HTML response", nil)
+			return "", errors.New(nil, "invalid HTML response")
 		}
 
 		name = name[:i]
@@ -92,7 +92,7 @@ func tasksPage(user site.User) (string, error) {
 			i = strings.Index(value, `"`)
 
 			if i == -1 {
-				return "", errors.New("invalid HTML response", nil)
+				return "", errors.New(nil, "invalid HTML response")
 			}
 
 			value = value[:i]
@@ -110,7 +110,7 @@ func tasksPage(user site.User) (string, error) {
 
 	s2req, err := http.NewRequest("POST", link, data)
 	if err != nil {
-		return "", errors.New("cannot create stage 2 request", err)
+		return "", errors.New(err, "cannot create stage 2 request")
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -118,12 +118,12 @@ func tasksPage(user site.User) (string, error) {
 
 	s2, err := client.Do(s2req)
 	if err != nil {
-		return "", errors.New("cannot execute stage 2 request", err)
+		return "", errors.New(err, "cannot execute stage 2 request")
 	}
 
 	s2body, err := io.ReadAll(s2.Body)
 	if err != nil {
-		return "", errors.New("cannot read stage 2 body", err)
+		return "", errors.New(err, "cannot read stage 2 body")
 	}
 
 	return string(s2body), nil
@@ -135,7 +135,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 
 	page, err := tasksPage(user)
 	if err != nil {
-		result.Second = errors.New("cannot fetch tasks page", err)
+		result.Second = errors.New(err, "cannot fetch tasks page")
 		c <- result
 		return
 	}
@@ -153,7 +153,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `)">`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -164,7 +164,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `<td>`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -174,7 +174,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `</td>`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -185,7 +185,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -195,7 +195,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -206,7 +206,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -215,7 +215,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 
 		task.Posted, err = time.ParseInLocation("2/01/06", postedStr, user.Timezone)
 		if err != nil {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -225,7 +225,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, `</td><td>`)
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -234,7 +234,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 
 		task.Due, err = time.ParseInLocation("2/01/06", dueStr, user.Timezone)
 		if err != nil {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -252,7 +252,7 @@ func Tasks(user site.User, c chan site.Pair[[]site.Task, error], classes []site.
 		i = strings.Index(page, "\n")
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}

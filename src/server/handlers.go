@@ -25,14 +25,14 @@ func handleTask(r *http.Request, user site.User, platform, id, cmd string) (int,
 	if cmd == "submit" {
 		school, ok := schools[user.School]
 		if !ok {
-			logger.Debug(errors.New("unsupported platform", nil))
+			logger.Debug(errors.New(nil, "unsupported platform"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
 		}
 		err := school.Submit(user, platform, id)
 		if err != nil {
-			logger.Debug(errors.New("cannot submit task", err))
+			logger.Debug(errors.New(err, "cannot submit task"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
@@ -43,14 +43,14 @@ func handleTask(r *http.Request, user site.User, platform, id, cmd string) (int,
 	} else if cmd == "upload" {
 		school, ok := schools[user.School]
 		if !ok {
-			logger.Debug(errors.New("unsupported platform", nil))
+			logger.Debug(errors.New(nil, "unsupported platform"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
 		}
 		err := school.UploadWork(user, platform, id, r)
 		if err != nil {
-			logger.Debug(errors.New("cannot upload work", err))
+			logger.Debug(errors.New(err, "cannot upload work"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
@@ -65,14 +65,14 @@ func handleTask(r *http.Request, user site.User, platform, id, cmd string) (int,
 		}
 		school, ok := schools[user.School]
 		if !ok {
-			logger.Debug(errors.New("unsupported platform", nil))
+			logger.Debug(errors.New(nil, "unsupported platform"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
 		}
 		err := school.RemoveWork(user, platform, id, filenames)
 		if err != nil {
-			logger.Debug(errors.New("cannot remove worklink", err))
+			logger.Debug(errors.New(err, "cannot remove worklink"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
@@ -111,14 +111,14 @@ func handleTaskReq(r *http.Request, user site.User) (int, pageData, [][2]string)
 	if index == -1 {
 		school, ok := schools[user.School]
 		if !ok {
-			logger.Debug(errors.New("unsupported platform", nil))
+			logger.Debug(errors.New(nil, "unsupported platform"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
 		}
 		assignment, err := school.Task(user, platform, taskId)
 		if err != nil {
-			logger.Debug(errors.New("cannot fetch task", err))
+			logger.Debug(errors.New(err, "cannot fetch task"))
 			data = statusServerErrorData
 			statusCode = 500
 			return statusCode, data, headers
@@ -146,7 +146,7 @@ func handleTaskReq(r *http.Request, user site.User) (int, pageData, [][2]string)
 func genPage(w http.ResponseWriter, data pageData) {
 	err := templates.ExecuteTemplate(w, "page", data)
 	if err != nil {
-		logger.Debug(errors.New("template execution failed", err))
+		logger.Debug(errors.New(err, "template execution failed"))
 	}
 }
 
@@ -156,14 +156,14 @@ func dispatchAsset(w http.ResponseWriter, fullPath string, mimeType string) {
 
 	file, err := os.Open(fullPath)
 	if err != nil {
-		logger.Error(errors.New("could not open "+fullPath, err))
+		logger.Error(errors.New(err, "could not open %s", fullPath))
 		w.WriteHeader(500)
 	}
 	defer file.Close()
 
 	_, err = io.Copy(w, file)
 	if err != nil {
-		logger.Debug(errors.New("could not copy contents of "+fullPath, err))
+		logger.Debug(errors.New(err, "could not copy contents of %s", fullPath))
 		w.WriteHeader(500)
 	}
 }
@@ -312,7 +312,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Set-Cookie", cookie)
 			w.WriteHeader(302)
 		} else {
-			logger.Debug(errors.New("auth failed", err))
+			logger.Debug(errors.New(err, "auth failed"))
 			w.Header().Set("Location", "/login?auth=failed")
 			w.WriteHeader(302)
 		}
@@ -337,7 +337,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(302)
 		} else {
-			logger.Error(errors.New("failed to log out user", err))
+			logger.Error(errors.New(err, "failed to log out user"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}
@@ -380,7 +380,7 @@ func resourceHandler(w http.ResponseWriter, r *http.Request) {
 
 		school, ok := schools[user.School]
 		if !ok {
-			logger.Debug(errors.New("unsupported platform", nil))
+			logger.Debug(errors.New(nil, "unsupported platform"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}
@@ -389,7 +389,7 @@ func resourceHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		res, err := school.Resource(user, platform, resId)
 		if err != nil {
-			logger.Debug(errors.New("cannot fetch task", err))
+			logger.Debug(errors.New(err, "cannot fetch task"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}
@@ -449,7 +449,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: user.DispName}
 			genPage(w, data)
 		} else if err != nil {
-			logger.Debug(errors.New("failed to generate resources", err))
+			logger.Debug(errors.New(err, "failed to generate resources"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}
@@ -482,7 +482,7 @@ func timetableHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: user.DispName}
 			genPage(w, data)
 		} else if err != nil {
-			logger.Debug(errors.New("failed to generate resources", err))
+			logger.Debug(errors.New(err, "failed to generate resources"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}
@@ -515,7 +515,7 @@ func gradesHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: user.DispName}
 			genPage(w, data)
 		} else if err != nil {
-			logger.Debug(errors.New("failed to generate resources", err))
+			logger.Debug(errors.New(err, "failed to generate resources"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}
@@ -550,7 +550,7 @@ func resHandler(w http.ResponseWriter, r *http.Request) {
 			data.User = userData{Name: user.DispName}
 			genPage(w, data)
 		} else if err != nil {
-			logger.Debug(errors.New("failed to generate resources", err))
+			logger.Debug(errors.New(err, "failed to generate resources"))
 			w.WriteHeader(500)
 			data := statusServerErrorData
 			data.User = userData{Name: user.DispName}

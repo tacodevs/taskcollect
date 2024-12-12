@@ -144,11 +144,11 @@ func (m *Mux) SetReports(f func(User) ([]Report, error)) {
 func (m *Mux) Auth(user *User) error {
 	ch := make(chan Pair[[2]string, error])
 	if user == nil {
-		return errors.New("user is nil", nil)
+		return errors.New(nil, "user is nil")
 	}
 	err := LoadConfig(user)
 	if err != nil {
-		return errors.New("", err)
+		return errors.Wrap(err)
 	}
 	for _, f := range m.auth {
 		go f(*user, ch)
@@ -182,7 +182,7 @@ func (m *Mux) Classes(user User) ([]Class, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get class list", err)
+			return nil, errors.New(err, "cannot get class list")
 		}
 		classes = append(classes, list...)
 	}
@@ -203,7 +203,7 @@ func (m *Mux) DueTasks(user User) ([]Task, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get active task list", err)
+			return nil, errors.New(err, "cannot get active task list")
 		}
 		active = append(active, list...)
 	}
@@ -224,7 +224,7 @@ func (m *Mux) Events(user User) ([]Event, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get event list", err)
+			return nil, errors.New(err, "cannot get event list")
 		}
 		events = append(events, list...)
 	}
@@ -245,7 +245,7 @@ func (m *Mux) Graded(user User) ([]Task, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get graded task list", err)
+			return nil, errors.New(err, "cannot get graded task list")
 		}
 		graded = append(graded, list...)
 	}
@@ -258,7 +258,7 @@ func (m *Mux) Graded(user User) ([]Task, error) {
 // Lessons returns a list of lessons occuring from start to end.
 func (m *Mux) Lessons(user User, start, end time.Time) ([]Lesson, error) {
 	if m.lessons == nil {
-		return nil, errors.New("lessons function not set", nil)
+		return nil, errors.New(nil, "lessons function not set")
 	}
 	lessons, err := m.lessons(user, start, end)
 	if err != nil {
@@ -281,7 +281,7 @@ func (m *Mux) Messages(user User) ([]Message, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get unread message list", err)
+			return nil, errors.New(err, "cannot get unread message list")
 		}
 		messages = append(messages, list...)
 	}
@@ -298,7 +298,7 @@ func (m *Mux) Messages(user User) ([]Message, error) {
 func (m *Mux) RemoveWork(user User, platform, id string, filenames []string) error {
 	f, ok := m.remove[platform]
 	if !ok {
-		return errors.New("unsupported platform", nil)
+		return errors.New(nil, "unsupported platform")
 	}
 	return f(user, id, filenames)
 }
@@ -306,7 +306,7 @@ func (m *Mux) RemoveWork(user User, platform, id string, filenames []string) err
 // Reports returns a series of report cards.
 func (m *Mux) Reports(user User) ([]Report, error) {
 	if m.reports == nil {
-		return nil, errors.New("reports function not set", nil)
+		return nil, errors.New(nil, "reports function not set")
 	}
 	reports, err := m.reports(user)
 	if err != nil {
@@ -324,7 +324,7 @@ func (m *Mux) Reports(user User) ([]Report, error) {
 func (m *Mux) Resource(user User, platform, id string) (Resource, error) {
 	f, ok := m.resource[platform]
 	if !ok {
-		return Resource{}, errors.New("unsupported platform", nil)
+		return Resource{}, errors.New(nil, "unsupported platform")
 	}
 	return f(user, id)
 }
@@ -344,7 +344,7 @@ func (m *Mux) Resources(user User, classes ...Class) ([]Resource, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get resources list", err)
+			return nil, errors.New(err, "cannot get resources list")
 		}
 		resources = append(resources, list...)
 	}
@@ -360,7 +360,7 @@ func (m *Mux) Resources(user User, classes ...Class) ([]Resource, error) {
 func (m *Mux) Submit(user User, platform, id string) error {
 	f, ok := m.submit[platform]
 	if !ok {
-		return errors.New("unsupported platform", nil)
+		return errors.New(nil, "unsupported platform")
 	}
 	return f(user, id)
 }
@@ -371,7 +371,7 @@ func (m *Mux) Submit(user User, platform, id string) error {
 func (m *Mux) Task(user User, platform, id string) (Task, error) {
 	f, ok := m.task[platform]
 	if !ok {
-		return Task{}, errors.New("unsupported platform", nil)
+		return Task{}, errors.New(nil, "unsupported platform")
 	}
 	return f(user, id)
 }
@@ -391,7 +391,7 @@ func (m *Mux) Tasks(user User, classes ...Class) ([]Task, error) {
 		result := <-ch
 		list, err := result.First, result.Second
 		if err != nil {
-			return nil, errors.New("cannot get tasks list", err)
+			return nil, errors.New(err, "cannot get tasks list")
 		}
 		tasks = append(tasks, list...)
 	}
@@ -408,11 +408,11 @@ func (m *Mux) Tasks(user User, classes ...Class) ([]Task, error) {
 func (m *Mux) UploadWork(user User, platform, id string, r *http.Request) error {
 	f, ok := m.upload[platform]
 	if !ok {
-		return errors.New("unsupported platform", nil)
+		return errors.New(nil, "unsupported platform")
 	}
 	files, err := r.MultipartReader()
 	if err != nil {
-		return errors.New("cannot parse multipart MIME", err)
+		return errors.New(err, "cannot parse multipart MIME")
 	}
 	return f(user, id, files)
 }

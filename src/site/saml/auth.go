@@ -21,19 +21,19 @@ func fetch(username, password string) error {
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return errors.New("error creating cookiejar", err)
+		return errors.New(err, "error creating cookiejar")
 	}
 
 	client := &http.Client{Jar: jar}
 
 	s1, err := client.Get("https://da.gihs.sa.edu.au")
 	if err != nil {
-		return errors.New("GET request failed", err)
+		return errors.New(err, "GET request failed")
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return errors.New("error reading s1.Body", err)
+		return errors.New(err, "error reading s1.Body")
 	}
 
 	s1page := string(s1body)
@@ -52,7 +52,7 @@ func fetch(username, password string) error {
 
 	idIndex := strings.Index(s1page, "&client-request-id=")
 	if idIndex == -1 {
-		err := errors.New("missing client request ID", nil)
+		err := errors.New(nil, "missing client request ID")
 		return err
 	}
 
@@ -60,7 +60,7 @@ func fetch(username, password string) error {
 	idEnd += idIndex
 
 	if idEnd == -1 {
-		err := errors.New("unterminated client request ID", nil)
+		err := errors.New(nil, "unterminated client request ID")
 		return err
 	}
 
@@ -71,13 +71,13 @@ func fetch(username, password string) error {
 
 	s2req, err := http.NewRequest("POST", s2url, s2data)
 	if err != nil {
-		return errors.New("malformed stage 2 POST", err)
+		return errors.New(err, "malformed stage 2 POST")
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	s2, err := client.Do(s2req)
 	if err != nil {
-		return errors.New("stage 2 POST failed", err)
+		return errors.New(err, "stage 2 POST failed")
 	}
 
 	// Stage 3 - Check if authentication was successful.
@@ -85,14 +85,14 @@ func fetch(username, password string) error {
 	if s2.StatusCode == 200 && s2.Header.Get("X-Frame-Options") == "" {
 		return nil
 	}
-	return errors.New("saml returned non-200 response", nil)
+	return errors.New(nil, "saml returned non-200 response")
 }
 
 func Auth(user site.User, c chan site.Pair[[2]string, error]) {
 	var result site.Pair[[2]string, error]
 	err := fetch(user.Username, user.Password)
 	if err != nil {
-		result.Second = errors.New("saml login failed", err)
+		result.Second = errors.New(err, "saml login failed")
 		c <- result
 		return
 	}

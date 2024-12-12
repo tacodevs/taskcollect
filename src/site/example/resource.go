@@ -1,7 +1,6 @@
 package example
 
 import (
-	"fmt"
 	"main/site"
 
 	"git.sr.ht/~kvo/go-std/errors"
@@ -18,7 +17,7 @@ func Resource(user site.User, id string) (site.Resource, error) {
 	}
 	resource, exists := resources[id]
 	if !exists {
-		return resource, errors.New(fmt.Sprintf("no resource with ID %s exists", id), nil)
+		return resource, errors.New(nil, "no resource with ID %s exists", id)
 	}
 	return resource, nil
 }

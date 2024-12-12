@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
+	"git.sr.ht/~kvo/go-std/slices"
 
 	"main/logger"
 	"main/site"
@@ -28,7 +28,7 @@ func extract(cookie string) (string, error) {
 
 	start := strings.Index(cookie, "token=")
 	if start == -1 {
-		return "", errors.New("no token in session cookie", nil)
+		return "", errors.New(nil, "no token in session cookie")
 	}
 
 	start += 6
@@ -46,12 +46,11 @@ func extract(cookie string) (string, error) {
 func (creds *Creds) LookupToken(cookie string) (site.User, error) {
 	token, err := extract(cookie)
 	if err != nil {
-		return site.User{}, errors.New("cannot lookup token", err)
+		return site.User{}, errors.New(err, "cannot lookup token")
 	}
 	user := creds.Users[creds.Tokens[token]]
 	if user.Username == "" {
-		errstr := "no user with matching token: " + token
-		return site.User{}, errors.New(errstr, nil)
+		return site.User{}, errors.New(nil, "no user with matching token: %s", token)
 	}
 	return user, nil
 }
@@ -60,11 +59,7 @@ func (creds *Creds) LookupUid(school, username string) (site.User, error) {
 	uid := site.Uid{school, username}
 	user := creds.Users[uid]
 	if user.Username == "" {
-		errstr := fmt.Sprintf(
-			`no user with matching uid: {"%s", "%s"}`,
-			school, username,
-		)
-		return site.User{}, errors.New(errstr, nil)
+		return site.User{}, errors.New(nil, `no user with matching uid: {"%s", "%s"}`, school, username)
 	}
 	return user, nil
 }
@@ -88,8 +83,8 @@ func auth(school, email, username, password string) (site.User, error) {
 		username = strings.ToUpper(username)
 	}
 
-	if defs.Has([]string{username, password}, "") {
-		return site.User{}, errors.New("username or password is empty", nil)
+	if slices.Has([]string{username, password}, "") {
+		return site.User{}, errors.New(nil, "username or password is empty")
 	}
 
 	user := site.User{
@@ -105,30 +100,30 @@ func auth(school, email, username, password string) (site.User, error) {
 	case "gihs":
 		user.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
-			return site.User{}, errors.New("cannot load timezone", err)
+			return site.User{}, errors.New(err, "cannot load timezone")
 		}
 		user.DispName = strings.TrimPrefix(username, `CURRIC\`)
 		err = schools["gihs"].Auth(&user)
 		if err != nil {
-			return site.User{}, errors.New("", err)
+			return site.User{}, errors.Wrap(err)
 		}
 	case "uofa":
 		user.Timezone, err = time.LoadLocation("Australia/Adelaide")
 		if err != nil {
-			return site.User{}, errors.New("cannot load timezone", err)
+			return site.User{}, errors.New(err, "cannot load timezone")
 		}
 		err = schools["uofa"].Auth(&user)
 		if err != nil {
-			return site.User{}, errors.New("", err)
+			return site.User{}, errors.Wrap(err)
 		}
 	case "example":
 		user.Timezone = time.UTC
 		err = schools["example"].Auth(&user)
 		if err != nil {
-			return site.User{}, errors.New("", err)
+			return site.User{}, errors.Wrap(err)
 		}
 	default:
-		return site.User{}, errors.New(fmt.Sprintf("unsupported school: %s", school), nil)
+		return site.User{}, errors.New(nil, "unsupported school: %s", school)
 	}
 
 	return user, nil
@@ -152,14 +147,14 @@ func (creds *Creds) Login(query url.Values) (string, error) {
 		logger.Debug(err)
 		user, err = creds.LookupUid(school, username)
 		if err != nil {
-			return "", errors.New("login failed", err)
+			return "", errors.New(err, "login failed")
 		}
 	}
 
 	buf := make([]byte, 32)
 	_, err = rand.Read(buf)
 	if err != nil {
-		return "", errors.New("login failed", err)
+		return "", errors.New(err, "login failed")
 	}
 
 	token := base64.StdEncoding.EncodeToString(buf)
@@ -177,7 +172,7 @@ func (creds *Creds) Login(query url.Values) (string, error) {
 func (creds *Creds) Logout(cookie string) error {
 	token, err := extract(cookie)
 	if err != nil {
-		return errors.New("cannot logout user", err)
+		return errors.New(err, "cannot logout user")
 	}
 	creds.Mutex.Lock()
 	delete(creds.Tokens, token)

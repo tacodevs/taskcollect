@@ -20,17 +20,17 @@ func getTasks(user site.User) map[string][]site.Task {
 	}
 	school, ok := schools[user.School]
 	if !ok {
-		logger.Debug(errors.New("unsupported platform", nil))
+		logger.Debug(errors.New(nil, "unsupported platform"))
 		return filtered
 	}
 	classes, err := school.Classes(user)
 	if err != nil {
-		logger.Debug(errors.New("cannot fetch class list", err))
+		logger.Debug(errors.New(err, "cannot fetch class list"))
 		return filtered
 	}
 	tasks, err := school.Tasks(user, classes...)
 	if err != nil {
-		logger.Debug(errors.New("cannot fetch tasks list", err))
+		logger.Debug(errors.New(err, "cannot fetch tasks list"))
 		return filtered
 	}
 	for _, task := range tasks {
@@ -67,17 +67,17 @@ func getResources(user site.User) ([]string, map[string][]site.Resource) {
 	resMap := make(map[string][]site.Resource)
 	school, ok := schools[user.School]
 	if !ok {
-		logger.Debug(errors.New("unsupported platform", nil))
+		logger.Debug(errors.New(nil, "unsupported platform"))
 		return classList, resMap
 	}
 	classes, err := school.Classes(user)
 	if err != nil {
-		logger.Debug(errors.New("cannot fetch class list", err))
+		logger.Debug(errors.New(err, "cannot fetch class list"))
 		return classList, resMap
 	}
 	resources, err := school.Resources(user, classes...)
 	if err != nil {
-		logger.Debug(errors.New("cannot fetch resources list", err))
+		logger.Debug(errors.New(err, "cannot fetch resources list"))
 		return classList, resMap
 	}
 	for _, resource := range resources {

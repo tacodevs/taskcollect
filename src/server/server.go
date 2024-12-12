@@ -11,8 +11,8 @@ import (
 	path "path/filepath"
 	_ "time/tzdata"
 
-	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
+	"git.sr.ht/~kvo/go-std/slices"
 
 	"main/logger"
 	"main/site"
@@ -34,7 +34,7 @@ func Run(version string, tlsConn bool) {
 
 	execpath, err := os.Executable()
 	if err != nil {
-		logger.Fatal(errors.New("cannot get path to executable", err))
+		logger.Fatal(errors.New(err, "cannot get path to executable"))
 	}
 	respath = path.Join(path.Dir(execpath), "../../../res/")
 	config := path.Join(respath, "config.json")
@@ -43,7 +43,7 @@ func Run(version string, tlsConn bool) {
 
 	cfg, err := getConfig(config)
 	if err != nil {
-		logger.Error(errors.New("unable to read config file", err))
+		logger.Error(errors.New(err, "unable to read config file"))
 		logger.Warn("Resorting to default configuration settings")
 	}
 
@@ -52,7 +52,7 @@ func Run(version string, tlsConn bool) {
 		logPath := path.Join(respath, "logs")
 		err = logger.UseConfigFile(logPath)
 		if err != nil {
-			logger.Error(errors.New("Log file was not set up successfully", err))
+			logger.Error(errors.New(err, "Log file was not set up successfully"))
 		} else {
 			logger.Info("Log file set up successfully")
 		}
@@ -60,7 +60,7 @@ func Run(version string, tlsConn bool) {
 
 	err = initTemplates(respath)
 	if err != nil {
-		logger.Fatal(errors.New(site.ErrInitFailed.Error()+" for HTML templates", err))
+		logger.Fatal(errors.New(err, "%s for HTML templates", site.ErrInitFailed.Error()))
 	}
 	logger.Info("Successfully initialized HTML templates")
 
@@ -98,7 +98,7 @@ func initTemplates(respath string) error {
 	tmplPath := path.Join(respath, "templates")
 	err := os.MkdirAll(tmplPath, os.ModePerm)
 	if err != nil {
-		return errors.New("could not make 'templates' directory", err)
+		return errors.New(err, "could not make 'templates' directory")
 	}
 
 	tmplResPath := tmplPath
@@ -118,10 +118,10 @@ func initTemplates(respath string) error {
 		return nil
 	})
 	if err != nil {
-		logger.Fatal(errors.New("error walking the template/ directory", err))
+		logger.Fatal(errors.New(err, "error walking the template/ directory"))
 	}
 
-	files = defs.Remove(files, tmplResPath)
+	files = slices.Remove(files, tmplResPath)
 
 	var requiredFiles []string
 	tmplFiles := []string{
@@ -138,14 +138,14 @@ func initTemplates(respath string) error {
 	filesMissing := false
 	var missingFiles []string
 	for _, f := range requiredFiles {
-		if !defs.Has(files, f) {
+		if !slices.Has(files, f) {
 			filesMissing = true
 			missingFiles = append(missingFiles, f)
 		}
 	}
 	if filesMissing {
 		errStr := fmt.Errorf("%v:\n%+v", "the following files are missing", missingFiles)
-		logger.Fatal(errors.New(errStr.Error(), nil))
+		logger.Fatal(errors.New(nil, errStr.Error()))
 	}
 
 	sortedFiles := files
@@ -183,29 +183,29 @@ func getConfig(cfgPath string) (config, error) {
 
 	jsonFile, err := os.OpenFile(cfgPath, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
-		return cfg, errors.New("failed to open config.json", err)
+		return cfg, errors.New(err, "failed to open config.json")
 	}
 
 	b, err := io.ReadAll(jsonFile)
 	if err != nil {
-		return cfg, errors.New("failed to read config.json", err)
+		return cfg, errors.New(err, "failed to read config.json")
 	}
 
 	err = jsonFile.Close()
 	if err != nil {
-		return cfg, errors.New("failed to close config.json", err)
+		return cfg, errors.New(err, "failed to close config.json")
 	}
 
 	jsonFile, err = os.OpenFile(cfgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0622)
 	if err != nil {
-		return cfg, errors.New("failed to open config.json", err)
+		return cfg, errors.New(err, "failed to open config.json")
 	}
 	defer jsonFile.Close()
 
 	if len(b) > 0 {
 		err = json.Unmarshal(b, &cfg)
 		if err != nil {
-			return cfg, errors.New("failed to unmarshal config.json", err)
+			return cfg, errors.New(err, "failed to unmarshal config.json")
 		}
 	} else {
 		logger.Info("Using default configuration settings. These can be edited in the config.json file")
@@ -213,12 +213,12 @@ func getConfig(cfgPath string) (config, error) {
 
 	rawJson, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {
-		return config{}, errors.New("failed to marshal config.json", err)
+		return config{}, errors.New(err, "failed to marshal config.json")
 	}
 
 	_, err = jsonFile.Write(rawJson)
 	if err != nil {
-		return cfg, errors.New("failed to write to config.json", err)
+		return cfg, errors.New(err, "failed to write to config.json")
 	}
 
 	return cfg, nil

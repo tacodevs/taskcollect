@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
+	"git.sr.ht/~kvo/go-std/slices"
 
 	"main/site"
 )
@@ -41,41 +41,41 @@ func auxClassInfo(user site.User, link string) (string, string, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create aux class request", err)
+		return "", "", errors.New(err, "cannot create aux class request")
 	}
 
 	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", "", errors.New("cannot execute aux class request", err)
+		return "", "", errors.New(err, "cannot execute aux class request")
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read aux class response body", err)
+		return "", "", errors.New(err, "cannot read aux class response body")
 	}
 
 	page := string(body)
 	exp, err := regexp.Compile(`new Classroom\([0-9]+,null,[0-9]+,`)
 	if err != nil {
-		return "", "", errors.New("cannot compile regex", err)
+		return "", "", errors.New(err, "cannot compile regex")
 	}
-	courseId, err := defs.Get(strings.Split(exp.FindString(page), ","), 2)
+	courseId, err := slices.Get(strings.Split(exp.FindString(page), ","), 2)
 	if err != nil {
-		return "", "", errors.New("missing secondary course ID", err)
+		return "", "", errors.New(err, "missing secondary course ID")
 	}
 
 	classDiv := `<td><span id="ctl00_ctl00_cp_cp_divHeader" class="Header14" style="padding-left: 20px">`
 	i := strings.Index(page, classDiv)
 	if i == -1 {
-		return "", "", errors.New("missing class name", nil)
+		return "", "", errors.New(nil, "missing class name")
 	}
 	i += len(classDiv)
 	page = page[i:]
 	i = strings.Index(page, "</span>")
 	if i == -1 {
-		return "", "", errors.New("unterminated class name", nil)
+		return "", "", errors.New(nil, "unterminated class name")
 	}
 	class := page[:i]
 
@@ -90,7 +90,7 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 
 	className, courseId, err := auxClassInfo(user, classUrl)
 	if err != nil {
-		result.Second = errors.New("cannot fetch secondary class ID", err)
+		result.Second = errors.New(err, "cannot fetch secondary class ID")
 		c <- result
 		return
 	}
@@ -100,7 +100,7 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 
 	req, err := http.NewRequest("POST", resUrl, strings.NewReader(form))
 	if err != nil {
-		result.Second = errors.New("cannot create resources request", err)
+		result.Second = errors.New(err, "cannot create resources request")
 		c <- result
 		return
 	}
@@ -112,21 +112,21 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 
 	resp, err := client.Do(req)
 	if err != nil {
-		result.Second = errors.New("cannot execute resources request", err)
+		result.Second = errors.New(err, "cannot execute resources request")
 		c <- result
 		return
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		result.Second = errors.New("cannot read resources response body", err)
+		result.Second = errors.New(err, "cannot read resources response body")
 		c <- result
 		return
 	}
 
 	exp, err := regexp.Compile("[0-9]+/[0-9]+/[0-9]+")
 	if err != nil {
-		result.Second = errors.New("cannot compile regex", err)
+		result.Second = errors.New(err, "cannot compile regex")
 		c <- result
 		return
 	}
@@ -134,7 +134,7 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 	var data resJson
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		result.Second = errors.New("cannot unmarshal JSON", err)
+		result.Second = errors.New(err, "cannot unmarshal JSON")
 		c <- result
 		return
 	}
@@ -155,20 +155,20 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 		dates := exp.FindAllString(dateRegion, -1)
 
 		if len(dates) == 0 && strings.Index(page, planDiv) == -1 && strings.Index(page, fileDiv) == -1 {
-			result.Second = errors.New("resource has no post date", nil)
+			result.Second = errors.New(nil, "resource has no post date")
 			c <- result
 			return
 		} else if len(dates) > 0 {
 			postStr := dates[len(dates)-1]
 			resource.Posted, err = time.ParseInLocation("2/01/2006", postStr, user.Timezone)
 			if err != nil {
-				result.Second = errors.New("cannot parse time", err)
+				result.Second = errors.New(err, "cannot parse time")
 				c <- result
 				return
 			}
 		} else {
-			if _, err = defs.Get([]byte(page), len(div)); err != nil {
-				result.Second = errors.New("invalid HTML response", err)
+			if _, err = slices.Get([]byte(page), len(div)); err != nil {
+				result.Second = errors.New(err, "invalid HTML response")
 				c <- result
 				return
 			}
@@ -178,8 +178,8 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 		}
 
 		i = len(div)
-		if _, err = defs.Get([]byte(page), i); err != nil {
-			result.Second = errors.New("invalid HTML response", err)
+		if _, err = slices.Get([]byte(page), i); err != nil {
+			result.Second = errors.New(err, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -188,7 +188,7 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 		i = strings.Index(page, ");")
 
 		if i == -1 {
-			result.Second = errors.New("invalid HTML response", nil)
+			result.Second = errors.New(nil, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -198,7 +198,7 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 		if div == fileDiv {
 			i = strings.Index(page, "&nbsp;")
 			if i == -1 {
-				result.Second = errors.New("invalid HTML response", nil)
+				result.Second = errors.New(nil, "invalid HTML response")
 				c <- result
 				return
 			}
@@ -207,7 +207,7 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 			page = page[i:]
 			i = strings.Index(page, "</a>")
 			if i == -1 {
-				result.Second = errors.New("invalid HTML response", nil)
+				result.Second = errors.New(nil, "invalid HTML response")
 				c <- result
 				return
 			}
@@ -216,14 +216,14 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 			page = page[i:]
 			i = strings.Index(page, "</div>")
 			if i == -1 {
-				result.Second = errors.New("invalid HTML response", nil)
+				result.Second = errors.New(nil, "invalid HTML response")
 				c <- result
 				return
 			}
 		}
 
-		if _, err = defs.Get([]byte(page), i); err != nil {
-			result.Second = errors.New("invalid HTML response", err)
+		if _, err = slices.Get([]byte(page), i); err != nil {
+			result.Second = errors.New(err, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -239,8 +239,8 @@ func classRes(user site.User, c chan site.Pair[[]site.Resource, error], class si
 		resource.Id = class.Id + "-" + resource.Id
 		resources = append(resources, resource)
 
-		if _, err = defs.Get([]byte(page), i); err != nil {
-			result.Second = errors.New("invalid HTML response", err)
+		if _, err = slices.Get([]byte(page), i); err != nil {
+			result.Second = errors.New(err, "invalid HTML response")
 			c <- result
 			return
 		}
@@ -262,7 +262,7 @@ func Resources(user site.User, c chan site.Pair[[]site.Resource, error], classes
 		sent := <-ch
 		list, err := sent.First, sent.Second
 		if err != nil {
-			result.Second = errors.New("", err)
+			result.Second = errors.Wrap(err)
 			c <- result
 			return
 		}

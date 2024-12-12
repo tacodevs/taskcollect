@@ -3,6 +3,6 @@ package site
 import "git.sr.ht/~kvo/go-std/errors"
 
 var (
-	ErrInitFailed = errors.New("initialization failed", nil)
-	ErrNotFound   = errors.New("cannot find resource", nil)
+	ErrInitFailed = errors.New(nil, "initialization failed")
+	ErrNotFound   = errors.New(nil, "cannot find resource")
 )

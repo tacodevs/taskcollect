@@ -1,7 +1,6 @@
 package site
 
 import (
-	"fmt"
 	"net/url"
 	"os"
 	path "path/filepath"
@@ -20,8 +19,7 @@ func readcfg(path string) (map[string]UserConfig, error) {
 	defer file.Close()
 	_, err = toml.NewDecoder(file).Decode(&config)
 	if err != nil {
-		errstr := fmt.Sprintf("cannot parse user config: %s", path)
-		return config, errors.New(errstr, err)
+		return config, errors.New(err, "cannot parse user config: %s", path)
 	}
 	return config, nil
 }
@@ -31,12 +29,12 @@ func LoadConfig(user *User) error {
 	filename := username + ".cfg"
 	execpath, err := os.Executable()
 	if err != nil {
-		return errors.New("cannot get path to executable", err)
+		return errors.New(err, "cannot get path to executable")
 	}
 	cfgpath := path.Join(path.Dir(execpath), "../../../cfg/user/", user.School, filename)
 	config, err := readcfg(cfgpath)
 	if err != nil {
-		return errors.New("", err)
+		return errors.Wrap(err)
 	}
 	user.Config = config
 	return nil

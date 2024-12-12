@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"git.sr.ht/~kvo/go-std/defs"
 	"git.sr.ht/~kvo/go-std/errors"
+	"git.sr.ht/~kvo/go-std/slices"
 
 	"main/site"
 )
@@ -34,19 +34,19 @@ func Task(user site.User, id string) (site.Task, error) {
 
 	req, err := http.NewRequest("GET", taskUrl, nil)
 	if err != nil {
-		return site.Task{}, errors.New("cannot create task request", err)
+		return site.Task{}, errors.New(err, "cannot create task request")
 	}
 
 	req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return site.Task{}, errors.New("cannot execute task request", err)
+		return site.Task{}, errors.New(err, "cannot execute task request")
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return site.Task{}, errors.New("cannot read task response body", err)
+		return site.Task{}, errors.New(err, "cannot read task response body")
 	}
 
 	page := string(body)
@@ -56,14 +56,14 @@ func Task(user site.User, id string) (site.Task, error) {
 
 	i := strings.Index(page, "ctl00_ctl00_cp_cp_divResults")
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
 	i = strings.Index(page, "SectionHeader")
 
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
@@ -72,7 +72,7 @@ func Task(user site.User, id string) (site.Task, error) {
 	i = strings.Index(page, "</div>")
 
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	task.Name = page[:i]
@@ -80,7 +80,7 @@ func Task(user site.User, id string) (site.Task, error) {
 	i = strings.Index(page, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
@@ -89,7 +89,7 @@ func Task(user site.User, id string) (site.Task, error) {
 	i = strings.Index(page, "</div>")
 
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	task.Class = page[:i]
@@ -97,7 +97,7 @@ func Task(user site.User, id string) (site.Task, error) {
 	i = strings.Index(page, "<div style='padding:6px'>")
 
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
@@ -106,7 +106,7 @@ func Task(user site.User, id string) (site.Task, error) {
 	i = strings.Index(page, "</div>")
 
 	if i == -1 {
-		return site.Task{}, errors.New("invalid task HTML response", nil)
+		return site.Task{}, errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
@@ -119,7 +119,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		dueStr := page[:i]
@@ -132,7 +132,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		}
 
 		if err != nil {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 	}
 
@@ -143,14 +143,14 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "<div><div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		page = page[i:]
 		i = strings.Index(page, "</div></div></div></div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		wlHtml := page[:i]
@@ -163,7 +163,7 @@ func Task(user site.User, id string) (site.Task, error) {
 			j = strings.Index(wlHtml, `"`)
 
 			if j == -1 {
-				return site.Task{}, errors.New("invalid task HTML response", nil)
+				return site.Task{}, errors.New(nil, "invalid task HTML response")
 			}
 
 			wlPath := wlHtml[:j]
@@ -172,7 +172,7 @@ func Task(user site.User, id string) (site.Task, error) {
 			j = strings.Index(wlHtml, "&nbsp;")
 
 			if j == -1 {
-				return site.Task{}, errors.New("invalid task HTML response", nil)
+				return site.Task{}, errors.New(nil, "invalid task HTML response")
 			}
 
 			j += len("&nbsp;")
@@ -180,7 +180,7 @@ func Task(user site.User, id string) (site.Task, error) {
 			j = strings.Index(wlHtml, "</a>")
 
 			if j == -1 {
-				return site.Task{}, errors.New("invalid task HTML response", nil)
+				return site.Task{}, errors.New(nil, "invalid task HTML response")
 			}
 
 			name := wlHtml[:j]
@@ -196,7 +196,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "TaskGrade'>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		page = page[i:]
@@ -205,7 +205,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		task.Grade = page[:i]
@@ -218,7 +218,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "TaskGrade'>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		page = page[i:]
@@ -227,7 +227,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		markStr := page[:i]
@@ -236,7 +236,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i := strings.Index(markStr, " / ")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		var marks [2]string
@@ -245,12 +245,12 @@ func Task(user site.User, id string) (site.Task, error) {
 
 		top, err := strconv.ParseFloat(marks[0], 64)
 		if err != nil {
-			return site.Task{}, errors.New(fmt.Sprintf("cannot convert %s to float64", marks[0]), err)
+			return site.Task{}, errors.New(err, "cannot convert %s to float64", marks[0])
 		}
 
 		bottom, err := strconv.ParseFloat(marks[1], 64)
 		if err != nil {
-			return site.Task{}, errors.New(fmt.Sprintf("cannot convert %s to float64", marks[1]), err)
+			return site.Task{}, errors.New(err, "cannot convert %s to float64", marks[1])
 		}
 
 		task.Score = top / bottom * 100
@@ -266,7 +266,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		task.Comment = page[:i]
@@ -286,7 +286,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		}
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		rlHtml := page[:i]
@@ -299,7 +299,7 @@ func Task(user site.User, id string) (site.Task, error) {
 			j = strings.Index(rlHtml, ")")
 
 			if j == -1 {
-				return site.Task{}, errors.New("invalid task HTML response", nil)
+				return site.Task{}, errors.New(nil, "invalid task HTML response")
 			}
 
 			rlId := rlHtml[:j]
@@ -308,7 +308,7 @@ func Task(user site.User, id string) (site.Task, error) {
 			j = strings.Index(rlHtml, "&nbsp;")
 
 			if j == -1 {
-				return site.Task{}, errors.New("invalid task HTML response", nil)
+				return site.Task{}, errors.New(nil, "invalid task HTML response")
 			}
 
 			j += len("&nbsp;")
@@ -316,7 +316,7 @@ func Task(user site.User, id string) (site.Task, error) {
 			j = strings.Index(rlHtml, "</a>")
 
 			if j == -1 {
-				return site.Task{}, errors.New("invalid task HTML response", nil)
+				return site.Task{}, errors.New(nil, "invalid task HTML response")
 			}
 
 			name := rlHtml[:j]
@@ -335,7 +335,7 @@ func Task(user site.User, id string) (site.Task, error) {
 		i = strings.Index(page, "</div>")
 
 		if i == -1 {
-			return site.Task{}, errors.New("invalid task HTML response", nil)
+			return site.Task{}, errors.New(nil, "invalid task HTML response")
 		}
 
 		task.Desc = page[:i]
@@ -347,7 +347,7 @@ func Task(user site.User, id string) (site.Task, error) {
 }
 
 func Submit(user site.User, id string) error {
-	return errors.New("daymap does not support task submission", nil)
+	return errors.New(nil, "daymap does not support task submission")
 }
 
 type chkJson struct {
@@ -437,7 +437,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 			s1url += "?" + s1form.Encode()
 			s1req, err := http.NewRequest("GET", s1url, nil)
 			if err != nil {
-				return errors.New("cannot create stage 1 request", err)
+				return errors.New(err, "cannot create stage 1 request")
 			}
 
 			s1req.Header.Set("Accept", "application/json")
@@ -446,12 +446,12 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 			s1, err := client.Do(s1req)
 			if err != nil {
-				return errors.New("cannot execute stage 1 request", err)
+				return errors.New(err, "cannot execute stage 1 request")
 			}
 
 			s1body, err = io.ReadAll(s1.Body)
 			if err != nil {
-				return errors.New("cannot read stage 1 body", err)
+				return errors.New(err, "cannot read stage 1 body")
 			}
 
 			if isLast == 2 {
@@ -466,7 +466,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 			s2req, err := http.NewRequest("OPTIONS", s2url, nil)
 			if err != nil {
-				return errors.New("cannot create stage 2 request", err)
+				return errors.New(err, "cannot create stage 2 request")
 			}
 
 			s2req.Header.Set("Accept", "*/*")
@@ -476,14 +476,14 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 			_, err = client.Do(s2req)
 			if err != nil {
-				return errors.New("cannot execute stage 2 request", err)
+				return errors.New(err, "cannot execute stage 2 request")
 			}
 
 			// Stage 3: Send file contents and metadata to the DayMap file upload server.
 
 			s3req, err := http.NewRequest("PUT", s2url, chunk)
 			if err != nil {
-				return errors.New("cannot create stage 3 request", err)
+				return errors.New(err, "cannot create stage 3 request")
 			}
 
 			s3req.Header.Set("Accept", "*/*")
@@ -496,7 +496,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 			_, err = client.Do(s3req)
 			if err != nil {
-				return errors.New("cannot execute stage 3 request", err)
+				return errors.New(err, "cannot execute stage 3 request")
 			}
 
 			if isLast == 1 {
@@ -509,7 +509,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 		s4url := string(s1body) + `&comp=blocklist`
 		s4req, err := http.NewRequest("OPTIONS", s4url, nil)
 		if err != nil {
-			return errors.New("cannot create stage 4 request", err)
+			return errors.New(err, "cannot create stage 4 request")
 		}
 
 		s4req.Header.Set("Accept", "*/*")
@@ -521,7 +521,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 		_, err = client.Do(s4req)
 		if err != nil {
-			return errors.New("cannot execute stage 4 request", err)
+			return errors.New(err, "cannot execute stage 4 request")
 		}
 
 		// Stage 5: Send final PUT request to the Daymap file upload server.
@@ -536,7 +536,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 		s5req, err := http.NewRequest("PUT", s4url, s5data)
 		if err != nil {
-			return errors.New("cannot create stage 5 request", err)
+			return errors.New(err, "cannot create stage 5 request")
 		}
 
 		s5req.Header.Set("Accept", "*/*")
@@ -550,7 +550,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 		_, err = client.Do(s5req)
 		if err != nil {
-			return errors.New("cannot execute stage 5 request", err)
+			return errors.New(err, "cannot execute stage 5 request")
 		}
 
 		// Stage 6: Send the concluding POST request to the Daymap server.
@@ -568,7 +568,7 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 		s6req, err := http.NewRequest("POST", s6url, s6data)
 		if err != nil {
-			return errors.New("cannot create stage 6 request", err)
+			return errors.New(err, "cannot create stage 6 request")
 		}
 
 		s6req.Header.Set("Accept", "application/json")
@@ -580,32 +580,32 @@ func UploadWork(user site.User, id string, files *multipart.Reader) error {
 
 		s6, err := client.Do(s6req)
 		if err != nil {
-			return errors.New("cannot execute stage 6 request", err)
+			return errors.New(err, "cannot execute stage 6 request")
 		}
 
 		s6body, err := io.ReadAll(s6.Body)
 		if err != nil {
-			return errors.New("cannot read stage 6 body", err)
+			return errors.New(err, "cannot read stage 6 body")
 		}
 
 		jresp := chkJson{}
 		err = json.Unmarshal(s6body, &jresp)
 		if err != nil {
-			return errors.New("cannot unmarshal JSON", err)
+			return errors.New(err, "cannot unmarshal JSON")
 		}
 
 		if !jresp.Success || jresp.Error != "" {
-			return errors.New("daymap returned error", errors.New(jresp.Error, nil))
+			return errors.New(errors.New(nil, jresp.Error), "daymap returned error")
 		}
 
 		file, mimeErr = files.NextPart()
 	}
 
-	err := errors.New(mimeErr.Error(), nil)
+	err := errors.New(nil, mimeErr.Error())
 	if mimeErr == io.EOF {
 		return nil
 	} else {
-		return errors.New("cannot parse multipart MIME", err)
+		return errors.New(err, "cannot parse multipart MIME")
 	}
 }
 
@@ -616,33 +616,33 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 
 	s1req, err := http.NewRequest("GET", removeUrl, nil)
 	if err != nil {
-		return errors.New("cannot create stage 1 request", err)
+		return errors.New(err, "cannot create stage 1 request")
 	}
 
 	s1req.Header.Set("Cookie", user.SiteTokens["daymap"])
 
 	s1, err := client.Do(s1req)
 	if err != nil {
-		return errors.New("cannot execute stage 1 request", err)
+		return errors.New(err, "cannot execute stage 1 request")
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return errors.New("cannot read stage 1 body", err)
+		return errors.New(err, "cannot read stage 1 body")
 	}
 
 	page := string(s1body)
 	i := strings.Index(page, "<form")
 
 	if i == -1 {
-		return errors.New("invalid task HTML response", nil)
+		return errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
 	i = strings.Index(page, ` action="`)
 
 	if i == -1 {
-		return errors.New("invalid task HTML response", nil)
+		return errors.New(nil, "invalid task HTML response")
 	}
 
 	page = page[i:]
@@ -651,7 +651,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 	i = strings.Index(page, `"`)
 
 	if i == -1 {
-		return errors.New("invalid task HTML response", nil)
+		return errors.New(nil, "invalid task HTML response")
 	}
 
 	rwUrl := page[:i]
@@ -666,7 +666,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, ` type=`)
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		page = page[i:]
@@ -675,7 +675,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, ` `)
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		inputType := page[:i]
@@ -683,7 +683,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, `name="`)
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		page = page[i:]
@@ -692,7 +692,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, `"`)
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		name = page[:i]
@@ -701,7 +701,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, "\n")
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		valTest := page[:i]
@@ -714,7 +714,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 			i = strings.Index(page, `"`)
 
 			if i == -1 {
-				return errors.New("invalid task HTML response", nil)
+				return errors.New(nil, "invalid task HTML response")
 			}
 
 			value = page[:i]
@@ -730,7 +730,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, `<span name=filename>`)
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		page = page[i:]
@@ -739,13 +739,13 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 		i = strings.Index(page, `</span>`)
 
 		if i == -1 {
-			return errors.New("invalid task HTML response", nil)
+			return errors.New(nil, "invalid task HTML response")
 		}
 
 		fname := page[:i]
 		page = page[i:]
 
-		if defs.Has(filenames, fname) {
+		if slices.Has(filenames, fname) {
 			s2form.Set(name, "del")
 		}
 
@@ -757,13 +757,13 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 	s2form.Set("__EVENTARGUMENT", "")
 
 	s2data := strings.NewReader(s2form.Encode())
-	if _, err := defs.Get([]byte(rwUrl), 1); err != nil {
-		return errors.New("invalid task HTML response", err)
+	if _, err := slices.Get([]byte(rwUrl), 1); err != nil {
+		return errors.New(err, "invalid task HTML response")
 	}
 	s2url := "https://gihs.daymap.net/daymap/student" + rwUrl[1:]
 	s2req, err := http.NewRequest("POST", s2url, s2data)
 	if err != nil {
-		return errors.New("cannot create stage 2 request", err)
+		return errors.New(err, "cannot create stage 2 request")
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -771,7 +771,7 @@ func RemoveWork(user site.User, id string, filenames []string) error {
 
 	_, err = client.Do(s2req)
 	if err != nil {
-		return errors.New("cannot execute stage 2 request", err)
+		return errors.New(err, "cannot execute stage 2 request")
 	}
 
 	return nil

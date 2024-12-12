@@ -135,14 +135,14 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 1 cookie jar", err)
+		return "", "", errors.New(err, "cannot create stage 1 cookie jar")
 	}
 
 	client := &http.Client{Jar: jar}
 
 	_, err = client.Get(link)
 	if err != nil {
-		return "", "", errors.New("stage 1 request failed", err)
+		return "", "", errors.New(err, "stage 1 request failed")
 	}
 
 	// Stage 2 - Manually self-redirect to Okta.
@@ -150,19 +150,19 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s2charset := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 	s2verifier, err := mkverifier()
 	if err != nil {
-		return "", "", errors.New("cannot make stage 2 verifier token", nil)
+		return "", "", errors.New(nil, "cannot make stage 2 verifier token")
 	}
 	s2challenge, err := mkchallenge(s2verifier)
 	if err != nil {
-		return "", "", errors.New("cannot make stage 2 code_challenge token", nil)
+		return "", "", errors.New(nil, "cannot make stage 2 code_challenge token")
 	}
 	s2nonce, err := randstr(s2charset, 64)
 	if err != nil {
-		return "", "", errors.New("cannot make stage 2 nonce token", nil)
+		return "", "", errors.New(nil, "cannot make stage 2 nonce token")
 	}
 	s2state, err := randstr(s2charset, 64)
 	if err != nil {
-		return "", "", errors.New("cannot make stage 2 state token", nil)
+		return "", "", errors.New(nil, "cannot make stage 2 state token")
 	}
 
 	s2url := "https://id.adelaide.edu.au/oauth2/default/v1/authorize?"
@@ -178,7 +178,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s2req, err := http.NewRequest("GET", s2url, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 2 request", err)
+		return "", "", errors.New(err, "cannot create stage 2 request")
 	}
 
 	s2req.Header.Set("Referer", "https://myadelaide.uni.adelaide.edu.au/")
@@ -186,12 +186,12 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s2, err := client.Do(s2req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 2 request", err)
+		return "", "", errors.New(err, "cannot execute stage 2 request")
 	}
 
 	s2body, err := io.ReadAll(s2.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 2 response body", err)
+		return "", "", errors.New(err, "cannot read stage 2 response body")
 	}
 
 	s2page := string(s2body)
@@ -201,24 +201,24 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s3rstate := regexp.MustCompile(`"stateToken":"[_0-9\\\-\.a-zA-Z]+","helpLinks"`)
 	s3state := s3rstate.FindString(s2page)
 	if len(s3state) < 27 {
-		return "", "", errors.New("cannot find stage 3 state token", nil)
+		return "", "", errors.New(nil, "cannot find stage 3 state token")
 	}
 	s3state, err = strconv.Unquote(fmt.Sprintf(`"%s"`, s3state[14:len(s3state)-13]))
 	if err != nil {
-		return "", "", errors.New("cannot unquote stage 3 state token", err)
+		return "", "", errors.New(err, "cannot unquote stage 3 state token")
 	}
 
 	s3url := "https://id.adelaide.edu.au/idp/idx/introspect"
 	s3tmpl := `{"stateToken":%s}`
 	s3jstate, err := json.Marshal(s3state)
 	if err != nil {
-		return "", "", errors.New("cannot marshal stage 3 state token as JSON", err)
+		return "", "", errors.New(err, "cannot marshal stage 3 state token as JSON")
 	}
 	s3data := strings.NewReader(fmt.Sprintf(s3tmpl, string(s3jstate)))
 
 	s3req, err := http.NewRequest("POST", s3url, s3data)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 3 request", err)
+		return "", "", errors.New(err, "cannot create stage 3 request")
 	}
 
 	s3req.Header.Set("Accept", `application/ion+json; okta-version=1.0.0`)
@@ -229,7 +229,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	_, err = client.Do(s3req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 3 request", err)
+		return "", "", errors.New(err, "cannot execute stage 3 request")
 	}
 
 	// Stage 4 - POST to Okta nonce.
@@ -237,7 +237,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s4url := "https://id.adelaide.edu.au/api/v1/internal/device/nonce"
 	s4req, err := http.NewRequest("POST", s4url, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 4 request", err)
+		return "", "", errors.New(err, "cannot create stage 4 request")
 	}
 
 	s4req.Header.Set("Accept", `*/*`)
@@ -249,12 +249,12 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s4, err := client.Do(s4req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 4 request", err)
+		return "", "", errors.New(err, "cannot execute stage 4 request")
 	}
 
 	s4body, err := io.ReadAll(s4.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 4 response body", err)
+		return "", "", errors.New(err, "cannot read stage 4 response body")
 	}
 
 	// Stage 5 - POST to Okta identify.
@@ -262,28 +262,28 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s5nonce := s5json{}
 	err = json.Unmarshal(s4body, &s5nonce)
 	if err != nil {
-		return "", "", errors.New("cannot unmarshal stage 5 nonce", err)
+		return "", "", errors.New(err, "cannot unmarshal stage 5 nonce")
 	}
 	s5finger1, err := randhex(64)
 	if err != nil {
-		return "", "", errors.New("cannot make counterfeit fingerprint field 1", err)
+		return "", "", errors.New(err, "cannot make counterfeit fingerprint field 1")
 	}
 	s5finger2, err := randhex(32)
 	if err != nil {
-		return "", "", errors.New("cannot make counterfeit fingerprint field 2", err)
+		return "", "", errors.New(err, "cannot make counterfeit fingerprint field 2")
 	}
 	s5finger := fmt.Sprintf("%s|%s|%s", s5nonce.Nonce, s5finger1, s5finger2)
 
 	s5form := s5struct{username, s3state}
 	s5data, err := json.Marshal(s5form)
 	if err != nil {
-		return "", "", errors.New("cannot marshal stage 5 form", err)
+		return "", "", errors.New(err, "cannot marshal stage 5 form")
 	}
 
 	s5url := "https://id.adelaide.edu.au/idp/idx/identify"
 	s5req, err := http.NewRequest("POST", s5url, bytes.NewReader(s5data))
 	if err != nil {
-		return "", "", errors.New("cannot create stage 5 request", err)
+		return "", "", errors.New(err, "cannot create stage 5 request")
 	}
 
 	s5req.Header.Set("Accept", `application/json; okta-version=1.0.0`)
@@ -296,12 +296,12 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s5, err := client.Do(s5req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 5 request", err)
+		return "", "", errors.New(err, "cannot execute stage 5 request")
 	}
 
 	s5body, err := io.ReadAll(s5.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 5 response body", err)
+		return "", "", errors.New(err, "cannot read stage 5 response body")
 	}
 
 	// Stage 6 - POST to Okta answer.
@@ -309,18 +309,18 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s6state := s5struct{}
 	err = json.Unmarshal(s5body, &s6state)
 	if err != nil {
-		return "", "", errors.New("cannot unmarshal stage 6 state token", err)
+		return "", "", errors.New(err, "cannot unmarshal stage 6 state token")
 	}
 	s6form := s6json{s6creds{password}, s6state.StateHandle}
 	s6data, err := json.Marshal(s6form)
 	if err != nil {
-		return "", "", errors.New("cannot marshal stage 6 form", err)
+		return "", "", errors.New(err, "cannot marshal stage 6 form")
 	}
 
 	s6url := "https://id.adelaide.edu.au/idp/idx/challenge/answer"
 	s6req, err := http.NewRequest("POST", s6url, bytes.NewReader(s6data))
 	if err != nil {
-		return "", "", errors.New("cannot create stage 6 request", err)
+		return "", "", errors.New(err, "cannot create stage 6 request")
 	}
 
 	s6req.Header.Set("Accept", `application/json; okta-version=1.0.0`)
@@ -332,25 +332,25 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	_, err = client.Do(s6req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 6 request", err)
+		return "", "", errors.New(err, "cannot execute stage 6 request")
 	}
 
 	// Stage 7 - POST to Okta answer (again).
 
 	s7mfa, err := mkcode(key)
 	if err != nil {
-		return "", "", errors.New("cannot make 2fa code", err)
+		return "", "", errors.New(err, "cannot make 2fa code")
 	}
 	s7form := s6json{s6creds{s7mfa}, s6state.StateHandle}
 	s7data, err := json.Marshal(s7form)
 	if err != nil {
-		return "", "", errors.New("cannot marshal stage 7 form", err)
+		return "", "", errors.New(err, "cannot marshal stage 7 form")
 	}
 
 	s7url := "https://id.adelaide.edu.au/idp/idx/challenge/answer"
 	s7req, err := http.NewRequest("POST", s7url, bytes.NewReader(s7data))
 	if err != nil {
-		return "", "", errors.New("cannot create stage 7 request", err)
+		return "", "", errors.New(err, "cannot create stage 7 request")
 	}
 
 	s7req.Header.Set("Accept", `application/json; okta-version=1.0.0`)
@@ -362,12 +362,12 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s7, err := client.Do(s7req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 7 request", err)
+		return "", "", errors.New(err, "cannot execute stage 7 request")
 	}
 
 	s7body, err := io.ReadAll(s7.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 7 response body", err)
+		return "", "", errors.New(err, "cannot read stage 7 response body")
 	}
 
 	// Stage 8 - Get redirect from Okta.
@@ -400,32 +400,32 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s8url := s8json{}
 	err = json.Unmarshal(s7body, &s8url)
 	if err != nil {
-		return "", "", errors.New("cannot unmarshal stage 8 url", err)
+		return "", "", errors.New(err, "cannot unmarshal stage 8 url")
 	}
 
 	s8req, err := http.NewRequest("GET", s8url.Success.Href, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 8 request", err)
+		return "", "", errors.New(err, "cannot create stage 8 request")
 	}
 
 	s8req.Header.Set("User-Agent", browser)
 
 	s8, err := noredirect.Do(s8req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 8 request", err)
+		return "", "", errors.New(err, "cannot execute stage 8 request")
 	}
 	s8loc := s8.Header.Get("location")
 
 	s8req, err = http.NewRequest("GET", link, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create redirected stage 8 request", err)
+		return "", "", errors.New(err, "cannot create redirected stage 8 request")
 	}
 
 	s8req.Header.Set("User-Agent", browser)
 
 	_, err = client.Do(s8req)
 	if err != nil {
-		return "", "", errors.New("cannot execute redirected stage 8 request", err)
+		return "", "", errors.New(err, "cannot execute redirected stage 8 request")
 	}
 
 	// Stage 9 - Request token options from Adelaide Okta.
@@ -433,7 +433,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s9url := "https://adelaide.okta.com/oauth2/default/v1/token"
 	s9req, err := http.NewRequest("OPTIONS", s9url, nil)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 9 request", err)
+		return "", "", errors.New(err, "cannot create stage 9 request")
 	}
 
 	s9req.Header.Set("Accept", `*/*`)
@@ -445,7 +445,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	_, err = client.Do(s9req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 9 request", err)
+		return "", "", errors.New(err, "cannot execute stage 9 request")
 	}
 
 	// Stage 10 - POST to Adelaide Okta token.
@@ -453,7 +453,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s10rloc := regexp.MustCompile("#code=[-A-Za-z0-9]+&state=")
 	s10loc := s10rloc.FindString(s8loc)
 	if len(s10loc) < 13 {
-		return "", "", errors.New("cannot find stage 10 redirect link", nil)
+		return "", "", errors.New(nil, "cannot find stage 10 redirect link")
 	}
 	s10loc = s10loc[6 : len(s10loc)-7]
 
@@ -467,7 +467,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s10req, err := http.NewRequest("POST", s9url, s10data)
 	if err != nil {
-		return "", "", errors.New("cannot create stage 10 request", err)
+		return "", "", errors.New(err, "cannot create stage 10 request")
 	}
 
 	s10req.Header.Set("Accept", `application/json`)
@@ -479,12 +479,12 @@ func fetch(link, username, password, key string) (string, string, error) {
 
 	s10, err := client.Do(s10req)
 	if err != nil {
-		return "", "", errors.New("cannot execute stage 10 request", err)
+		return "", "", errors.New(err, "cannot execute stage 10 request")
 	}
 
 	s10body, err := io.ReadAll(s10.Body)
 	if err != nil {
-		return "", "", errors.New("cannot read stage 10 response body", err)
+		return "", "", errors.New(err, "cannot read stage 10 response body")
 	}
 
 	s10page := string(s10body)
@@ -494,7 +494,7 @@ func fetch(link, username, password, key string) (string, string, error) {
 	s10bearer := s10json{}
 	err = json.Unmarshal(s10body, &s10bearer)
 	if err != nil {
-		return "", "", errors.New("cannot unmarshal stage 10 bearer token", err)
+		return "", "", errors.New(err, "cannot unmarshal stage 10 bearer token")
 	}
 
 	return s10page, s10bearer.Token, nil
@@ -504,14 +504,14 @@ func Auth(user site.User, c chan site.Pair[[2]string, error]) {
 	var result site.Pair[[2]string, error]
 	cfg, ok := user.Config["myadelaide"]
 	if !ok {
-		result.Second = errors.New("no user settings for myadelaide", nil)
+		result.Second = errors.New(nil, "no user settings for myadelaide")
 		c <- result
 		return
 	}
 	link := "https://myadelaide.uni.adelaide.edu.au"
 	_, token, err := fetch(link, user.Username, user.Password, cfg.HotpKey)
 	if err != nil {
-		result.Second = errors.New("myadelaide login failed", err)
+		result.Second = errors.New(err, "myadelaide login failed")
 		c <- result
 		return
 	}

@@ -360,7 +360,7 @@ func genRes(resURL string, user site.User) (pageData, error) {
 
 		timetable, err := TimetableHTML(user)
 		if err != nil {
-			return data, errors.New("failed to generate timetable", err)
+			return data, errors.New(err, "failed to generate timetable")
 		}
 
 		data.Body.TimetableData = timetable
@@ -443,11 +443,11 @@ func genRes(resURL string, user site.User) (pageData, error) {
 
 		school, ok := schools[user.School]
 		if !ok {
-			return statusServerErrorData, errors.New("unsupported platform", nil)
+			return statusServerErrorData, errors.New(nil, "unsupported platform")
 		}
 		tasks, err := school.Graded(user)
 		if err != nil {
-			return data, errors.New("cannot fetch graded tasks", err)
+			return data, errors.New(err, "cannot fetch graded tasks")
 		}
 
 		for _, task := range tasks {
