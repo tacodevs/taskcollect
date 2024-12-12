@@ -21,19 +21,19 @@ func fetch(username, password string) error {
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return errors.New(err, "error creating cookiejar")
+		return errors.New(err, "cannot create cookiejar")
 	}
 
 	client := &http.Client{Jar: jar}
 
 	s1, err := client.Get("https://da.gihs.sa.edu.au")
 	if err != nil {
-		return errors.New(err, "GET request failed")
+		return errors.New(err, "stage 1 request failed")
 	}
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return errors.New(err, "error reading s1.Body")
+		return errors.New(err, "cannot read stage 1 body")
 	}
 
 	s1page := string(s1body)
@@ -71,16 +71,17 @@ func fetch(username, password string) error {
 
 	s2req, err := http.NewRequest("POST", s2url, s2data)
 	if err != nil {
-		return errors.New(err, "malformed stage 2 POST")
+		return errors.New(err, "cannot create stage 2 request")
 	}
 
 	s2req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
 	s2, err := client.Do(s2req)
 	if err != nil {
-		return errors.New(err, "stage 2 POST failed")
+		return errors.New(err, "cannot execute stage 2 request")
 	}
 
-	// Stage 3 - Check if authentication was successful.
+	// Check if authentication was successful.
 
 	if s2.StatusCode == 200 && s2.Header.Get("X-Frame-Options") == "" {
 		return nil

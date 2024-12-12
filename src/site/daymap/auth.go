@@ -52,7 +52,7 @@ func fetch(link, username, password string) (string, string, error) {
 
 	s1body, err := io.ReadAll(s1.Body)
 	if err != nil {
-		return "", "", errors.New(err, "cannot read stage 1 response body")
+		return "", "", errors.New(err, "cannot read stage 1 body")
 	}
 
 	s1page := string(s1body)
