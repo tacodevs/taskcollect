@@ -24,7 +24,6 @@ $checkbox-dim: 1.2em;
     }
 
     @include bp.xs {
-
         .task-title,
         .topright {
             width: 100%;
@@ -32,7 +31,6 @@ $checkbox-dim: 1.2em;
     }
 
     @include bp.sm {
-
         .task-title,
         .topright {
             width: 100%;
@@ -40,7 +38,6 @@ $checkbox-dim: 1.2em;
     }
 
     @include bp.md {
-
         .task-title,
         .topright {
             width: 100%;
@@ -48,7 +45,6 @@ $checkbox-dim: 1.2em;
     }
 
     @include bp.lg {
-
         .task-title,
         .topright {
             width: 100%;
@@ -83,7 +79,6 @@ $checkbox-dim: 1.2em;
     @include bp.xl {
         grid-template-columns: repeat(3, minmax(0, 1fr))
     }
-
 }
 
 .task-grade {
@@ -238,7 +233,6 @@ $checkbox-dim: 1.2em;
             margin-top: 5px;
             min-width: $checkbox-dim;
         }
-
     }
 }
 
@@ -278,5 +272,4 @@ input[type="checkbox"] {
     &:checked::before {
         transform: scale(1);
     }
-
 }
