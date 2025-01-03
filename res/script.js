@@ -36,8 +36,7 @@ document.addEventListener("click", function (event) {
     if (parent != null && parent.tagName == "P") {
       let grandparent = parent.parentElement;
       if (grandparent != null && grandparent.tagName == "DIV") {
-        let greatGrandparent = grandparent.parentElement;
-        if (greatGrandparent.tagName == "DETAILS") {
+        if (grandparent.parentElement.tagName == "DETAILS") {
           applyLoader();
         }
       }
