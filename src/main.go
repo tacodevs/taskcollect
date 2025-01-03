@@ -1,21 +1,34 @@
 package main
 
 import (
-	"os"
-
-	"git.sr.ht/~kvo/go-std/slices"
+	"flag"
 
 	"main/logger"
 	"main/server"
 )
 
+var wflag bool
+
+var schools = []string{
+	"example",
+	"gihs",
+	"uofa",
+}
+
+func init() {
+	flag.BoolVar(&wflag, "w", false, "run without TLS, on port 8080")
+}
+
 func main() {
-	tlsConn := true
-	if len(os.Args) > 2 || len(os.Args) == 2 && os.Args[1] != "-w" {
-		logger.Fatal("invalid invocation")
+	flag.Parse()
+	server.Announce(version)
+	server.Enrol(schools)
+	err := server.Configure()
+	if err != nil {
+		logger.Fatal(err)
 	}
-	if slices.Has(os.Args, "-w") {
-		tlsConn = false
+	err = server.Run(!wflag)
+	if err != nil {
+		logger.Fatal(err)
 	}
-	server.Run(version, tlsConn)
 }

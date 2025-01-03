@@ -108,10 +108,14 @@ To add support for a new institution, you will need to:
      </select><br>
      ```
 
-  2. Update the list of enrolled institutions at the start of `server.Run`:
+  2. Update the list of enrolled institutions at the top of `src/main.go`:
 
      ```go
-     enrol("gihs", "newschool", "uofa")
+     var schools = []string{
+     	"gihs",
+     	"newschool",
+     	"uofa",
+     }
      ```
 
   3. Add institution timezone and login configurations to `server.auth`:
@@ -125,11 +129,11 @@ To add support for a new institution, you will need to:
      	}
      ```
 
-  4. Configure the new institution's supported platfoms in `server.enrol` (see below):
+  4. Configure the new institution's supported platfoms in `server.Enrol` (see below):
 
 ### Expanding platform support for an existing institution
 
-Add newly supported functions to the institution's section in `server.enrol`:
+Add newly supported functions to the institution's section in `server.Enrol`:
 
 ```go
 case "newschool":

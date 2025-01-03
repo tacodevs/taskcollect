@@ -8,7 +8,7 @@ import (
 	"main/site/saml"
 )
 
-func enrol(institutes ...string) {
+func Enrol(institutes []string) {
 	for _, institute := range institutes {
 		switch institute {
 		case "gihs":
