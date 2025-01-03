@@ -108,13 +108,13 @@ To add support for a new institution, you will need to:
      </select><br>
      ```
 
-  1. Update the list of enrolled institutions at the start of `server.Run`:
+  2. Update the list of enrolled institutions at the start of `server.Run`:
 
      ```go
      enrol("gihs", "newschool", "uofa")
      ```
 
-  2. Add institution timezone and login configurations to `server.auth`:
+  3. Add institution timezone and login configurations to `server.auth`:
 
      ```go
      case "newschool":
@@ -125,16 +125,19 @@ To add support for a new institution, you will need to:
      	}
      ```
 
-  3. Configure the new institution's supported platfoms in `server.enrol`:
+  4. Configure the new institution's supported platfoms in `server.enrol` (see below):
 
-     ```go
-     case "newschool":
-     	schools["newschool"] = site.NewMux()
-     	schools["newschool"].AddAuth(newsite.Auth)
-     	schools["newschool"].SetLessons(newsite.Lessons)
-     	schools["newschool"].SetReports(newsite.Reports)
-     ```
+### Expanding platform support for an existing institution
 
+Add newly supported functions to the institution's section in `server.enrol`:
+
+```go
+case "newschool":
+	schools["newschool"] = site.NewMux()
+	schools["newschool"].AddAuth(newsite.Auth)
+	schools["newschool"].SetLessons(newsite.Lessons)
+	schools["newschool"].SetReports(newsite.Reports)
+```
 
 [1]: https://git-send-email.io
 [2]: https://developercertificate.org/
