@@ -121,7 +121,7 @@ To add support for a new institution, you will need to:
      	user.Timezone = time.UTC
      	err = schools["newschool"].Auth(&user)
      	if err != nil {
-     		return site.User{}, errors.New("", err)
+     		return site.User{}, errors.Wrap(err)
      	}
      ```
 
