@@ -86,7 +86,6 @@ TaskCollect currently has a lot of moldy spots that need to be fixed:
   * It does too many tasks at once (scraping, muxing, UI, auth, etc.)
   * It's a web server (GUI app would be nicer)
   * The codebase is ugly (refactor required)
-  * The official website is on Codeberg (slow) and badly designed
 
 We will be releasing a proposal for TaskCollect v2 which will address these moldy spots. Keep an eye out for the official announcement.
 
