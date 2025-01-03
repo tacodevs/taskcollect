@@ -100,7 +100,7 @@ To add support for a new institution, you will need to:
 
   1. Add the institution to the alphabetically ordered login page selection:
 
-     ```
+     ```html
      <select id="school" name="school">
          <option value="gihs">Glenunga International High School</option>
          <option value="newschool">Newly Added Institution</option>
