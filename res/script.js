@@ -34,9 +34,10 @@ document.addEventListener("click", function (event) {
     // Show loading animation when cliking on resource/task links
     let parent = event.target.parentElement;
     if (parent != null && parent.tagName == "P") {
-      let grandparent = parent.parentElement;
-      if (grandparent != null && grandparent.tagName == "DIV") {
-        if (grandparent.parentElement.tagName == "DETAILS") {
+      let div = parent.parentElement;
+      if (div != null && div.tagName == "DIV") {
+        let details = div.parentElement;
+        if (details.tagName == "DETAILS") {
           applyLoader();
         }
       }
